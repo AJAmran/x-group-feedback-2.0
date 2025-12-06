@@ -184,7 +184,7 @@ export function FeedbackForm() {
                                     <button
                                         key={opt.value}
                                         type="button"
-                                        onClick={() => setFieldValue("source", opt.value)}
+                                        onClick={() => setFieldValue("source", opt.value as import("../types").Source)}
                                         className={`group relative flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-300 ${isSelected
                                             ? "bg-gradient-to-r from-[hsl(var(--brand-primary))] to-[hsl(var(--brand-primary-light))] text-white shadow-lg shadow-[hsl(var(--brand-primary))]/25 scale-[1.02]"
                                             : "bg-white/40 hover:bg-white/60 text-slate-600 hover:text-slate-800 border border-white/40 hover:border-white/60"
@@ -216,7 +216,7 @@ export function FeedbackForm() {
                                     <button
                                         key={opt.value}
                                         type="button"
-                                        onClick={() => setFieldValue("ageGroup", opt.value)}
+                                        onClick={() => setFieldValue("ageGroup", opt.value as import("../types").AgeGroup)}
                                         className={`group relative flex items-center justify-center gap-1.5 px-2 py-3.5 rounded-xl text-sm font-semibold transition-all duration-300 ${isSelected
                                             ? "bg-gradient-to-r from-[hsl(var(--brand-primary))] to-[hsl(var(--brand-primary-light))] text-white shadow-lg shadow-[hsl(var(--brand-primary))]/25 scale-[1.02]"
                                             : "bg-white/40 hover:bg-white/60 text-slate-600 hover:text-slate-800 border border-white/40 hover:border-white/60"

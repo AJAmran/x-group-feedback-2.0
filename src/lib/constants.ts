@@ -28,3 +28,33 @@ export const SOURCES = [
     { value: "Friends & Family", label: "Friends & Family" },
     { value: "Visited Before", label: "I’ve visited before" },
 ];
+
+import { RatingValue } from "../types";
+import { Smile, Meh, Star } from "lucide-react";
+
+export const RATING_OPTIONS = [
+    {
+        val: RatingValue.EXCELLENT,
+        label: "Excellent",
+        icon: Star,
+        activeClasses:
+            "bg-gradient-to-br from-[hsl(var(--brand-dark))] to-[hsl(var(--brand-primary))] border-transparent text-white shadow-lg shadow-[hsl(var(--brand-primary))/0.3]",
+        iconClass: "text-white fill-white/20",
+    },
+    {
+        val: RatingValue.GOOD,
+        label: "Good",
+        icon: Smile,
+        activeClasses:
+            "bg-gradient-to-br from-emerald-600 to-teal-500 border-transparent text-white shadow-lg shadow-teal-500/20",
+        iconClass: "text-white fill-white/10",
+    },
+    {
+        val: RatingValue.AVERAGE,
+        label: "Average",
+        icon: Meh,
+        activeClasses:
+            "bg-gradient-to-br from-amber-500 to-orange-500 border-transparent text-white shadow-lg shadow-orange-500/20",
+        iconClass: "text-white fill-white/10",
+    },
+];

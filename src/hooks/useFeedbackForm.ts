@@ -118,7 +118,8 @@ export function useFeedbackForm() {
 
     const handleRatingChange = useCallback(
         (category: RatingCategory, value: RatingValue) => {
-            // Force path type to avoid deep nesting inference issues with enums
+            // We use 'as any' for the path here because string template inference with deep nested objects
+            // and Enums can be brittle in RHF's types.
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setValue(`ratings.${category}` as any, value, { shouldValidate: true });
         },
@@ -126,8 +127,9 @@ export function useFeedbackForm() {
     );
 
     // Generic handler for custom inputs
-    const setFieldValue = useCallback((field: keyof FeedbackFormValues, value: any) => {
-        setValue(field, value, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    const setFieldValue = useCallback(<K extends keyof FeedbackFormValues>(field: K, value: FeedbackFormValues[K]) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setValue(field, value as any, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
     }, [setValue]);
 
     const onSubmit: SubmitHandler<FeedbackFormValues> = async (data) => {

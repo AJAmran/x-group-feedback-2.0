@@ -1,6 +1,6 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { RatingCategory, RatingValue } from "../types";
-import { Smile, Meh, Star } from "lucide-react";
+import { RATING_OPTIONS } from "../lib/constants";
 
 interface RatingRowProps {
   category: RatingCategory;
@@ -10,34 +10,7 @@ interface RatingRowProps {
 
 export const RatingRow: React.FC<RatingRowProps> = React.memo(
   ({ category, value, onChange }) => {
-    const options = useMemo(
-      () => [
-        {
-          val: RatingValue.EXCELLENT,
-          label: "Excellent",
-          icon: Star,
-          activeClasses:
-            "bg-gradient-to-br from-[hsl(var(--brand-dark))] to-[hsl(var(--brand-primary))] border-transparent text-white shadow-lg shadow-[hsl(var(--brand-primary))/0.3]",
-          iconClass: "text-white fill-white/20",
-        },
-        {
-          val: RatingValue.GOOD,
-          label: "Good",
-          icon: Smile,
-          activeClasses:
-            "bg-gradient-to-br from-emerald-600 to-teal-500 border-transparent text-white shadow-lg shadow-teal-500/20",
-          iconClass: "text-white fill-white/10",
-        },
-        {
-          val: RatingValue.AVERAGE,
-          label: "Average",
-          icon: Meh,
-          activeClasses: "bg-gradient-to-br from-amber-500 to-orange-500 border-transparent text-white shadow-lg shadow-orange-500/20",
-          iconClass: "text-white fill-white/10",
-        },
-      ],
-      []
-    );
+
 
     return (
       <div
@@ -49,7 +22,7 @@ export const RatingRow: React.FC<RatingRowProps> = React.memo(
           {category}
         </span>
         <div className="grid grid-cols-3 gap-3 w-full sm:max-w-[300px]">
-          {options.map((opt) => {
+          {RATING_OPTIONS.map((opt) => {
             const Icon = opt.icon;
             const isSelected = value === opt.val;
 

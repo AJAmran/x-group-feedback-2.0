@@ -10,23 +10,22 @@ interface InputProps
   validationMessage?: string;
 }
 
+// Helper to join classes conditionally (mini-clsx)
+const cn = (...classes: (string | boolean | undefined | null)[]) => classes.filter(Boolean).join(" ");
+
 export const Input: React.FC<InputProps> = React.memo(
   ({ label, isTextArea, error, validationStatus = "neutral", validationMessage, className, ...props }) => {
     // Determine effective error state
     const isInvalid = error || validationStatus === "invalid";
     const isValid = validationStatus === "valid";
 
-    const baseClasses = `w-full glass-inner text-slate-800 text-[15px] rounded-xl px-4 py-3.5 placeholder-slate-500/70 transition-all duration-300 transform-gpu
-      focus:outline-none focus:bg-white/60 focus:ring-2 focus:ring-[hsl(var(--brand-primary)/0.3)] focus:border-transparent focus:shadow-[0_4px_20px_rgba(0,0,0,0.05)] focus:-translate-y-0.5
-      hover:bg-white/50 
-      ${isInvalid
-        ? "!bg-red-50/50 !border-red-300 ring-2 ring-red-100 focus:!ring-red-400 focus:!shadow-red-100"
-        : ""
-      }
-      ${isValid
-        ? "!bg-green-50/50 !border-green-300 ring-2 ring-green-100 focus:!ring-green-400 focus:!shadow-green-100"
-        : ""
-      }`;
+    const baseClasses = cn(
+      "w-full glass-inner text-slate-800 text-[15px] rounded-xl px-4 py-3.5 placeholder-slate-500/70 transition-all duration-300 transform-gpu",
+      "focus:outline-none focus:bg-white/60 focus:ring-2 focus:ring-[hsl(var(--brand-primary)/0.3)] focus:border-transparent focus:shadow-[0_4px_20px_rgba(0,0,0,0.05)] focus:-translate-y-0.5",
+      "hover:bg-white/50",
+      isInvalid && "!bg-red-50/50 !border-red-300 ring-2 ring-red-100 focus:!ring-red-400 focus:!shadow-red-100",
+      isValid && "!bg-green-50/50 !border-green-300 ring-2 ring-green-100 focus:!ring-green-400 focus:!shadow-green-100"
+    );
 
     return (
       <div className="flex flex-col space-y-2 w-full group relative isolate">
@@ -71,15 +70,14 @@ export const Input: React.FC<InputProps> = React.memo(
         <div className="relative">
           {isTextArea ? (
             <textarea
-              className={`${baseClasses} min-h-[120px] resize-none relative z-10 ${className || ""
-                }`}
+              className={cn(baseClasses, "min-h-[120px] resize-none relative z-10", className)}
               aria-invalid={isInvalid ? "true" : "false"}
               aria-label={label}
               {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
             />
           ) : (
             <input
-              className={`${baseClasses} relative z-10 ${className || ""}`}
+              className={cn(baseClasses, "relative z-10", className)}
               aria-invalid={isInvalid ? "true" : "false"}
               aria-label={label}
               {...props}
@@ -87,7 +85,7 @@ export const Input: React.FC<InputProps> = React.memo(
           )}
 
           {/* Subtle inner light reflection */}
-          <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-white/50 to-transparent pointer-events-none opacity-50" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none opacity-50" />
         </div>
 
         {/* Additional Validation Message if provided */}
