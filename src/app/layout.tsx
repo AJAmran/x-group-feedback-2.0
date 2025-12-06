@@ -46,7 +46,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "X-Group Feedback | Share Your Dining Experience",
+  title: "X-Group Chain Restaurant Feedback | Share Your Dining Experience",
   description:
     "Share your dining experience with X-Group Chain Restaurant and Hospitality. Quick and easy feedback form for our valued guests.",
   keywords: [

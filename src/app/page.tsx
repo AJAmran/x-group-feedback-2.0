@@ -15,6 +15,7 @@ import type { FeedbackSubmissionRequest, ApiError } from "../types";
 import { Input } from "../components/Input";
 import { RatingRow } from "../components/RatingRow";
 import { submitFeedbackWithRetry } from "../lib/api";
+import logo from "../assets/logo.png"
 
 // Move BRANCH_MAP outside component to prevent recreation on every render
 const BRANCH_MAP: Record<string, string> = {
@@ -218,11 +219,11 @@ function FeedbackForm() {
             {/* Main Title */}
             <div className="flex items-center gap-3">
               <Image
-                src="/logo.webp"
+                src={logo}
                 alt="X-Group Logo"
                 width={64}
                 height={64}
-                className="h-16 w-auto object-contain drop-shadow-sm"
+                className="h-16 w-auto object-contain drop-shadow-lg"
                 priority
               />
               <div>
