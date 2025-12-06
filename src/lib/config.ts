@@ -16,12 +16,16 @@ export const APP_CONFIG = {
         LABELS: {
             GUEST_NAME: "Guest Name",
             CONTACT: "Contact (Mobile/Email)",
+            AGE_GROUP: "Age Group",
+            SOURCE: "How did you learn about us?",
             OPINION: "Valuable Opinion",
             RATING_HEADER: "Rate Your Experience",
         },
         PLACEHOLDERS: {
             GUEST_NAME: "Your name",
             CONTACT: "Contact number or email",
+            AGE_GROUP: "Select age group",
+            SOURCE: "Select option",
             OPINION: "Any compliments or suggestions?",
         },
         BUTTONS: {

@@ -4,6 +4,7 @@ import {
     Loader2,
     Sparkles,
     MapPin,
+    Check,
 } from "lucide-react";
 import { Input } from "./Input";
 import { RatingRow } from "./RatingRow";
@@ -12,6 +13,7 @@ import { ErrorView } from "./ErrorView";
 import { RatingCategory } from "../types";
 import { useFeedbackForm } from "../hooks/useFeedbackForm";
 import { APP_CONFIG } from "../lib/config";
+import { AGE_GROUPS, SOURCES } from "../lib/constants";
 import logo from "../assets/logo.png";
 
 /**
@@ -38,6 +40,9 @@ export function FeedbackForm() {
         errors,
         isValid,
         contactStatus,
+        sourceValue,
+        ageGroupValue,
+        setFieldValue
     } = useFeedbackForm();
 
     if (view === "success") {
@@ -142,10 +147,11 @@ export function FeedbackForm() {
                         autoComplete="email"
                         error={!!errors.contact}
                         validationStatus={contactStatus}
-                        validationMessage={errors.contact?.message}
                         {...register("contact")}
                     />
+
                 </section>
+
                 <section className="mb-8 relative">
                     <div className="flex items-center justify-between mb-5">
                         <h3 className="text-xs font-bold uppercase tracking-widest text-slate-600 flex items-center gap-2 backdrop-blur-sm bg-white/30 px-3 py-1.5 rounded-full">
@@ -164,7 +170,71 @@ export function FeedbackForm() {
                         ))}
                     </div>
                 </section>
-                <section className="mb-8 relative">
+
+                <section className="mb-8 relative space-y-8">
+                    {/* Source Selection - Custom Chips */}
+                    <div className="space-y-3">
+                        <label className="block text-[13px] font-bold uppercase tracking-wider text-slate-500 ml-1">
+                            {APP_CONFIG.FORM.LABELS.SOURCE}
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {SOURCES.map((opt) => {
+                                const isSelected = sourceValue === opt.value;
+                                return (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => setFieldValue("source", opt.value)}
+                                        className={`group relative flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-300 ${isSelected
+                                            ? "bg-gradient-to-r from-[hsl(var(--brand-primary))] to-[hsl(var(--brand-primary-light))] text-white shadow-lg shadow-[hsl(var(--brand-primary))]/25 scale-[1.02]"
+                                            : "bg-white/40 hover:bg-white/60 text-slate-600 hover:text-slate-800 border border-white/40 hover:border-white/60"
+                                            }`}
+                                    >
+                                        <span className="relative z-10">{opt.label}</span>
+                                        {isSelected && (
+                                            <Check size={15} className="relative z-10 animate-scale-in" strokeWidth={3} />
+                                        )}
+                                        {/* Hover Glow for unselected */}
+                                        {!isSelected && (
+                                            <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Age Group Selection - Custom Chips */}
+                    <div className="space-y-3">
+                        <label className="block text-[13px] font-bold uppercase tracking-wider text-slate-500 ml-1">
+                            {APP_CONFIG.FORM.LABELS.AGE_GROUP}
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            {AGE_GROUPS.map((opt) => {
+                                const isSelected = ageGroupValue === opt.value;
+                                return (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => setFieldValue("ageGroup", opt.value)}
+                                        className={`group relative flex items-center justify-center gap-1.5 px-2 py-3.5 rounded-xl text-sm font-semibold transition-all duration-300 ${isSelected
+                                            ? "bg-gradient-to-r from-[hsl(var(--brand-primary))] to-[hsl(var(--brand-primary-light))] text-white shadow-lg shadow-[hsl(var(--brand-primary))]/25 scale-[1.02]"
+                                            : "bg-white/40 hover:bg-white/60 text-slate-600 hover:text-slate-800 border border-white/40 hover:border-white/60"
+                                            }`}
+                                    >
+                                        <span className="relative z-10 whitespace-nowrap">{opt.label}</span>
+                                        {isSelected && (
+                                            <Check size={14} className="relative z-10 animate-scale-in" strokeWidth={3} />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {/* Hidden inputs for validation registration */}
+                        <input type="hidden" {...register("source")} />
+                        <input type="hidden" {...register("ageGroup")} />
+                    </div>
+
                     <Input
                         label={APP_CONFIG.FORM.LABELS.OPINION}
                         isTextArea

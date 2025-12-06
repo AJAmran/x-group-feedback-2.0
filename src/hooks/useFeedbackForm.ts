@@ -3,7 +3,14 @@ import { useSearchParams } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { RatingCategory, RatingValue, FeedbackSubmissionRequest, ApiError } from "../types";
+import {
+    RatingCategory,
+    RatingValue,
+    FeedbackSubmissionRequest,
+    ApiError,
+    AgeGroup,
+    Source
+} from "../types";
 import { submitFeedbackWithRetry } from "../lib/api";
 import { BRANCH_MAP } from "../lib/constants";
 import { APP_CONFIG } from "../lib/config";
@@ -11,29 +18,28 @@ import { APP_CONFIG } from "../lib/config";
 // --- Validation Schema ---
 const feedbackSchema = z.object({
     name: z.string().min(1, "Name is required"),
-    contact: z.string().superRefine((val, ctx) => {
-        if (!val) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Contact is required" });
-            return;
-        }
-        // Check for Email OR Mobile
-        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-        const isMobile = /^[0-9+\-\s()]{7,}$/.test(val); // Basic mobile validation (7+ digits/chars)
-
-        if (!isEmail && !isMobile) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Enter a valid email or mobile number" });
-        }
+    contact: z.string().trim().min(1, "Contact is required").refine((val) => {
+        // Loose email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // Loose phone validation (at least 7 digits/symbols)
+        const phoneRegex = /^[\d\s+\-()]{7,}$/;
+        return emailRegex.test(val) || phoneRegex.test(val);
+    }, {
+        message: "Please enter a valid email or phone number",
     }),
+    ageGroup: z.nativeEnum(AgeGroup).optional(),
+    source: z.nativeEnum(Source).optional(),
     opinion: z.string().optional(),
     ratings: z.object({
         [RatingCategory.FOOD]: z.nativeEnum(RatingValue).nullable(),
         [RatingCategory.SERVICE]: z.nativeEnum(RatingValue).nullable(),
         [RatingCategory.ENVIRONMENT]: z.nativeEnum(RatingValue).nullable(),
+        [RatingCategory.EVENT]: z.nativeEnum(RatingValue).nullable(),
         [RatingCategory.OVERALL]: z.nativeEnum(RatingValue).nullable(),
     }),
 });
 
-export type FeedbackFormValues = z.infer<typeof feedbackSchema>;
+type FeedbackFormValues = z.infer<typeof feedbackSchema>;
 
 /**
  * Custom hook to manage Feedback Form state and logic.
@@ -77,11 +83,14 @@ export function useFeedbackForm() {
         defaultValues: {
             name: "",
             contact: "",
+            ageGroup: undefined,
+            source: undefined,
             opinion: "",
             ratings: {
                 [RatingCategory.FOOD]: null,
                 [RatingCategory.SERVICE]: null,
                 [RatingCategory.ENVIRONMENT]: null,
+                [RatingCategory.EVENT]: null,
                 [RatingCategory.OVERALL]: null,
             },
         },
@@ -101,10 +110,11 @@ export function useFeedbackForm() {
     };
 
     const contactStatus = getValidationStatus(contactError, contactTouched, contactValue);
-    // nameStatus removed as per user request to only show for Contact
 
-    // Watch ratings for local usage
+    // Watch values for UI updates (custom select/chips)
     const ratings = watch("ratings");
+    const sourceValue = watch("source");
+    const ageGroupValue = watch("ageGroup");
 
     const handleRatingChange = useCallback(
         (category: RatingCategory, value: RatingValue) => {
@@ -114,6 +124,11 @@ export function useFeedbackForm() {
         },
         [setValue]
     );
+
+    // Generic handler for custom inputs
+    const setFieldValue = useCallback((field: keyof FeedbackFormValues, value: any) => {
+        setValue(field, value, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    }, [setValue]);
 
     const onSubmit: SubmitHandler<FeedbackFormValues> = async (data) => {
         setView("submitting");
@@ -125,7 +140,12 @@ export function useFeedbackForm() {
             branchCode,
             branchName,
             submittedAt: new Date().toISOString(),
-            guest: { name: data.name.trim(), contact: data.contact.trim() },
+            guest: {
+                name: data.name.trim(),
+                contact: data.contact.trim(),
+                ageGroup: data.ageGroup,
+                source: data.source,
+            },
             ratings: data.ratings,
             comments: data.opinion?.trim() || null,
         };
@@ -161,11 +181,6 @@ export function useFeedbackForm() {
         resetHookForm();
     }, [resetHookForm]);
 
-    // Handle Manual blurs if needed (RHF handles onBlur via register)
-
-    // Additional logic for "showValidation" - purely for the "Submit" button click scenario 
-    // where we want to show all errors at once if the user tries to submit empty form.
-
     return {
         view,
         error: apiError,
@@ -173,13 +188,15 @@ export function useFeedbackForm() {
         branchCode,
         branchName,
         ratings,
+        sourceValue, // Exported for UI
+        ageGroupValue, // Exported for UI
+        setFieldValue, // Exported for custom inputs
         handleRatingChange,
         resetForm,
-        // RHF props
         register,
         onSubmitWrapper,
         errors,
-        isValid, // Form-level validity
+        isValid,
         contactStatus,
     };
 }

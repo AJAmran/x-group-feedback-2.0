@@ -15,3 +15,16 @@ export const BRANCH_MAP: Record<string, string> = {
     "X-18": "Zam Zam Convention Center, Mirpur-11",
     "X-19": "Four Seasons Restaurant, Mirpur-11",
 };
+
+export const AGE_GROUPS = [
+    { value: "Below 18", label: "Below 18" },
+    { value: "18-30", label: "18-30" },
+    { value: "31-50", label: "31-50" },
+    { value: "51+", label: "51+" },
+];
+
+export const SOURCES = [
+    { value: "Social Media", label: "Social Media" },
+    { value: "Friends & Family", label: "Friends & Family" },
+    { value: "Visited Before", label: "I’ve visited before" },
+];

@@ -32,10 +32,10 @@ export const Input: React.FC<InputProps> = React.memo(
       <div className="flex flex-col space-y-2 w-full group relative isolate">
         <div className="flex justify-between items-baseline ml-1 relative z-10">
           <label
-            className={`text-sm font-bold uppercase tracking-widest transition-all duration-300 relative inline-flex items-center gap-2 
+            className={`text-[13px] font-bold uppercase tracking-wider transition-all duration-300 relative inline-flex items-center gap-2 
               ${isInvalid ? "text-red-500" : ""}
               ${isValid ? "text-green-600" : ""}
-              ${!isInvalid && !isValid ? "text-slate-600 group-focus-within:text-[hsl(var(--brand-primary))] group-focus-within:translate-x-1" : ""}
+              ${!isInvalid && !isValid ? "text-slate-500 group-focus-within:text-[hsl(var(--brand-primary))] group-focus-within:translate-x-1" : ""}
               `}
           >
             {label}

@@ -23,17 +23,18 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate email or phone format (basic validation)
-        const contactRegex = /^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$|^\+?[\d\s\-\(\)]{10,}$/;
-        if (!contactRegex.test(body.guest.contact)) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: 'VALIDATION_ERROR',
-                    message: 'Invalid contact format. Please provide a valid email or phone number.',
-                },
-                { status: 400 }
-            );
-        }
+        // Validation removed as per user request
+        // const contactRegex = /^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$|^\+?[\d\s\-\(\)]{10,}$/;
+        // if (!contactRegex.test(body.guest.contact)) {
+        //     return NextResponse.json(
+        //         {
+        //             success: false,
+        //             error: 'VALIDATION_ERROR',
+        //             message: 'Invalid contact format. Please provide a valid email or phone number.',
+        //         },
+        //         { status: 400 }
+        //     );
+        // }
 
         // TODO: Replace this with your actual database integration
         // Example database save logic:
