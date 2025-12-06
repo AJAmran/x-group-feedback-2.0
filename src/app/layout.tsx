@@ -48,7 +48,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "X-Group Feedback | Share Your Dining Experience",
   description:
-    "Share your dining experience with X-Group Hospitality. Quick and easy feedback form for our valued guests.",
+    "Share your dining experience with X-Group Chain Restaurant and Hospitality. Quick and easy feedback form for our valued guests.",
   keywords: [
     "X-Group",
     "feedback",
@@ -56,20 +56,20 @@ export const metadata: Metadata = {
     "dining experience",
     "hospitality",
   ],
-  authors: [{ name: "X-Group Hospitality" }],
-  creator: "X-Group Hospitality",
-  publisher: "X-Group Hospitality",
+  authors: [{ name: "X-Group Chain Restaurant and Hospitality" }],
+  creator: "X-Group Chain Restaurant and Hospitality",
+  publisher: "X-Group Chain Restaurant and Hospitality",
   openGraph: {
     type: "website",
     locale: "en_US",
     title: "X-Group Feedback",
-    description: "Share your dining experience with X-Group Hospitality",
+    description: "Share your dining experience with X-Group Chain Restaurant and Hospitality",
     siteName: "X-Group Feedback",
   },
   twitter: {
     card: "summary_large_image",
     title: "X-Group Feedback",
-    description: "Share your dining experience with X-Group Hospitality",
+    description: "Share your dining experience with X-Group Chain Restaurant and Hospitality",
   },
   robots: {
     index: true,
