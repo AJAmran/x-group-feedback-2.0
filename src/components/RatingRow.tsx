@@ -25,22 +25,26 @@ export const RatingRow: React.FC<RatingRowProps> = React.memo(
           label: "Good",
           icon: Smile,
           activeClasses:
-            "bg-gradient-to-br from-[hsl(var(--brand-primary))] to-[hsl(var(--brand-primary-light))] border-transparent text-white shadow-lg shadow-[hsl(var(--brand-primary))/0.3]",
-          iconClass: "text-white",
+            "bg-gradient-to-br from-emerald-600 to-teal-600 border-transparent text-white shadow-lg shadow-emerald-500/30",
+          iconClass: "text-emerald-100",
         },
         {
           val: RatingValue.AVERAGE,
           label: "Average",
           icon: Meh,
-          activeClasses: "bg-slate-600 border-transparent text-white shadow-lg shadow-slate-500/30",
-          iconClass: "text-slate-200",
+          activeClasses: "bg-gradient-to-br from-amber-600 to-orange-600 border-transparent text-white shadow-lg shadow-amber-500/30",
+          iconClass: "text-amber-100",
         },
       ],
       []
     );
 
     return (
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between py-2 sm:py-3 px-2 hover:bg-white/5 transition-colors duration-200 rounded-xl group/row">
+      <div
+        className="flex flex-col sm:flex-row sm:items-center justify-between py-2 sm:py-3 px-2 hover:bg-white/5 transition-colors duration-200 rounded-xl group/row"
+        role="radiogroup"
+        aria-label={`Rate ${category}`}
+      >
         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 sm:mb-0 sm:mr-4 min-w-[100px] px-2 transition-colors group-hover/row:text-[hsl(var(--brand-primary))]">
           {category}
         </span>
@@ -53,9 +57,10 @@ export const RatingRow: React.FC<RatingRowProps> = React.memo(
               <button
                 key={opt.val}
                 type="button"
+                role="radio"
+                aria-checked={isSelected}
+                aria-label={`${opt.label} rating for ${category}`}
                 onClick={() => onChange(category, opt.val)}
-                aria-label={`Rate ${category} as ${opt.label}`}
-                aria-pressed={isSelected}
                 className={`
                 relative flex flex-col items-center justify-center py-3 px-2 rounded-xl transition-all duration-300 transform-gpu
                 border backdrop-blur-md
