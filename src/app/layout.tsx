@@ -1,14 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Poppins, Inter, Outfit, JetBrains_Mono } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
-
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
-  weight: ["300", "400", "500", "600", "700", "800"],
-});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,14 +16,6 @@ const outfit = Outfit({
   display: "swap",
   preload: true,
   weight: ["400", "500", "600", "700", "800"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
-  weight: ["400", "500", "600"],
 });
 
 export const viewport: Viewport = {
@@ -65,6 +49,7 @@ export const metadata: Metadata = {
     title: "X-Group Feedback",
     description: "Share your dining experience with X-Group Chain Restaurant and Hospitality",
     siteName: "X-Group Feedback",
+
   },
   twitter: {
     card: "summary_large_image",
@@ -84,13 +69,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head />
       <body
         className={`
-    ${poppins.variable} ${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}
-    antialiased min-h-screen bg-linear-to-br from-[#f5f6ff] to-[#eceeff]
-  `}
+          ${inter.variable} ${outfit.variable}
+          antialiased min-h-screen bg-gradient-to-br from-[#f8faff] via-[#f0f4ff] to-[#e8edff] relative overflow-x-hidden
+          bg-[length:400%_400%] animate-gradient-flow
+        `}
       >
-        {children}
+        {/* Animated background elements */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-r from-blue-300/10 via-purple-300/5 to-pink-300/10 rounded-full blur-3xl animate-floating-blobs" />
+          <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-r from-[hsl(var(--brand-primary)/0.08)] via-[hsl(var(--brand-glow)/0.05)] to-transparent rounded-full blur-3xl animate-floating-blobs animation-delay-2000" />
+          <div className="absolute top-3/4 left-1/3 w-[400px] h-[400px] bg-gradient-to-r from-slate-300/5 via-gray-300/3 to-transparent rounded-full blur-3xl animate-floating-blobs animation-delay-4000" />
+        </div>
+
+        <div className="relative z-10">
+          {children}
+        </div>
       </body>
     </html>
   );
