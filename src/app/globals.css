@@ -46,7 +46,7 @@
 /* Custom Utilities */
 @layer components {
   .glass-card {
-    @apply bg-gradient-to-br from-white/60 via-white/40 to-white/50 backdrop-blur-3xl shadow-2xl;
+    @apply bg-gradient-to-br from-white/60 via-white/40 to-white/50 backdrop-blur-2xl shadow-2xl;
     border: 1px solid rgba(255, 255, 255, 0.5);
     box-shadow: 
       0 4px 6px -1px rgba(0, 0, 0, 0.02),

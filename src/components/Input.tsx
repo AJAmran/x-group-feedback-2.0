@@ -85,7 +85,7 @@ export const Input: React.FC<InputProps> = React.memo(
           )}
 
           {/* Subtle inner light reflection */}
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none opacity-50" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-white/50 to-transparent pointer-events-none opacity-50" />
         </div>
 
         {/* Additional Validation Message if provided */}

@@ -15,6 +15,8 @@ import { useFeedbackForm } from "../hooks/useFeedbackForm";
 import { APP_CONFIG } from "../lib/config";
 import { AGE_GROUPS, SOURCES } from "../lib/constants";
 import logo from "../assets/logo.png";
+import * as motion from "framer-motion/client";
+import { KeyboardEvent } from "react";
 
 /**
  * Main Feedback Form Component
@@ -120,7 +122,12 @@ export function FeedbackForm() {
             </div>
 
             {/* Main Form Card with Enhanced Glassmorphism */}
-            <div className="w-full max-w-md glass-card rounded-[2.5rem] p-6 sm:p-8 animate-[slide-up_0.6s_ease-out] hover:-translate-y-1 hover:shadow-2xl hover:shadow-[hsl(var(--brand-primary))]/10 transition-all duration-500 relative overflow-hidden group">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+                className="w-full max-w-md glass-card rounded-[2.5rem] p-6 sm:p-8 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[hsl(var(--brand-primary))]/10 transition-all duration-500 relative overflow-hidden group"
+            >
                 {/* Glass border effect */}
                 <div className="absolute inset-0 glass-border rounded-[2.5rem]" />
 
@@ -181,24 +188,40 @@ export function FeedbackForm() {
                             {SOURCES.map((opt) => {
                                 const isSelected = sourceValue === opt.value;
                                 return (
-                                    <button
+                                    <motion.button
                                         key={opt.value}
                                         type="button"
+                                        role="radio"
+                                        aria-checked={isSelected}
+                                        tabIndex={0}
                                         onClick={() => setFieldValue("source", opt.value as import("../types").Source)}
-                                        className={`group relative flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-300 ${isSelected
+                                        onKeyDown={(e: KeyboardEvent) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                setFieldValue("source", opt.value as import("../types").Source);
+                                            }
+                                        }}
+                                        className={`group relative flex flex-col items-start gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-300 ${isSelected
                                             ? "bg-gradient-to-r from-[hsl(var(--brand-primary))] to-[hsl(var(--brand-primary-light))] text-white shadow-lg shadow-[hsl(var(--brand-primary))]/25 scale-[1.02]"
                                             : "bg-white/40 hover:bg-white/60 text-slate-600 hover:text-slate-800 border border-white/40 hover:border-white/60"
                                             }`}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
                                     >
-                                        <span className="relative z-10">{opt.label}</span>
-                                        {isSelected && (
-                                            <Check size={15} className="relative z-10 animate-scale-in" strokeWidth={3} />
-                                        )}
+                                        {/* Radio Indicator */}
+                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors duration-300 ${isSelected
+                                            ? "border-white bg-white/20"
+                                            : "border-slate-300 group-hover:border-slate-400"
+                                            }`}>
+                                            {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white animate-scale-in" />}
+                                        </div>
+                                        <span className="relative z-10 text-left leading-tight">{opt.label}</span>
+
                                         {/* Hover Glow for unselected */}
                                         {!isSelected && (
                                             <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                                         )}
-                                    </button>
+                                    </motion.button>
                                 );
                             })}
                         </div>
@@ -213,20 +236,35 @@ export function FeedbackForm() {
                             {AGE_GROUPS.map((opt) => {
                                 const isSelected = ageGroupValue === opt.value;
                                 return (
-                                    <button
+                                    <motion.button
                                         key={opt.value}
                                         type="button"
+                                        role="radio"
+                                        aria-checked={isSelected}
+                                        tabIndex={0}
                                         onClick={() => setFieldValue("ageGroup", opt.value as import("../types").AgeGroup)}
-                                        className={`group relative flex items-center justify-center gap-1.5 px-2 py-3.5 rounded-xl text-sm font-semibold transition-all duration-300 ${isSelected
+                                        onKeyDown={(e: KeyboardEvent) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                setFieldValue("ageGroup", opt.value as import("../types").AgeGroup);
+                                            }
+                                        }}
+                                        className={`group relative flex flex-col items-center justify-center gap-2 px-2 py-3.5 rounded-xl text-xs font-semibold transition-all duration-300 ${isSelected
                                             ? "bg-gradient-to-r from-[hsl(var(--brand-primary))] to-[hsl(var(--brand-primary-light))] text-white shadow-lg shadow-[hsl(var(--brand-primary))]/25 scale-[1.02]"
                                             : "bg-white/40 hover:bg-white/60 text-slate-600 hover:text-slate-800 border border-white/40 hover:border-white/60"
                                             }`}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
                                     >
+                                        {/* Radio Indicator */}
+                                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors duration-300 ${isSelected
+                                            ? "border-white bg-white/20"
+                                            : "border-slate-300 group-hover:border-slate-400"
+                                            }`}>
+                                            {isSelected && <div className="w-2 h-2 rounded-full bg-white animate-scale-in" />}
+                                        </div>
                                         <span className="relative z-10 whitespace-nowrap">{opt.label}</span>
-                                        {isSelected && (
-                                            <Check size={14} className="relative z-10 animate-scale-in" strokeWidth={3} />
-                                        )}
-                                    </button>
+                                    </motion.button>
                                 );
                             })}
                         </div>
@@ -242,10 +280,12 @@ export function FeedbackForm() {
                         {...register("opinion")}
                     />
                 </section>
-                <button
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={onSubmitWrapper}
-                    disabled={!isValid || view === "submitting"}
-                    className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center space-x-2.5 relative overflow-hidden group transition-all duration-500 ${isValid && view !== "submitting"
+                    disabled={view === "submitting"}
+                    className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center space-x-2.5 relative overflow-hidden group transition-all duration-500 ${view !== "submitting"
                         ? "glass-button-gradient text-white shadow-lg shadow-[hsl(var(--brand-primary))]/40 hover:shadow-xl hover:shadow-[hsl(var(--brand-primary))]/50 hover:-translate-y-0.5"
                         : "glass-button-disabled text-slate-400 cursor-not-allowed"
                         }`}
@@ -264,12 +304,11 @@ export function FeedbackForm() {
                             <ChevronRight
                                 size={22}
                                 strokeWidth={3}
-                                className={`relative z-10 transition-transform duration-300 ${isValid ? "group-hover:translate-x-2" : ""
-                                    }`}
+                                className="relative z-10 transition-transform duration-300 group-hover:translate-x-2"
                             />
                         </>
                     )}
-                </button>
+                </motion.button>
                 <div className="mt-6 text-center">
                     {feedbackId && (
                         <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold backdrop-blur-sm bg-white/30 px-3 py-1.5 rounded-full inline-block">
@@ -277,7 +316,7 @@ export function FeedbackForm() {
                         </p>
                     )}
                 </div>
-            </div>
+            </motion.div>
             <footer className="mt-8 mb-2 text-center relative">
                 <p className="text-xs text-slate-500 font-medium backdrop-blur-sm bg-white/30 px-4 py-2 rounded-full">
                     {APP_CONFIG.COMPANY_NAME} © {new Date().getFullYear()}

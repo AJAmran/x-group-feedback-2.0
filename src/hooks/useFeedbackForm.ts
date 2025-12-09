@@ -80,6 +80,7 @@ export function useFeedbackForm() {
     } = useForm<FeedbackFormValues>({
         resolver: zodResolver(feedbackSchema),
         mode: "onBlur", // Validation on blur as requested
+        reValidateMode: "onBlur", // Prevent aggressive re-validation on change
         defaultValues: {
             name: "",
             contact: "",
