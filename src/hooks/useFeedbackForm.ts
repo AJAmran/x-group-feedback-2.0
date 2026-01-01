@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { useForm, SubmitHandler, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -65,7 +65,11 @@ export function useFeedbackForm() {
         const month = String(now.getMonth() + 1).padStart(2, "0");
         const day = String(now.getDate()).padStart(2, "0");
         const random = Math.floor(100 + Math.random() * 900);
-        setFeedbackId(`${branchPrefix}${month}${day}${random}`);
+        // Delay to avoid synchronous set state in effect
+        const timer = setTimeout(() => {
+            setFeedbackId(`${branchPrefix}${month}${day}${random}`);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [branchCode]);
 
     // Initialize React Hook Form
@@ -73,7 +77,7 @@ export function useFeedbackForm() {
         register,
         handleSubmit,
         setValue,
-        watch,
+        control,
         trigger,
         formState: { errors, isValid, touchedFields },
         reset: resetHookForm,
@@ -97,7 +101,7 @@ export function useFeedbackForm() {
         },
     });
 
-    const contactValue = watch("contact");
+    const contactValue = useWatch({ control, name: "contact" });
     const contactError = errors.contact;
     const contactTouched = touchedFields.contact;
 
@@ -113,9 +117,9 @@ export function useFeedbackForm() {
     const contactStatus = getValidationStatus(contactError, contactTouched, contactValue);
 
     // Watch values for UI updates (custom select/chips)
-    const ratings = watch("ratings");
-    const sourceValue = watch("source");
-    const ageGroupValue = watch("ageGroup");
+    const ratings = useWatch({ control, name: "ratings" });
+    const sourceValue = useWatch({ control, name: "source" });
+    const ageGroupValue = useWatch({ control, name: "ageGroup" });
 
     const handleRatingChange = useCallback(
         (category: RatingCategory, value: RatingValue) => {

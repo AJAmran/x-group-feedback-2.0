@@ -4,7 +4,6 @@ import {
     Loader2,
     Sparkles,
     MapPin,
-    Check,
 } from "lucide-react";
 import { Input } from "./Input";
 import { RatingRow } from "./RatingRow";
@@ -40,7 +39,6 @@ export function FeedbackForm() {
         resetForm,
         register,
         errors,
-        isValid,
         contactStatus,
         sourceValue,
         ageGroupValue,
@@ -73,9 +71,9 @@ export function FeedbackForm() {
             <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--brand-primary)/0.03)] via-transparent to-[hsl(var(--brand-primary)/0.06)]" />
 
             {/* Floating orbs/particles for glassmorphism effect */}
-            <div className="absolute top-10 left-10 w-96 h-96 bg-gradient-to-r from-[hsl(var(--brand-primary)/0.1)] to-transparent rounded-full blur-3xl animate-float-orb-1" />
-            <div className="absolute bottom-10 right-10 w-80 h-80 bg-gradient-to-r from-[hsl(var(--brand-glow)/0.08)] to-transparent rounded-full blur-3xl animate-float-orb-2" />
-            <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-400/0.03 to-purple-400/0.05 rounded-full blur-3xl animate-pulse-soft delay-500" />
+            <div className="absolute top-10 left-10 w-96 h-96 bg-gradient-to-r from-[hsl(var(--brand-primary)/0.1)] to-transparent rounded-full blur-3xl animate-float-orb-1 will-change-transform" />
+            <div className="absolute bottom-10 right-10 w-80 h-80 bg-gradient-to-r from-[hsl(var(--brand-glow)/0.08)] to-transparent rounded-full blur-3xl animate-float-orb-2 will-change-transform" />
+            <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-400/0.03 to-purple-400/0.05 rounded-full blur-3xl animate-pulse-soft delay-500 will-change-transform" />
 
             <div className="w-full max-w-md mb-8 sm:mb-10 animate-slide-up relative">
                 <div className="relative pl-1">
@@ -112,7 +110,7 @@ export function FeedbackForm() {
                         {/* Branch pill with glass effect */}
                         <div className="inline-flex items-center gap-1.5 glass-inner border border-[hsl(var(--brand-primary)/0.2)] px-4 py-2 rounded-full text-[hsl(var(--brand-primary))] w-fit shadow-sm backdrop-blur-sm relative overflow-hidden group hover:border-[hsl(var(--brand-primary)/0.3)] transition-all duration-300">
                             <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--brand-primary)/0.1)] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                            <MapPin size={14} strokeWidth={2.2} className="relative z-10" />
+                            <MapPin size={14} strokeWidth={2.2} className="relative z-10" aria-hidden="true" />
                             <span className="text-xs font-semibold tracking-wide uppercase relative z-10">
                                 {branchName}
                             </span>
@@ -161,10 +159,10 @@ export function FeedbackForm() {
 
                 <section className="mb-8 relative">
                     <div className="flex items-center justify-between mb-5">
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-600 flex items-center gap-2 backdrop-blur-sm bg-white/30 px-3 py-1.5 rounded-full">
-                            <Sparkles size={12} className="text-brand-400 animate-pulse" />
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-600 flex items-center gap-2 backdrop-blur-sm bg-white/30 px-3 py-1.5 rounded-full">
+                            <Sparkles size={12} className="text-brand-400 animate-pulse" aria-hidden="true" />
                             {APP_CONFIG.FORM.LABELS.RATING_HEADER}
-                        </h3>
+                        </h2>
                     </div>
                     <div className="glass-inner rounded-2xl p-2 border border-white/30">
                         {Object.values(RatingCategory).map((cat) => (
@@ -180,8 +178,8 @@ export function FeedbackForm() {
 
                 <section className="mb-8 relative space-y-8">
                     {/* Source Selection - Custom Chips */}
-                    <div className="space-y-3">
-                        <label className="block text-[13px] font-bold uppercase tracking-wider text-slate-500 ml-1">
+                    <div className="space-y-3" role="radiogroup" aria-labelledby="source-label">
+                        <label id="source-label" className="block text-[13px] font-bold uppercase tracking-wider text-slate-500 ml-1">
                             {APP_CONFIG.FORM.LABELS.SOURCE}
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -228,8 +226,8 @@ export function FeedbackForm() {
                     </div>
 
                     {/* Age Group Selection - Custom Chips */}
-                    <div className="space-y-3">
-                        <label className="block text-[13px] font-bold uppercase tracking-wider text-slate-500 ml-1">
+                    <div className="space-y-3" role="radiogroup" aria-labelledby="age-group-label">
+                        <label id="age-group-label" className="block text-[13px] font-bold uppercase tracking-wider text-slate-500 ml-1">
                             {APP_CONFIG.FORM.LABELS.AGE_GROUP}
                         </label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -295,7 +293,7 @@ export function FeedbackForm() {
 
                     {view === "submitting" ? (
                         <>
-                            <Loader2 className="animate-spin relative z-10" size={22} />
+                            <Loader2 className="animate-spin relative z-10" size={22} aria-hidden="true" />
                             <span className="relative z-10">{APP_CONFIG.FORM.BUTTONS.SUBMITTING}</span>
                         </>
                     ) : (
@@ -305,6 +303,7 @@ export function FeedbackForm() {
                                 size={22}
                                 strokeWidth={3}
                                 className="relative z-10 transition-transform duration-300 group-hover:translate-x-2"
+                                aria-hidden="true"
                             />
                         </>
                     )}

@@ -33,6 +33,7 @@ export const SuccessView: React.FC<SuccessViewProps> = React.memo(({ branchName,
                             size={48}
                             strokeWidth={2.5}
                             className="drop-shadow-sm"
+                            aria-hidden="true"
                         />
                     </div>
                 </div>

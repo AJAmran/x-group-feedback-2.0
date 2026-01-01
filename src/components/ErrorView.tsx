@@ -32,6 +32,7 @@ export const ErrorView: React.FC<ErrorViewProps> = React.memo(({ error, onRetry,
                             size={48}
                             strokeWidth={2.5}
                             className="drop-shadow-sm"
+                            aria-hidden="true"
                         />
                     </div>
                 </div>

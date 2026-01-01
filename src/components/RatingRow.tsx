@@ -56,6 +56,7 @@ export const RatingRow: React.FC<RatingRowProps> = React.memo(
                       : "group-hover:scale-110"
                       }`}
                     strokeWidth={2}
+                    aria-hidden="true"
                   />
                   <span className="text-[10px] font-bold tracking-wide">
                     {opt.label}

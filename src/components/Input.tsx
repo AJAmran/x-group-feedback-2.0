@@ -14,7 +14,10 @@ interface InputProps
 const cn = (...classes: (string | boolean | undefined | null)[]) => classes.filter(Boolean).join(" ");
 
 export const Input: React.FC<InputProps> = React.memo(
-  ({ label, isTextArea, error, validationStatus = "neutral", validationMessage, className, ...props }) => {
+  ({ label, isTextArea, error, validationStatus = "neutral", validationMessage, className, id: providedId, ...props }) => {
+    const uniqueId = React.useId();
+    const id = providedId || uniqueId;
+
     // Determine effective error state
     const isInvalid = error || validationStatus === "invalid";
     const isValid = validationStatus === "valid";
@@ -31,6 +34,7 @@ export const Input: React.FC<InputProps> = React.memo(
       <div className="flex flex-col space-y-2 w-full group relative isolate">
         <div className="flex justify-between items-baseline ml-1 relative z-10">
           <label
+            htmlFor={id}
             className={`text-[13px] font-bold uppercase tracking-wider transition-all duration-300 relative inline-flex items-center gap-2 
               ${isInvalid ? "text-red-500" : ""}
               ${isValid ? "text-green-600" : ""}
@@ -70,16 +74,16 @@ export const Input: React.FC<InputProps> = React.memo(
         <div className="relative">
           {isTextArea ? (
             <textarea
+              id={id}
               className={cn(baseClasses, "min-h-[120px] resize-none relative z-10", className)}
               aria-invalid={isInvalid ? "true" : "false"}
-              aria-label={label}
               {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
             />
           ) : (
             <input
+              id={id}
               className={cn(baseClasses, "relative z-10", className)}
               aria-invalid={isInvalid ? "true" : "false"}
-              aria-label={label}
               {...props}
             />
           )}
