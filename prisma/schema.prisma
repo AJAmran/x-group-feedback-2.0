@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  fullName     String
+  email        String   @unique
+  role         String   @default("admin")
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  reviews Review[]
+}
+
+model Branch {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  feedbacks Feedback[]
+
+  @@index([code])
+  @@index([status])
+}
+
+model Feedback {
+  id                  String   @id @default(cuid())
+  feedbackId          String   @unique
+  branchCode          String
+  branchName          String
+  guestName           String
+  guestContact        String
+  ageGroup            String?
+  source              String?
+  wouldRecommend      Boolean?
+  visitFrequency      String?
+  foodRating          String?
+  serviceRating       String?
+  environmentRating   String?
+  eventRating         String?
+  overallRating       String?
+  comments            String?
+  sentimentScore      Float?
+  sentimentLabel      String?
+  createdAt           DateTime @default(now())
+
+  branch              Branch   @relation(fields: [branchCode], references: [code])
+  review              Review?
+
+  @@index([branchCode])
+  @@index([createdAt])
+  @@index([sentimentLabel])
+  @@index([overallRating])
+  @@index([branchCode, createdAt])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  feedbackId String   @unique
+  status     String   @default("pending")
+  note       String?
+  reviewedAt DateTime @default(now())
+  reviewedBy String
+
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  reviewer   User     @relation(fields: [reviewedBy], references: [id])
+
+  @@index([status])
+  @@index([reviewedBy])
+}

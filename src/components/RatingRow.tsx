@@ -1,6 +1,7 @@
 import React from "react";
 import { RatingCategory, RatingValue } from "../types";
 import { RATING_OPTIONS } from "../lib/constants";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface RatingRowProps {
   category: RatingCategory;
@@ -8,61 +9,128 @@ interface RatingRowProps {
   onChange: (category: RatingCategory, value: RatingValue) => void;
 }
 
+const cn = (...classes: (string | boolean | undefined | null)[]) =>
+  classes.filter(Boolean).join(" ");
+
+/**
+ * Colour semantics per rating tier — consistent across badge and button.
+ * Adjust hues here and they propagate everywhere.
+ */
+const VALUE_STYLES: Record<
+  RatingValue,
+  { activeBg: string; badge: string }
+> = {
+  [RatingValue.EXCELLENT]: {
+    activeBg:
+      "bg-ios-primary text-ios-on-primary shadow-lg shadow-ios-primary/25 ring-1 ring-white/25 border-transparent",
+    badge:
+      "bg-ios-primary/10 text-ios-primary ring-ios-primary/25 dark:bg-ios-primary/20 dark:text-ios-primary",
+  },
+  [RatingValue.GOOD]: {
+    activeBg:
+      "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 ring-1 ring-white/25 border-transparent dark:bg-emerald-500 dark:text-slate-950",
+    badge:
+      "bg-emerald-500/10 text-emerald-700 ring-emerald-500/25 dark:text-emerald-400 dark:bg-emerald-500/15",
+  },
+  [RatingValue.AVERAGE]: {
+    activeBg:
+      "bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 ring-1 ring-white/30 border-transparent",
+    badge:
+      "bg-amber-500/10 text-amber-700 ring-amber-500/25 dark:text-amber-400 dark:bg-amber-500/15",
+  },
+};
+
 export const RatingRow: React.FC<RatingRowProps> = React.memo(
   ({ category, value, onChange }) => {
-
+    const groupId = React.useId();
 
     return (
       <div
-        className="flex flex-col sm:flex-row sm:items-center justify-between py-2 sm:py-3 px-2 hover:bg-white/5 transition-colors duration-200 rounded-xl group/row"
+        className="px-3 py-3.5 rounded-2xl transition-colors duration-300 group/row hover:bg-ios-border-subtle"
         role="radiogroup"
-        aria-label={`Rate ${category}`}
+        aria-labelledby={groupId}
       >
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 sm:mb-0 sm:mr-4 min-w-[100px] px-2 transition-colors group-hover/row:text-[hsl(var(--brand-primary))]">
-          {category}
-        </span>
-        <div className="grid grid-cols-3 gap-3 w-full sm:max-w-[300px]">
+        {/* Row header */}
+        <div className="flex items-center justify-between mb-3 px-0.5">
+          <span
+            id={groupId}
+            className="text-label font-semibold capitalize tracking-wide text-ios-foreground-muted group-hover/row:text-ios-foreground transition-colors duration-200"
+          >
+            {category}
+          </span>
+
+          {/* Animated selection badge */}
+          <AnimatePresence mode="wait">
+            {value && (
+              <motion.span
+                key={value}
+                initial={{ opacity: 0, scale: 0.7, x: 10 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.7, x: 10 }}
+                transition={{ type: "spring", stiffness: 500, damping: 26 }}
+                className={cn(
+                  "text-micro font-black uppercase tracking-[0.14em] px-2.5 py-0.5 rounded-full ring-1",
+                  VALUE_STYLES[value]?.badge
+                )}
+              >
+                {value}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Rating buttons */}
+        <div className="grid grid-cols-3 gap-2">
           {RATING_OPTIONS.map((opt) => {
             const Icon = opt.icon;
             const isSelected = value === opt.val;
+            const styles = VALUE_STYLES[opt.val];
 
             return (
-              <button
+              <motion.button
                 key={opt.val}
                 type="button"
                 role="radio"
                 aria-checked={isSelected}
-                aria-label={`${opt.label} rating for ${category}`}
+                aria-label={`Rate ${category} as ${opt.label}`}
                 onClick={() => onChange(category, opt.val)}
-                className={`
-                relative flex flex-col items-center justify-center py-3 px-2 rounded-xl transition-all duration-300 transform-gpu
-                border backdrop-blur-md
-                ${isSelected
-                    ? `${opt.activeClasses} scale-[1.05] ring-2 ring-white/50 ring-offset-2 ring-offset-transparent`
-                    : "bg-white/30 border-white/40 text-slate-500 hover:bg-white/60 hover:border-white/60 hover:-translate-y-0.5 hover:shadow-md hover:text-[hsl(var(--brand-primary))]"
-                  }
-              `}
-              >
-                {/* Active state inner shine */}
-                {isSelected && (
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
+                whileHover={!isSelected ? { y: -2, scale: 1.02 } : undefined}
+                whileTap={{ scale: 0.94 }}
+                className={cn(
+                  "relative flex flex-col items-center justify-center gap-1.5",
+                  "min-h-[68px] sm:min-h-[74px] rounded-[1.15rem] border",
+                  "transition-colors duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-ios-primary/40",
+                  isSelected
+                    ? styles?.activeBg
+                    : "liquid-glass text-ios-foreground-muted hover:text-ios-foreground hover:border-ios-primary/25"
                 )}
-
-                <div className="relative z-10 flex flex-col items-center gap-1.5">
+              >
+                {/* Icon settles into a restrained selected state. */}
+                <motion.div
+                  animate={{ scale: isSelected ? 1.08 : 1 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 30 }}
+                >
                   <Icon
-                    size={20}
-                    className={`transition-all duration-300 ${isSelected
-                      ? "scale-110 " + opt.iconClass
-                      : "group-hover:scale-110"
-                      }`}
-                    strokeWidth={2}
-                    aria-hidden="true"
+                    size={18}
+                    strokeWidth={isSelected ? 2.5 : 2}
+                    aria-hidden
+                    className={cn(
+                      "transition-colors duration-200",
+                      !isSelected && "text-ios-foreground-subtle"
+                    )}
                   />
-                  <span className="text-[10px] font-bold tracking-wide">
-                    {opt.label}
-                  </span>
-                </div>
-              </button>
+                </motion.div>
+
+                <span
+                  className={cn(
+                    "text-caption font-bold capitalize tracking-wide",
+                    !isSelected && "text-ios-foreground-subtle"
+                  )}
+                >
+                  {opt.label}
+                </span>
+              </motion.button>
             );
           })}
         </div>

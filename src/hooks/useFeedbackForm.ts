@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { useForm, SubmitHandler, useWatch } from "react-hook-form";
+import { useForm, SubmitHandler, useWatch, Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -41,6 +41,16 @@ const feedbackSchema = z.object({
 
 type FeedbackFormValues = z.infer<typeof feedbackSchema>;
 
+const createFeedbackId = (branchCode: string) => {
+    const branchPrefix = branchCode.replace("X-", "").toUpperCase() || "01";
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const random = Math.floor(100 + Math.random() * 900);
+
+    return `${branchPrefix}${month}${day}${random}`;
+};
+
 /**
  * Custom hook to manage Feedback Form state and logic.
  * Uses react-hook-form + zod for validation.
@@ -57,20 +67,8 @@ export function useFeedbackForm() {
     const branchCode = branchParam ? branchParam.toUpperCase() : APP_CONFIG.DEFAULT_BRANCH_CODE;
     const branchName = BRANCH_MAP[branchCode] || APP_CONFIG.DEFAULT_BRANCH_NAME;
 
-    const [feedbackId, setFeedbackId] = useState("");
-
-    useEffect(() => {
-        const branchPrefix = branchCode.replace("X-", "").toUpperCase() || "01";
-        const now = new Date();
-        const month = String(now.getMonth() + 1).padStart(2, "0");
-        const day = String(now.getDate()).padStart(2, "0");
-        const random = Math.floor(100 + Math.random() * 900);
-        // Delay to avoid synchronous set state in effect
-        const timer = setTimeout(() => {
-            setFeedbackId(`${branchPrefix}${month}${day}${random}`);
-        }, 0);
-        return () => clearTimeout(timer);
-    }, [branchCode]);
+    // Generate unique feedback ID based on branch and timestamp
+    const [feedbackId, setFeedbackId] = useState<string>("");
 
     // Initialize React Hook Form
     const {
@@ -79,12 +77,13 @@ export function useFeedbackForm() {
         setValue,
         control,
         trigger,
-        formState: { errors, isValid, touchedFields },
+        formState: { errors, isValid },
         reset: resetHookForm,
     } = useForm<FeedbackFormValues>({
+
         resolver: zodResolver(feedbackSchema),
-        mode: "onBlur", // Validation on blur as requested
-        reValidateMode: "onBlur", // Prevent aggressive re-validation on change
+        mode: "onChange",
+        reValidateMode: "onChange",
         defaultValues: {
             name: "",
             contact: "",
@@ -103,47 +102,54 @@ export function useFeedbackForm() {
 
     const contactValue = useWatch({ control, name: "contact" });
     const contactError = errors.contact;
-    const contactTouched = touchedFields.contact;
+    const contactHasInput = Boolean(contactValue?.trim());
 
-    // "valid" only if: value exists AND no error AND touched
-    // "invalid" if: error exists AND (touched OR showValidation)
-    // "neutral" otherwise
-    const getValidationStatus = (fieldError: unknown, isTouched: boolean | undefined, value: string): "valid" | "invalid" | "neutral" => {
-        if ((isTouched || showValidation) && fieldError) return "invalid";
-        if (isTouched && !fieldError && value) return "valid";
-        return "neutral";
-    };
+    const contactStatus: "valid" | "invalid" | "neutral" =
+        contactHasInput && contactError
+            ? "invalid"
+            : contactHasInput && !contactError
+              ? "valid"
+              : "neutral";
 
-    const contactStatus = getValidationStatus(contactError, contactTouched, contactValue);
+    const contactShowError = Boolean(contactError) && (contactHasInput || showValidation);
 
-    // Watch values for UI updates (custom select/chips)
+
+    // Watch values for UI updates (progress, custom select/chips)
     const ratings = useWatch({ control, name: "ratings" });
     const sourceValue = useWatch({ control, name: "source" });
     const ageGroupValue = useWatch({ control, name: "ageGroup" });
 
     const handleRatingChange = useCallback(
         (category: RatingCategory, value: RatingValue) => {
-            // We use 'as any' for the path here because string template inference with deep nested objects
-            // and Enums can be brittle in RHF's types.
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setValue(`ratings.${category}` as any, value, { shouldValidate: true });
+            setValue(`ratings.${category}` as Path<FeedbackFormValues>, value, { 
+                shouldValidate: true, shouldDirty: true, shouldTouch: true 
+            });
         },
         [setValue]
     );
 
-    // Generic handler for custom inputs
+    // Generic handler for custom inputs (Age, Source)
     const setFieldValue = useCallback(<K extends keyof FeedbackFormValues>(field: K, value: FeedbackFormValues[K]) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setValue(field, value as any, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+        setValue(field as Path<FeedbackFormValues>, value, { 
+            shouldValidate: true, shouldDirty: true, shouldTouch: true 
+        });
     }, [setValue]);
 
+
+
     const onSubmit: SubmitHandler<FeedbackFormValues> = async (data) => {
+        const submissionFeedbackId = feedbackId || createFeedbackId(branchCode);
+
+        if (!feedbackId) {
+            setFeedbackId(submissionFeedbackId);
+        }
+
         setView("submitting");
         setApiError("");
         setShowValidation(false);
 
         const submittedData: FeedbackSubmissionRequest = {
-            feedbackId,
+            feedbackId: submissionFeedbackId,
             branchCode,
             branchName,
             submittedAt: new Date().toISOString(),
@@ -185,6 +191,7 @@ export function useFeedbackForm() {
         setView("form");
         setApiError("");
         setShowValidation(false);
+        setFeedbackId("");
         resetHookForm();
     }, [resetHookForm]);
 
@@ -205,5 +212,6 @@ export function useFeedbackForm() {
         errors,
         isValid,
         contactStatus,
+        contactShowError,
     };
 }

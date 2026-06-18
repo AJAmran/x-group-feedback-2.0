@@ -1,32 +1,38 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable React strict mode for better development experience
   reactStrictMode: true,
 
-  // Compiler optimizations
+  // Compiler & Build Optimizations
   compiler: {
-    // Remove console.log in production
     removeConsole: process.env.NODE_ENV === "production" ? {
       exclude: ["error", "warn"],
     } : false,
   },
 
-  // Image optimization
+  // Image & Asset Optimization
   images: {
     formats: ["image/webp", "image/avif"],
-    deviceSizes: [640, 750, 828, 1080, 1200],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    // Use modern AVIF for better compression
   },
 
-  // Optimize package imports for better tree-shaking
+  // Tree-shaking and Performance
   experimental: {
-    optimizePackageImports: ["lucide-react"],
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+      "zod",
+      "react-hook-form"
+    ],
   },
 
-  // Production optimizations
+  // Security & Best Practices
   poweredByHeader: false,
   compress: true,
+  
+  // Production Bundle Minimizer
+  productionBrowserSourceMaps: false,
 };
 
 export default nextConfig;
+

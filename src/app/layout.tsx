@@ -1,24 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Poppins } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
+import { ThemeToggle } from "../components/ThemeToggle";
 
-const poppins = Poppins({
-  variable: "--font-poppins",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
   display: "swap",
   preload: true,
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
+
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#2c327c" },
-    { media: "(prefers-color-scheme: dark)", color: "#1f2456" },
-  ],
 };
 
 export const metadata: Metadata = {
@@ -41,7 +37,6 @@ export const metadata: Metadata = {
     title: "X-Group Feedback",
     description: "Share your dining experience with X-Group Chain Restaurant and Hospitality",
     siteName: "X-Group Feedback",
-
   },
   twitter: {
     card: "summary_large_image",
@@ -60,25 +55,47 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head />
+    <html lang="en" suppressHydrationWarning className="scroll-smooth">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preload" href="/assets/logo.png" as="image" type="image/png" fetchPriority="high" />
+        <meta name="description" content="X-Group Premium Dining Feedback - Share your experience with us to help us create a better culinary journey. Quick and professional feedback form." />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const theme = localStorage.getItem('theme');
+                  const supportDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  if (theme === 'dark' || (!theme && supportDark)) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.add('light');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+
       <body
         className={`
-          ${poppins.variable}
-          antialiased min-h-screen bg-gradient-to-br from-[#f8faff] via-[#f0f4ff] to-[#e8edff] relative overflow-x-hidden
-          bg-[length:400%_400%] animate-gradient-flow
+          ${outfit.variable}
+          font-sans antialiased min-h-screen relative
         `}
       >
-        {/* Animated background elements */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-r from-blue-300/10 via-purple-300/5 to-pink-300/10 rounded-full blur-3xl animate-floating-blobs will-change-transform" />
-          <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-r from-[hsl(var(--brand-primary)/0.08)] via-[hsl(var(--brand-glow)/0.05)] to-transparent rounded-full blur-3xl animate-floating-blobs animation-delay-2000 will-change-transform" />
-          <div className="absolute top-3/4 left-1/3 w-[400px] h-[400px] bg-gradient-to-r from-slate-300/5 via-gray-300/3 to-transparent rounded-full blur-3xl animate-floating-blobs animation-delay-4000 will-change-transform" />
-        </div>
 
-        <div className="relative z-10">
+        <ThemeToggle />
+        {/* iOS 26 Mesh Background */}
+        <div className="mesh-bg" aria-hidden="true" />
+
+
+        <main className="relative z-10 flex min-h-screen flex-col">
           {children}
-        </div>
+        </main>
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 import React from "react";
 import { AlertCircle } from "lucide-react";
 import { APP_CONFIG } from "../lib/config";
+import { motion } from "framer-motion";
 
 interface ErrorViewProps {
     error?: string;
@@ -10,59 +11,55 @@ interface ErrorViewProps {
 
 export const ErrorView: React.FC<ErrorViewProps> = React.memo(({ error, onRetry, onBack }) => {
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 animate-fade-in relative overflow-hidden">
-            {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-red-50/20 via-transparent to-orange-50/20" />
+        <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+            <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                className="w-full max-w-[min(540px,100%)] glass-card p-8 sm:p-10 text-center relative border-red-500/10 rounded-[2rem]"
+            >
+                <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />
 
-            {/* Floating orbs/particles */}
-            <div className="absolute top-1/3 left-1/3 w-72 h-72 bg-gradient-to-r from-red-400/0.05 to-orange-400/0.08 rounded-full blur-3xl animate-pulse-soft" />
-
-            <div className="w-full max-w-md glass-card rounded-[2.5rem] overflow-hidden p-8 text-center relative animate-[float_3s_ease-in-out_infinite]">
-                {/* Glass border effect */}
-                <div className="absolute inset-0 glass-border rounded-[2.5rem]" />
-
-                {/* Top accent bar */}
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 via-orange-500 to-amber-500 rounded-t-[2.5rem]" />
-
-                {/* Error icon with glow effect */}
-                <div className="flex justify-center mb-8 mt-4 relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-400/20 to-orange-400/20 blur-xl rounded-full" />
-                    <div className="h-24 w-24 bg-gradient-to-tr from-white/95 to-red-50 rounded-full flex items-center justify-center text-red-600 shadow-2xl shadow-red-200/50 border border-red-100/50 animate-scale-in relative">
-                        <AlertCircle
-                            size={48}
-                            strokeWidth={2.5}
-                            className="drop-shadow-sm"
-                            aria-hidden="true"
-                        />
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.2 }}
+                    className="mb-8 flex justify-center"
+                >
+                    <div className="h-24 w-24 bg-red-500/10 dark:bg-red-500/15 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 border border-red-500/20 dark:border-red-400/25">
+                        <AlertCircle size={48} strokeWidth={2.2} aria-hidden="true" />
                     </div>
-                </div>
+                </motion.div>
 
-                <h2 className="text-3xl font-bold text-slate-800 mb-3 font-sans relative">
+                <h2 className="text-title font-bold text-ios-foreground mb-4">
                     {APP_CONFIG.FEEDBACK.ERROR_TITLE}
                 </h2>
-                <p className="text-slate-600 mb-8 leading-relaxed relative backdrop-blur-sm bg-white/30 px-4 py-3 rounded-2xl">
+                <p className="text-body text-ios-foreground-muted mb-10 leading-relaxed font-medium">
                     {error || APP_CONFIG.FEEDBACK.ERROR_DEFAULT}
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <button
-                        onClick={onBack}
-                        className="glass-button text-slate-700 text-sm font-semibold py-3 px-6 rounded-xl border border-slate-300/50 hover:border-slate-400/50 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-200/30 relative overflow-hidden group"
-                    >
-                        <span className="relative z-10">{APP_CONFIG.FORM.BUTTONS.BACK}</span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-100/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                    </button>
-                    <button
+                <div className="flex flex-col gap-4">
+                    <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={onRetry}
-                        className="glass-button bg-gradient-to-br from-[hsl(var(--brand-glow))] to-[hsl(var(--brand-primary))] text-white text-sm font-semibold py-3 px-6 rounded-xl shadow-lg shadow-[hsl(var(--brand-primary))]/40 hover:shadow-xl hover:shadow-[hsl(var(--brand-primary))]/50 transition-all duration-300 hover:-translate-y-0.5 relative overflow-hidden group"
+                        className="btn-ios btn-ios-danger w-full py-4 text-label font-bold uppercase tracking-widest"
                     >
-                        <span className="relative z-10">{APP_CONFIG.FORM.BUTTONS.TRY_AGAIN}</span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                    </button>
+                        {APP_CONFIG.FORM.BUTTONS.TRY_AGAIN}
+                    </motion.button>
+                    <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={onBack}
+                        className="w-full py-4 rounded-2xl text-label font-bold uppercase tracking-widest border border-ios-border text-ios-foreground-muted hover:border-ios-border hover:text-ios-foreground transition-colors"
+                    >
+                        {APP_CONFIG.FORM.BUTTONS.BACK}
+                    </motion.button>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 });
 
 ErrorView.displayName = "ErrorView";
+

@@ -1,74 +1,192 @@
 import React from "react";
 import { CheckCircle2 } from "lucide-react";
 import { APP_CONFIG } from "../lib/config";
+import { motion, type Variants } from "framer-motion";
 
 interface SuccessViewProps {
-    branchName: string;
-    feedbackId: string;
-    onClose: () => void;
+  branchName: string;
+  feedbackId: string;
+  onClose: () => void;
 }
 
-export const SuccessView: React.FC<SuccessViewProps> = React.memo(({ branchName, feedbackId, onClose }) => {
+// ─────────────────────────────────────────────
+// Lightweight confetti — pure framer-motion,
+// no extra packages. Particles are memo-stable.
+// ─────────────────────────────────────────────
+const CONFETTI_COLORS = [
+  "#6366f1", "#8b5cf6", "#ec4899",
+  "#f59e0b", "#10b981", "#3b82f6", "#f43f5e",
+];
+
+const seededValue = (seed: number) => {
+  const value = Math.sin(seed) * 10000;
+  return value - Math.floor(value);
+};
+
+const particles = Array.from({ length: 28 }, (_, i) => ({
+  id: i,
+  x: 8 + seededValue(i + 1) * 84,
+  color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+  size: 5 + seededValue(i + 29) * 7,
+  delay: seededValue(i + 57) * 0.55,
+  duration: 1.8 + seededValue(i + 85) * 1.4,
+  rotate:
+    (seededValue(i + 113) > 0.5 ? 1 : -1) *
+    (80 + seededValue(i + 141) * 200),
+  isCircle: seededValue(i + 169) > 0.5,
+}));
+
+function Confetti() {
+  return (
+    <div
+      className="absolute inset-0 overflow-hidden pointer-events-none"
+      aria-hidden="true"
+    >
+      {particles.map((p) => (
+        <motion.div
+          key={p.id}
+          className="absolute"
+          style={{
+            left: `${p.x}%`,
+            top: -16,
+            width: p.size,
+            height: p.isCircle ? p.size : p.size * 0.45,
+            backgroundColor: p.color,
+            borderRadius: p.isCircle ? "50%" : "2px",
+          }}
+          initial={{ y: -16, opacity: 1, rotate: 0 }}
+          animate={{
+            y: 640,
+            opacity: [1, 1, 0.9, 0],
+            rotate: p.rotate,
+          }}
+          transition={{
+            duration: p.duration,
+            delay: p.delay,
+            ease: [0.2, 0.82, 0.4, 1],
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Stagger helpers
+const container: Variants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.07, delayChildren: 0.28 },
+  },
+};
+const item: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { ease: "easeOut", duration: 0.3 } },
+};
+
+export const SuccessView: React.FC<SuccessViewProps> = React.memo(
+  ({ branchName, feedbackId, onClose }) => {
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 animate-fade-in relative overflow-hidden">
-            {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--brand-primary)/0.03)] via-transparent to-[hsl(var(--brand-primary)/0.06)]" />
+      <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+        <motion.div
+          initial={{ scale: 0.92, opacity: 0, y: 18 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 200, damping: 22 }}
+          className="w-full max-w-[min(520px,100%)] glass-card p-8 sm:p-10 text-center relative rounded-[2rem] overflow-hidden"
+        >
+          {/* Confetti */}
+          <Confetti />
 
-            {/* Floating orbs/particles */}
-            <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-[hsl(var(--brand-primary)/0.1)] to-[hsl(var(--brand-primary)/0.05)] rounded-full blur-3xl animate-pulse-soft" />
-            <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-[hsl(var(--brand-glow)/0.08)] to-transparent rounded-full blur-3xl animate-pulse-soft delay-1000" />
+          {/* Ambient glow */}
+          <div className="absolute inset-0 bg-emerald-500/8 blur-[80px] rounded-full pointer-events-none -z-10" />
 
-            <div className="w-full max-w-md glass-card rounded-[2.5rem] overflow-hidden p-8 text-center relative animate-[float_3s_ease-in-out_infinite]">
-                {/* Glass border effect */}
-                <div className="absolute inset-0 glass-border rounded-[2.5rem]" />
+          {/* Success icon + pulse rings */}
+          <motion.div
+            initial={{ scale: 0, rotate: -28 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 280, damping: 18, delay: 0.16 }}
+            className="mb-8 flex justify-center"
+          >
+            <div className="relative">
+              <div className="h-24 w-24 bg-emerald-500 rounded-[28%] flex items-center justify-center text-white shadow-2xl shadow-emerald-500/35">
+                <CheckCircle2 size={50} strokeWidth={2.5} aria-hidden="true" />
+                {/* Apple-style inner gloss */}
+                <div className="absolute inset-0 bg-white/12 rounded-[28%] pointer-events-none" />
+              </div>
 
-                {/* Top accent bar */}
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400 rounded-t-[2.5rem]" />
-
-                {/* Success icon with glow effect */}
-                <div className="flex justify-center mb-6 mt-4 relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-emerald-400/20 blur-xl rounded-full" />
-                    <div className="h-24 w-24 bg-gradient-to-tr from-white/95 to-green-50 rounded-full flex items-center justify-center text-green-600 shadow-2xl shadow-green-200/50 border border-green-100/50 animate-scale-in relative">
-                        <CheckCircle2
-                            size={48}
-                            strokeWidth={2.5}
-                            className="drop-shadow-sm"
-                            aria-hidden="true"
-                        />
-                    </div>
-                </div>
-
-                <h2 className="text-3xl font-bold text-slate-800 mb-3 font-sans relative">
-                    {APP_CONFIG.FEEDBACK.SUCCESS_TITLE}
-                </h2>
-                <p className="text-slate-600 mb-6 leading-relaxed relative backdrop-blur-sm bg-white/30 px-4 py-3 rounded-2xl">
-                    {APP_CONFIG.FEEDBACK.SUCCESS_MESSAGE}{" "}
-                    <span className="text-brand-700 font-semibold">{branchName}</span>.
-                </p>
-
-                {/* Feedback ID card with glass effect */}
-                <div className="glass-inner rounded-2xl p-5 mb-6 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-white/40 backdrop-blur-sm" />
-                    <p className="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-1 relative">
-                        feedback Reference
-                    </p>
-                    {feedbackId && (
-                        <p className="text-xl font-mono text-slate-800 tracking-wider relative font-semibold">
-                            #{feedbackId}
-                        </p>
-                    )}
-                </div>
-
-                <button
-                    onClick={onClose}
-                    className="glass-button text-brand-700 text-sm font-semibold py-3 px-6 rounded-xl border border-brand-200/50 hover:border-brand-300/50 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand-200/30 relative overflow-hidden group"
-                >
-                    <span className="relative z-10">{APP_CONFIG.FORM.BUTTONS.CLOSE}</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-50/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                </button>
+              {/* Pulse ring 1 */}
+              <motion.div
+                className="absolute inset-0 rounded-[28%] border-2 border-emerald-500/40"
+                animate={{ scale: [1, 1.4, 1.75], opacity: [0.6, 0.25, 0] }}
+                transition={{ repeat: Infinity, duration: 2.2, ease: "easeOut" }}
+              />
+              {/* Pulse ring 2 — offset */}
+              <motion.div
+                className="absolute inset-0 rounded-[28%] border-2 border-emerald-500/25"
+                animate={{ scale: [1, 1.6, 2.1], opacity: [0.4, 0.15, 0] }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 2.2,
+                  delay: 0.45,
+                  ease: "easeOut",
+                }}
+              />
             </div>
-        </div>
+          </motion.div>
+
+          {/* Staggered text content */}
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="space-y-0"
+          >
+            <motion.h2
+              variants={item}
+              className="text-title font-bold text-ios-foreground mb-3 tracking-tight"
+            >
+              {APP_CONFIG.FEEDBACK.SUCCESS_TITLE}
+            </motion.h2>
+
+            <motion.p
+              variants={item}
+              className="text-body text-ios-foreground-muted mb-8 leading-relaxed font-medium px-4"
+            >
+              {APP_CONFIG.FEEDBACK.SUCCESS_MESSAGE}{" "}
+              <span className="text-ios-primary font-bold">{branchName}</span>.
+            </motion.p>
+
+            {/* Ref card */}
+            <motion.div
+              variants={item}
+              className="liquid-glass rounded-[1.5rem] p-5 mb-8"
+            >
+              <p className="text-micro uppercase tracking-[0.24em] text-ios-foreground-subtle font-bold mb-2.5">
+                Confirmation Reference
+              </p>
+              <p className="text-title font-mono font-black text-ios-foreground tracking-widest">
+                #{feedbackId}
+              </p>
+              <p className="text-micro text-ios-foreground-faint font-medium mt-1.5 tracking-wide">
+                Keep this for your records
+              </p>
+            </motion.div>
+
+            {/* CTA */}
+            <motion.div variants={item}>
+              <motion.button
+                whileHover={{ scale: 1.015 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={onClose}
+                className="btn-ios w-full h-14 text-label font-bold uppercase tracking-[0.15em] shadow-xl"
+              >
+                {APP_CONFIG.FORM.BUTTONS.CLOSE}
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      </div>
     );
-});
+  }
+);
 
 SuccessView.displayName = "SuccessView";

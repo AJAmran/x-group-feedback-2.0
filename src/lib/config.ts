@@ -14,6 +14,7 @@ export const APP_CONFIG = {
     },
     FORM: {
         LABELS: {
+            GUEST_DETAILS: "Guest Information",
             GUEST_NAME: "Guest Name",
             CONTACT: "Contact (Mobile/Email)",
             AGE_GROUP: "Age Group",
@@ -21,6 +22,7 @@ export const APP_CONFIG = {
             OPINION: "Valuable Opinion",
             RATING_HEADER: "Rate Your Experience",
         },
+
         PLACEHOLDERS: {
             GUEST_NAME: "Your name",
             CONTACT: "Contact number or email",
