@@ -91,7 +91,7 @@ export const SuccessView: React.FC<SuccessViewProps> = React.memo(
           initial={{ scale: 0.92, opacity: 0, y: 18 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 200, damping: 22 }}
-          className="w-full max-w-[min(520px,100%)] glass-card p-8 sm:p-10 text-center relative rounded-[2rem] overflow-hidden"
+          className="w-full max-w-[min(520px,100%)] glass-card p-8 sm:p-10 text-center relative rounded-4xl overflow-hidden"
         >
           {/* Confetti */}
           <Confetti />
@@ -158,7 +158,7 @@ export const SuccessView: React.FC<SuccessViewProps> = React.memo(
             {/* Ref card */}
             <motion.div
               variants={item}
-              className="liquid-glass rounded-[1.5rem] p-5 mb-8"
+              className="liquid-glass rounded-3xl p-5 mb-8"
             >
               <p className="text-micro uppercase tracking-[0.24em] text-ios-foreground-subtle font-bold mb-2.5">
                 Confirmation Reference

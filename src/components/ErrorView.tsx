@@ -16,7 +16,7 @@ export const ErrorView: React.FC<ErrorViewProps> = React.memo(({ error, onRetry,
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 200, damping: 25 }}
-                className="w-full max-w-[min(540px,100%)] glass-card p-8 sm:p-10 text-center relative border-red-500/10 rounded-[2rem]"
+                className="w-full max-w-[min(540px,100%)] glass-card p-8 sm:p-10 text-center relative border-red-500/10 rounded-4xl"
             >
                 <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />
 

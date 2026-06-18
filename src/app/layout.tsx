@@ -59,9 +59,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preload" href="/assets/logo.png" as="image" type="image/png" fetchPriority="high" />
-        <meta name="description" content="X-Group Premium Dining Feedback - Share your experience with us to help us create a better culinary journey. Quick and professional feedback form." />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <link rel="preload" href="/logo.png" as="image" type="image/png" fetchPriority="high" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -81,19 +79,14 @@ export default function RootLayout({
         />
       </head>
 
-      <body
-        className={`
-          ${outfit.variable}
-          font-sans antialiased min-h-screen relative
-        `}
-      >
+      <body className={`${outfit.variable} font-sans antialiased min-h-screen relative`}>
 
         <ThemeToggle />
         {/* iOS 26 Mesh Background */}
         <div className="mesh-bg" aria-hidden="true" />
 
 
-        <main className="relative z-10 flex min-h-screen flex-col">
+        <main className="relative z-10">
           {children}
         </main>
       </body>

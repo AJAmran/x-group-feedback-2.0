@@ -150,7 +150,7 @@ export function FeedbackForm() {
         initial={{ y: 22, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 80, damping: 20, delay: 0.08 }}
-        className="w-full max-w-[min(640px,100%)] glass-card p-5 sm:p-8 relative mb-8 rounded-[2rem] overflow-visible"
+        className="w-full max-w-[min(640px,100%)] glass-card p-5 sm:p-8 relative mb-8 rounded-4xl overflow-visible"
       >
         {/* Ambient glows */}
         <div className="absolute -top-16 -left-16 w-64 h-64 bg-ios-primary/8 blur-[100px] rounded-full pointer-events-none" />

@@ -52,6 +52,51 @@ async function main() {
     });
   }
 
+  // Generate some sample feedback over the past 60 days for demo purposes
+  const ratings = ["EXCELLENT", "GOOD", "AVERAGE", "POOR", "VERY_POOR"];
+  const weightedRatings = ["EXCELLENT", "EXCELLENT", "GOOD", "GOOD", "GOOD", "AVERAGE", "AVERAGE", "POOR"];
+  const sources = ["Social Media", "Friends & Family", "Visited Before"];
+  const ageGroups = ["Below 18", "18-30", "31-50", "51+"];
+  const sentiments = ["positive", "positive", "positive", "neutral", "negative"] as const;
+  const names = ["John Smith", "Sarah Johnson", "Mike Chen", "Emily Davis", "Alex Kim", "Lisa Wang", "David Brown", "Anna Lee", "James Wilson", "Maria Garcia"];
+
+  const existingCount = await prisma.feedback.count();
+  if (existingCount === 0) {
+    const feedbacks = [];
+    for (let i = 0; i < 200; i++) {
+      const daysAgo = Math.floor(Math.random() * 60);
+      const date = new Date();
+      date.setDate(date.getDate() - daysAgo);
+      const branchIdx = Math.floor(Math.random() * BRANCHES.length);
+      const branch = BRANCHES[branchIdx];
+      const rating = weightedRatings[Math.floor(Math.random() * weightedRatings.length)];
+      const sentiment = rating === "EXCELLENT" || rating === "GOOD" ? "positive" : rating === "AVERAGE" ? "neutral" : "negative";
+
+      feedbacks.push({
+        feedbackId: `DEMO-${String(i + 1).padStart(4, "0")}`,
+        branchCode: branch.code,
+        branchName: branch.name,
+        guestName: names[Math.floor(Math.random() * names.length)],
+        guestContact: `guest${i + 1}@email.com`,
+        ageGroup: ageGroups[Math.floor(Math.random() * ageGroups.length)],
+        source: sources[Math.floor(Math.random() * sources.length)],
+        foodRating: weightedRatings[Math.floor(Math.random() * weightedRatings.length)],
+        serviceRating: weightedRatings[Math.floor(Math.random() * weightedRatings.length)],
+        environmentRating: weightedRatings[Math.floor(Math.random() * weightedRatings.length)],
+        eventRating: weightedRatings[Math.floor(Math.random() * weightedRatings.length)],
+        overallRating: rating,
+        comments: i % 3 === 0 ? "Great experience! Will visit again." : i % 5 === 0 ? "Service could be improved." : "Good food and ambiance.",
+        sentimentLabel: sentiment,
+        wouldRecommend: rating !== "POOR" && rating !== "VERY_POOR",
+        createdAt: date,
+      });
+    }
+    await prisma.feedback.createMany({ data: feedbacks });
+    console.log(`✅ ${feedbacks.length} sample feedback entries created`);
+  } else {
+    console.log(`⏭️ ${existingCount} feedback entries already exist, skipping demo data`);
+  }
+
   console.log("✅ Seed complete: 1 admin + 17 branches created");
 }
 

@@ -1,0 +1,38 @@
+"use client";
+
+import { useState } from "react";
+import { Sidebar } from "@/components/dashboard/sidebar";
+import { Topnav } from "@/components/dashboard/topnav";
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-ios-background">
+      <Sidebar
+        collapsed={collapsed}
+        onToggle={() => setCollapsed(!collapsed)}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
+      />
+
+      <Topnav
+        onMenuClick={() => setMobileOpen(true)}
+        collapsed={collapsed}
+      />
+
+      <main
+        className={`pt-4 px-4 sm:px-6 lg:px-8 pb-8 transition-all duration-300 ${
+          collapsed ? "lg:ml-16" : "lg:ml-60"
+        }`}
+      >
+        {children}
+      </main>
+    </div>
+  );
+}

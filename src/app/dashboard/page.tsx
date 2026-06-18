@@ -1,0 +1,138 @@
+import { Suspense } from "react";
+import {
+  MessageSquare,
+  TrendingUp,
+  CalendarDays,
+  CalendarCheck,
+  Star,
+  ThumbsUp,
+  ThumbsDown,
+  SmilePlus,
+  Users,
+  Award,
+} from "lucide-react";
+import { getDashboardStats, getInsights, getAlertsData, getAnalyticsData } from "@/features/dashboard/actions";
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { InsightCard } from "./_components/insight-card";
+import { AlertCard } from "./_components/alert-card";
+import { ChartsSection } from "./_components/charts-section";
+
+function SkeletonCard() {
+  return (
+    <div className="glass-card p-5 rounded-3xl animate-pulse">
+      <div className="w-10 h-10 rounded-xl bg-ios-border-subtle mb-3" />
+      <div className="h-3 w-20 bg-ios-border-subtle rounded mb-2" />
+      <div className="h-8 w-28 bg-ios-border-subtle rounded" />
+    </div>
+  );
+}
+
+async function KpiGrid() {
+  const stats = await getDashboardStats();
+
+  const cards = [
+    { title: "Total Feedback", value: stats.totalFeedback, icon: MessageSquare, subtext: "All time" },
+    { title: "Feedback Today", value: stats.feedbackToday, icon: TrendingUp, trend: stats.feedbackToday > 0 ? "up" : "neutral", change: "Today", subtext: `vs yesterday` },
+    { title: "This Week", value: stats.feedbackThisWeek, icon: CalendarDays, subtext: "Weekly count" },
+    { title: "This Month", value: stats.feedbackThisMonth, icon: CalendarCheck, subtext: "Monthly count" },
+    { title: "Average Rating", value: stats.averageRating.toFixed(1), icon: Star, trend: stats.averageRating >= 4 ? "up" : stats.averageRating >= 3 ? "neutral" : "down", change: `${stats.averageRating.toFixed(1)}/5`, subtext: "Overall" },
+    { title: "Positive Feedback", value: `${stats.positiveFeedback}%`, icon: ThumbsUp, trend: stats.positiveFeedback >= 70 ? "up" : "down", change: `${stats.positiveFeedback}%` },
+    { title: "Negative Feedback", value: `${stats.negativeFeedback}%`, icon: ThumbsDown, trend: stats.negativeFeedback <= 20 ? "up" : "down", change: `${stats.negativeFeedback}%` },
+    { title: "Net Satisfaction", value: stats.netSatisfactionScore, icon: SmilePlus, trend: stats.netSatisfactionScore >= 50 ? "up" : "down", change: `${stats.netSatisfactionScore}` },
+    { title: "Returning Guests", value: `${stats.returningGuestPercentage}%`, icon: Users, subtext: "Estimated" },
+    { title: "Recommendation Rate", value: `${stats.recommendationRate}%`, icon: Award, trend: stats.recommendationRate >= 70 ? "up" : "down", change: `${stats.recommendationRate}%` },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      {cards.map((card) => (
+        <KpiCard key={card.title} {...card} />
+      ))}
+    </div>
+  );
+}
+
+async function InsightsSection() {
+  const insights = await getInsights();
+  const alerts = await getAlertsData();
+
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {insights.map((insight, i) => (
+          <InsightCard key={i} type={insight.type} message={insight.message} />
+        ))}
+        {insights.length === 0 && (
+          <div className="col-span-full text-center py-12">
+            <p className="text-ios-foreground-subtle font-medium text-body">Not enough data for insights yet.</p>
+          </div>
+        )}
+      </div>
+
+      {alerts.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-subtitle font-bold text-ios-foreground mb-4 tracking-tight">Alerts</h2>
+          <div className="space-y-3">
+            {alerts.map((alert, i) => (
+              <AlertCard key={i} severity={alert.severity} title={alert.title} message={alert.message} />
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+async function DashboardCharts() {
+  const analytics = await getAnalyticsData();
+  return <ChartsSection data={analytics} />;
+}
+
+export default function DashboardPage() {
+  return (
+    <div className="space-y-8 pb-8">
+      <div>
+        <h1 className="text-display font-extrabold text-ios-foreground tracking-tight">Executive Overview</h1>
+        <p className="text-subtitle text-ios-foreground-muted mt-1">Real-time feedback performance across all branches</p>
+      </div>
+
+      <Suspense fallback={
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      }>
+        <KpiGrid />
+      </Suspense>
+
+      <div className="mt-8">
+        <h2 className="text-subtitle font-bold text-ios-foreground mb-4 tracking-tight">Intelligence & Insights</h2>
+        <Suspense fallback={
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="glass-card p-5 rounded-3xl animate-pulse">
+                <div className="h-4 w-3/4 bg-ios-border-subtle rounded" />
+              </div>
+            ))}
+          </div>
+        }>
+          <InsightsSection />
+        </Suspense>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-subtitle font-bold text-ios-foreground mb-4 tracking-tight">Performance Analytics</h2>
+        <Suspense fallback={
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+            <div className="glass-card h-[400px] rounded-4xl animate-pulse" />
+            <div className="grid grid-rows-2 gap-6">
+              <div className="glass-card rounded-4xl animate-pulse" />
+              <div className="glass-card rounded-4xl animate-pulse" />
+            </div>
+          </div>
+        }>
+          <DashboardCharts />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
