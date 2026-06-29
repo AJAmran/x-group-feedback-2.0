@@ -1,10 +1,8 @@
 "use server";
 
-import bcrypt from "bcryptjs";
-import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import { createSession, destroySession, getSession } from "@/lib/auth";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -25,80 +23,59 @@ export async function loginAction(_prev: unknown, formData: FormData) {
   const { username, password } = parsed.data;
 
   try {
-    const user = await prisma.user.findUnique({ where: { username } });
-    if (!user) {
-      return { error: "Invalid username or password" };
-    }
-
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) {
-      return { error: "Invalid username or password" };
-    }
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
+    // The backend uses 'email' instead of username, so we map username -> email
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+    const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: username, password }),
     });
 
-    await createSession({
-      userId: user.id,
-      username: user.username,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-    });
-  } catch {
-    return { error: "Authentication failed. Please try again." };
+    const data = await res.json();
+    
+    if (!res.ok) {
+      return { error: data.message || "Invalid username or password" };
+    }
+
+    // Extract cookie from Set-Cookie header sent by Express
+    const setCookie = res.headers.get("set-cookie");
+    if (setCookie) {
+      const match = setCookie.match(/accessToken=([^;]+)/);
+      if (match) {
+        const cookieStore = await cookies();
+        cookieStore.set("accessToken", match[1], {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          path: "/",
+          maxAge: 15 * 60, // 15 mins
+        });
+      }
+    }
+  } catch (err) {
+    return { error: "Authentication failed. Backend unreachable." };
   }
 
   redirect("/dashboard");
 }
 
 export async function logoutAction() {
-  await destroySession();
+  const cookieStore = await cookies();
+  cookieStore.delete("accessToken");
+  
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+    await fetch(`${apiUrl}/api/v1/auth/logout`, { method: 'POST' });
+  } catch {}
+  
   redirect("/login");
 }
 
-export async function changePasswordAction(_prev: unknown, formData: FormData) {
-  const session = await getSession();
-  if (!session) {
-    return { error: "Not authenticated" };
-  }
-
-  const schema = z.object({
-    currentPassword: z.string().min(1),
-    newPassword: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string().min(1),
-  }).refine((d) => d.newPassword === d.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-  const parsed = schema.safeParse({
-    currentPassword: formData.get("currentPassword"),
-    newPassword: formData.get("newPassword"),
-    confirmPassword: formData.get("confirmPassword"),
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message || "Invalid input" };
-  }
-
-  try {
-    const user = await prisma.user.findUnique({ where: { id: session.userId } });
-    if (!user) return { error: "User not found" };
-
-    const valid = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
-    if (!valid) return { error: "Current password is incorrect" };
-
-    const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
-    await prisma.user.update({
-      where: { id: session.userId },
-      data: { passwordHash },
-    });
-
-    return { success: true, message: "Password changed successfully" };
-  } catch {
-    return { error: "Failed to change password" };
-  }
+export async function changePasswordAction(
+  _prev: unknown, 
+  _formData: FormData
+): Promise<{ error?: string; success?: boolean; message?: string }> {
+  // The new Express backend API currently does not expose a change password route.
+  // This is a stub to prevent build errors and notify the user gracefully.
+  return { error: "Password changes are disabled in the new backend system. Please contact an administrator." };
 }

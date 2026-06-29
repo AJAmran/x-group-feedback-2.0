@@ -16,7 +16,7 @@ async function BranchContent() {
 
       {/* Best & Worst Branches */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        <div className="glass-card p-6 rounded-[1.5rem]">
+        <div className="glass-card p-6 rounded-3xl">
           <h3 className="text-label font-bold text-ios-foreground mb-4 uppercase tracking-[0.12em]">Best Branches</h3>
           <div className="space-y-3">
             {best.map((b, i) => (
@@ -42,7 +42,7 @@ async function BranchContent() {
           </div>
         </div>
 
-        <div className="glass-card p-6 rounded-[1.5rem]">
+        <div className="glass-card p-6 rounded-3xl">
           <h3 className="text-label font-bold text-ios-foreground mb-4 uppercase tracking-[0.12em]">Needs Attention</h3>
           <div className="space-y-3">
             {worst.length > 0 ? worst.map((b, i) => (
@@ -87,12 +87,12 @@ export default function BranchesPage() {
 
       <Suspense fallback={
         <div className="space-y-6">
-          <div className="glass-card p-6 rounded-[1.5rem] animate-pulse">
+          <div className="glass-card p-6 rounded-3xl animate-pulse">
             <div className="h-64 bg-ios-border-subtle rounded-xl" />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="glass-card p-6 rounded-[1.5rem] animate-pulse">
+              <div key={i} className="glass-card p-6 rounded-3xl animate-pulse">
                 <div className="h-4 w-24 bg-ios-border-subtle rounded mb-4" />
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, j) => <div key={j} className="h-12 bg-ios-border-subtle rounded-xl" />)}

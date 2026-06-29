@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef } from "react";
 import * as XLSX from "xlsx";
 import { Download, FileDown, Printer } from "lucide-react";
 import { format } from "date-fns";
@@ -8,8 +7,7 @@ import { format } from "date-fns";
 interface ReportBranch {
   branchName: string;
   averageRating: string;
-  positiveComments: string[];
-  negativeComments: string[];
+  comments: string[];
 }
 
 interface ReportViewProps {
@@ -32,8 +30,7 @@ export function ReportView({ data, dateFrom, dateTo }: ReportViewProps) {
     const rows = data.map((b) => ({
       Branch: b.branchName,
       Rating: b.averageRating !== "—" ? `${b.averageRating}/5.0` : "—",
-      Positive: b.positiveComments.map((c, i) => `${i + 1}. ${c}`).join("\n\n"),
-      Negative: b.negativeComments.map((c, i) => `${i + 1}. ${c}`).join("\n\n"),
+      Feedback: b.comments.map((c, i) => `${i + 1}. ${c}`).join("\n\n"),
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
@@ -46,8 +43,7 @@ export function ReportView({ data, dateFrom, dateTo }: ReportViewProps) {
     const rows = data.map((b) => ({
       Branch: b.branchName,
       Rating: b.averageRating !== "—" ? `${b.averageRating}/5.0` : "—",
-      Positive: b.positiveComments.map((c, i) => `${i + 1}. ${c}`).join(" | "),
-      Negative: b.negativeComments.map((c, i) => `${i + 1}. ${c}`).join(" | "),
+      Feedback: b.comments.map((c, i) => `${i + 1}. ${c}`).join(" | "),
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
@@ -65,7 +61,6 @@ export function ReportView({ data, dateFrom, dateTo }: ReportViewProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Action Bar - Hidden when printing */}
       <div className="print:hidden sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex justify-between items-center z-10 shadow-sm">
         <h1 className="font-bold text-gray-800">Report Generator</h1>
         <div className="flex gap-3">
@@ -81,9 +76,7 @@ export function ReportView({ data, dateFrom, dateTo }: ReportViewProps) {
         </div>
       </div>
 
-      {/* Printable Report Content */}
       <div className="p-8 max-w-[1200px] mx-auto print:p-0 print:m-0 w-full bg-white text-black">
-        
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Guest Feedback Report</h1>
           <p className="text-lg text-gray-700 mt-2">{formatRange()}</p>
@@ -94,14 +87,13 @@ export function ReportView({ data, dateFrom, dateTo }: ReportViewProps) {
             <tr>
               <th className="bg-[#4285F4] text-white font-bold p-4 text-left border border-gray-300 w-[20%]">Branch</th>
               <th className="bg-[#4285F4] text-white font-bold p-4 text-center border border-gray-300 w-[10%]">Rating</th>
-              <th className="bg-[#4285F4] text-white font-bold p-4 text-left border border-gray-300 w-[35%]">Positive</th>
-              <th className="bg-[#4285F4] text-white font-bold p-4 text-left border border-gray-300 w-[35%]">Negative</th>
+              <th className="bg-[#4285F4] text-white font-bold p-4 text-left border border-gray-300 w-[70%]">Feedback</th>
             </tr>
           </thead>
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-8 text-center text-gray-500 border border-gray-300">
+                <td colSpan={3} className="p-8 text-center text-gray-500 border border-gray-300">
                   No feedback found for this period.
                 </td>
               </tr>
@@ -115,20 +107,9 @@ export function ReportView({ data, dateFrom, dateTo }: ReportViewProps) {
                     {row.averageRating !== "—" ? `${row.averageRating}/5.0` : "—"}
                   </td>
                   <td className="p-4 border border-gray-300 text-gray-700">
-                    {row.positiveComments.length > 0 ? (
+                    {row.comments.length > 0 ? (
                       <ul className="space-y-4">
-                        {row.positiveComments.map((comment, i) => (
-                          <li key={i} className="leading-relaxed">{i + 1}. {comment}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="p-4 border border-gray-300 text-gray-700">
-                    {row.negativeComments.length > 0 ? (
-                      <ul className="space-y-4">
-                        {row.negativeComments.map((comment, i) => (
+                        {row.comments.map((comment, i) => (
                           <li key={i} className="leading-relaxed">{i + 1}. {comment}</li>
                         ))}
                       </ul>
@@ -141,7 +122,6 @@ export function ReportView({ data, dateFrom, dateTo }: ReportViewProps) {
             )}
           </tbody>
         </table>
-
       </div>
     </div>
   );

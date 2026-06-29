@@ -18,7 +18,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Change Password */}
-      <div className="glass-card p-6 rounded-[1.5rem]">
+      <div className="glass-card p-6 rounded-3xl">
         <h2 className="text-label font-bold text-ios-foreground mb-1 uppercase tracking-[0.12em]">Change Password</h2>
         <p className="text-caption text-ios-foreground-muted mb-6">Update your account password</p>
 
@@ -67,7 +67,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Theme */}
-      <div className="glass-card p-6 rounded-[1.5rem]">
+      <div className="glass-card p-6 rounded-3xl">
         <h2 className="text-label font-bold text-ios-foreground mb-1 uppercase tracking-[0.12em]">Theme</h2>
         <p className="text-caption text-ios-foreground-muted mb-4">Toggle between light and dark mode</p>
         <p className="text-caption text-ios-foreground-faint">Use the toggle button in the top-right corner to switch themes.</p>
