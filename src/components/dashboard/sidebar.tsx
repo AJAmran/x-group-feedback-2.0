@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -8,31 +7,52 @@ import {
   MessageSquare,
   BarChart3,
   Building2,
+  Users,
   FileText,
   Settings,
   ChevronLeft,
   PanelRightClose,
   X,
 } from "lucide-react";
+import type { UserRole } from "@/types";
+import { Button } from "@/components/ui/Button";
 
-const NAV_ITEMS = [
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  /** If omitted, the item is visible to all roles. */
+  roles?: UserRole[];
+}
+
+const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/dashboard/branches", label: "Branches", icon: Building2 },
+  { href: "/dashboard/branches", label: "Branches", icon: Building2, roles: ["SUPER_ADMIN", "ADMIN"] },
+  { href: "/dashboard/users", label: "Users", icon: Users, roles: ["SUPER_ADMIN", "ADMIN"] },
   { href: "/dashboard/reports", label: "Reports", icon: FileText },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings, roles: ["SUPER_ADMIN"] },
 ];
+
+function getNavItems(role: UserRole): NavItem[] {
+  return ALL_NAV_ITEMS.filter((item) => {
+    if (!item.roles) return true;
+    return item.roles.includes(role);
+  });
+}
 
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
+  role: UserRole;
 }
 
-export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose, role }: SidebarProps) {
   const pathname = usePathname();
+  const navItems = getNavItems(role);
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
@@ -61,17 +81,20 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
       </div>
 
       <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+        {navItems.map((item) => {
+          const isActive =
+            pathname === item.href ||
+            (item.href !== "/dashboard" && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
               href={item.href}
               onClick={onMobileClose}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-label font-semibold transition-all duration-200 group
-                ${isActive
-                  ? "bg-ios-primary/10 text-ios-primary shadow-sm"
-                  : "text-ios-foreground-subtle hover:text-ios-foreground hover:bg-ios-border-subtle"
+                ${
+                  isActive
+                    ? "bg-ios-primary/10 text-ios-primary shadow-sm"
+                    : "text-ios-foreground-subtle hover:text-ios-foreground hover:bg-ios-border-subtle"
                 }`}
               title={collapsed ? item.label : undefined}
             >
@@ -124,15 +147,10 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
                   Insights
                 </span>
               </Link>
-              <button
-                onClick={onMobileClose}
-                className="p-1.5 rounded-lg hover:bg-ios-border-subtle text-ios-foreground-subtle"
-              >
-                <X size={18} />
-              </button>
+              <Button variant="icon" size="sm" onClick={onMobileClose} icon={X} />
             </div>
             <nav className="py-4 px-3 space-y-1">
-              {NAV_ITEMS.map((item) => {
+              {navItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link
@@ -140,9 +158,10 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
                     href={item.href}
                     onClick={onMobileClose}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-label font-semibold transition-all duration-200
-                      ${isActive
-                        ? "bg-ios-primary/10 text-ios-primary shadow-sm"
-                        : "text-ios-foreground-subtle hover:text-ios-foreground hover:bg-ios-border-subtle"
+                      ${
+                        isActive
+                          ? "bg-ios-primary/10 text-ios-primary shadow-sm"
+                          : "text-ios-foreground-subtle hover:text-ios-foreground hover:bg-ios-border-subtle"
                       }`}
                   >
                     <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />

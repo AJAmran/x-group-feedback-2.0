@@ -1,11 +1,14 @@
 import { Suspense } from "react";
 import { getReportMetrics } from "@/features/dashboard/actions";
 import { ReportClient } from "./report-client";
-import { MessageSquare, Star, ThumbsUp, CalendarCheck, TrendingUp } from "lucide-react";
+import { MessageSquare, Star, CalendarCheck, TrendingUp } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 
-async function ReportContent() {
-  const data = await getReportMetrics();
+async function ReportContent(props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
+}) {
+  const params = await props.searchParams;
+  const data = await getReportMetrics(params.dateFrom, params.dateTo);
 
   return (
     <div className="space-y-6">
@@ -16,7 +19,7 @@ async function ReportContent() {
         <KpiCard title="This Month" value={data.thisMonth} icon={CalendarCheck} subtext="Monthly count" />
       </div>
 
-      <ReportClient data={data} />
+      <ReportClient data={data} dateFrom={params.dateFrom} dateTo={params.dateTo} />
     </div>
   );
 }
@@ -40,7 +43,9 @@ function SkeletonSection() {
   );
 }
 
-export default function ReportsPage() {
+export default function ReportsPage(props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
+}) {
   return (
     <div className="space-y-6 pb-8">
       <div>
@@ -49,7 +54,7 @@ export default function ReportsPage() {
       </div>
 
       <Suspense fallback={<SkeletonSection />}>
-        <ReportContent />
+        <ReportContent searchParams={props.searchParams} />
       </Suspense>
     </div>
   );

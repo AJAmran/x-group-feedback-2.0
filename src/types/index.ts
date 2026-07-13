@@ -59,3 +59,132 @@ export interface ApiError {
   message: string;
   statusCode?: number;
 }
+
+// ────────────────────────────
+// Backend API response envelope
+// ────────────────────────────
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data?: T;
+  meta?: PaginationMeta;
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  totalRecords: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+// ─── Auth ───────────────────
+
+export type UserRole = "SUPER_ADMIN" | "ADMIN" | "BRANCH_MANAGER";
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  branchId: number | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  user: User;
+}
+
+// ─── User management ────────
+
+export interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  branchId?: number;
+}
+
+export interface UpdateUserRequest {
+  name?: string;
+  email?: string;
+  password?: string;
+  role?: UserRole;
+  branchId?: number;
+}
+
+export interface UserQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: UserRole;
+  isActive?: boolean;
+}
+
+// ─── Reports ────────────────
+
+export interface ReportQueryParams {
+  startDate?: string;
+  endDate?: string;
+  branchId?: number;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface BackendFeedback extends Record<string, unknown> {}
+
+export interface DailyReport {
+  period: "daily";
+  date: string;
+  summary: {
+    total: number;
+    averageRating: number | null;
+    negativeCount: number;
+  };
+  feedbacks: BackendFeedback[];
+}
+
+export interface WeeklyReport {
+  period: "weekly";
+  start: string;
+  end: string;
+  summary: {
+    total: number;
+    averageRating: number | null;
+    negativeCount: number;
+  };
+  feedbacks: BackendFeedback[];
+}
+
+export interface MonthlyReport {
+  period: "monthly";
+  month: string;
+  summary: {
+    total: number;
+    averageRating: number | null;
+    negativeCount: number;
+  };
+  feedbacks: BackendFeedback[];
+}
+
+export interface BranchReport {
+  branch: { id: number; name: string; code: string };
+  summary: { total: number; averageRating: number | null; negativeCount: number };
+  recentFeedbacks: BackendFeedback[];
+}
+
+// ─── Settings ────────────────
+
+export interface SystemSettings {
+  [key: string]: unknown;
+}
+
+

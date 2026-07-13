@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Star, User, Building2, Calendar, Hash, Tag, MessageCircle } from "lucide-react";
 import { getFeedbackDetail } from "@/features/dashboard/actions";
+import { ratingValue } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -22,15 +23,6 @@ const RATING_BAR_BG: Record<string, string> = {
   2: "bg-orange-500",
   1: "bg-red-500",
 };
-
-function ratingValue(label: string | null): number {
-  if (label === "EXCELLENT") return 5;
-  if (label === "GOOD") return 4;
-  if (label === "AVERAGE") return 3;
-  if (label === "POOR") return 2;
-  if (label === "VERY_POOR") return 1;
-  return 0;
-}
 
 function RatingBar({ label, value }: { label: string; value: string | null }) {
   const num = ratingValue(value);
@@ -80,7 +72,7 @@ export default async function FeedbackDetailPage({ params }: Props) {
                 <h1 className="text-title font-extrabold text-ios-foreground tracking-tight truncate">{details.guestName}</h1>
                 <p className="text-label text-ios-foreground-muted mt-0.5">{details.guestContact}</p>
               </div>
-              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-micro font-bold uppercase tracking-wider border shrink-0 ${RATING_BADGE[details.overallRating] || "bg-ios-border-subtle text-ios-foreground-subtle border-ios-border"}`}>
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-micro font-bold uppercase tracking-wider border shrink-0 ${RATING_BADGE[details.overallRating] || "bg-ios-border-subtle text-ios-foreground-subtle border-ios-border-subtle"}`}>
                 <Star size={11} className="fill-current" />
                 {details.overallRating}
               </span>

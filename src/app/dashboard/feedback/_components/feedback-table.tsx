@@ -8,6 +8,8 @@ import {
   MessageSquare,
   Eye,
 } from "lucide-react";
+import { getRatingBadgeStyle, getSentimentColor } from "@/lib/chart-theme";
+import { Button } from "@/components/ui/Button";
 
 interface FeedbackItem {
   id: string;
@@ -28,14 +30,6 @@ interface FeedbackListData {
   pageSize: number;
   totalPages: number;
 }
-
-const RATING_COLORS: Record<string, string> = {
-  EXCELLENT: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-  GOOD: "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/20",
-  AVERAGE: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
-  POOR: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/20",
-  VERY_POOR: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20",
-};
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-ios-primary/10 text-ios-primary",
@@ -113,7 +107,7 @@ export function FeedbackTable({ data }: FeedbackTableProps) {
                   </td>
                   <td className="px-4 py-3.5">
                     {item.overallRating ? (
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-micro font-bold uppercase tracking-wider border ${RATING_COLORS[item.overallRating] || "bg-ios-border-subtle text-ios-foreground-subtle"}`}>
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-micro font-bold uppercase tracking-wider border" style={getRatingBadgeStyle(item.overallRating)}>
                         {item.overallRating}
                       </span>
                     ) : (
@@ -127,10 +121,11 @@ export function FeedbackTable({ data }: FeedbackTableProps) {
                   </td>
                   <td className="px-4 py-3.5">
                     {item.sentimentLabel ? (
-                      <span className={`text-micro font-bold uppercase tracking-wider ${
-                        item.sentimentLabel === "positive" ? "text-emerald-500" :
-                        item.sentimentLabel === "negative" ? "text-red-500" : "text-ios-foreground-subtle"
-                      }`}>
+                      <span className="text-micro font-bold uppercase tracking-wider" style={{
+                        color: item.sentimentLabel === "positive" || item.sentimentLabel === "negative"
+                          ? getSentimentColor(item.sentimentLabel)
+                          : "var(--color-ios-foreground-subtle)"
+                      }}>
                         {item.sentimentLabel}
                       </span>
                     ) : (
@@ -143,12 +138,7 @@ export function FeedbackTable({ data }: FeedbackTableProps) {
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <button 
-                      onClick={() => router.push(`/dashboard/feedback/${item.id}`)}
-                      className="p-2 rounded-lg hover:bg-ios-border-subtle text-ios-foreground-subtle hover:text-ios-primary transition-colors"
-                    >
-                      <Eye size={16} />
-                    </button>
+                    <Button variant="icon" onClick={() => router.push(`/dashboard/feedback/${item.id}`)} aria-label="View feedback" icon={Eye} />
                   </td>
                 </tr>
               ))
@@ -167,6 +157,7 @@ export function FeedbackTable({ data }: FeedbackTableProps) {
               onClick={() => goToPage(data.page - 1)}
               disabled={data.page <= 1}
               className="w-8 h-8 rounded-lg hover:bg-ios-border-subtle disabled:opacity-30 disabled:cursor-not-allowed text-ios-foreground-subtle transition-colors flex items-center justify-center"
+              aria-label="Previous page"
             >
               <ChevronLeft size={15} />
             </button>
@@ -191,6 +182,7 @@ export function FeedbackTable({ data }: FeedbackTableProps) {
               onClick={() => goToPage(data.page + 1)}
               disabled={data.page >= data.totalPages}
               className="w-8 h-8 rounded-lg hover:bg-ios-border-subtle disabled:opacity-30 disabled:cursor-not-allowed text-ios-foreground-subtle transition-colors flex items-center justify-center"
+              aria-label="Next page"
             >
               <ChevronRight size={15} />
             </button>

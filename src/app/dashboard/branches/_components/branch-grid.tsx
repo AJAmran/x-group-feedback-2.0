@@ -1,6 +1,8 @@
 interface BranchData {
+  id: number;
   code: string;
   name: string;
+  isActive: boolean;
   totalFeedback: number;
   averageRating: number;
   positivePercentage: number;

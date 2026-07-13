@@ -33,7 +33,7 @@ export function AlertCard({ severity, title, message }: AlertCardProps) {
       <div className="flex items-start gap-3">
         <Icon size={18} className={`${c.iconBg} shrink-0 mt-0.5`} />
         <div>
-          <p className="text-label font-bold text-ios-foreground mb-0.5">{title}</p>
+          <h3 className="text-label font-bold text-ios-foreground mb-0.5">{title}</h3>
           <p className="text-caption text-ios-foreground-muted">{message}</p>
         </div>
       </div>

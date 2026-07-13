@@ -1,25 +1,22 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Cell, PieChart, Pie, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Cell, PieChart, Pie } from "recharts";
+import {
+  getRatingColor,
+  getSentimentColor,
+  getStableColor,
+  SEQUENTIAL_COLORS,
+  RATING_ORDER,
+} from "@/lib/chart-theme";
 
-const COLORS = {
-  primary: "#6366f1",
-  accent: "#60a5fa",
-  emerald: "#10b981",
-  amber: "#f59e0b",
-  red: "#ef4444",
-  purple: "#8b5cf6",
-  surface: "#1e1b4b",
-};
-
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { color: string; name: string; value: number }[]; label?: string }) => {
   if (active && payload?.length) {
     return (
       <div className="glass-card px-3 py-2 rounded-xl text-caption font-semibold shadow-xl">
         <p className="text-ios-foreground-muted mb-1">{label}</p>
-        {payload.map((p: any, i: number) => (
+        {payload.map((p, i: number) => (
           <p key={i} style={{ color: p.color }} className="text-label">
-            {p.name}: {typeof p.value === "number" ? p.value.toFixed(1) : p.value}
+            {p.name}: {typeof p.value === "number" ? p.value.toFixed(2) : p.value}
           </p>
         ))}
       </div>
@@ -43,14 +40,6 @@ interface AnalyticsProps {
   daily: { date: string; count: number }[];
 }
 
-const RATING_COLORS_CHART: Record<string, string> = {
-  EXCELLENT: "#10b981",
-  GOOD: "#60a5fa",
-  AVERAGE: "#f59e0b",
-  POOR: "#f97316",
-  VERY_POOR: "#ef4444",
-};
-
 export function AnalyticsCharts({
   trend,
   ratingDistribution,
@@ -59,12 +48,23 @@ export function AnalyticsCharts({
   sentiment,
   daily,
 }: AnalyticsProps) {
-  const distData = Object.entries(ratingDistribution).map(([k, v]) => ({ name: k, value: v }));
+  const distData = RATING_ORDER
+    .map((name) => ({ name, value: ratingDistribution[name] || 0 }))
+    .filter((d) => d.value > 0);
+
   const sentimentData = [
-    { name: "Positive", value: sentiment.positive, color: "#10b981" },
-    { name: "Neutral", value: sentiment.neutral, color: "#6366f1" },
-    { name: "Negative", value: sentiment.negative, color: "#ef4444" },
+    { name: "Positive", value: sentiment.positive, key: "positive" },
+    { name: "Neutral", value: sentiment.neutral, key: "neutral" },
+    { name: "Negative", value: sentiment.negative, key: "negative" },
   ];
+
+  const primaryVar = "var(--color-ios-primary)";
+  const accentVar = "var(--color-ios-accent)";
+
+  const sortedBranches = [...branchComparison.branches].sort((a, b) => b.average - a.average).slice(0, 17);
+  const maxDelta = sortedBranches.length > 0
+    ? Math.max(...sortedBranches.map((b) => Math.abs(b.average - branchComparison.companyAvg)), 0.01)
+    : 1;
 
   return (
     <div className="space-y-6">
@@ -74,11 +74,11 @@ export function AnalyticsCharts({
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={trend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: "var(--foreground-faint)" }} />
-              <YAxis domain={[0, 5]} tick={{ fontSize: 12, fill: "var(--foreground-faint)" }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-ios-border-subtle)" />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: "var(--color-ios-foreground-faint)" }} />
+              <YAxis domain={[0, 5]} tick={{ fontSize: 12, fill: "var(--color-ios-foreground-faint)" }} />
               <Tooltip content={<CustomTooltip />} />
-              <Line type="monotone" dataKey="avgRating" stroke={COLORS.primary} strokeWidth={2.5} dot={{ fill: COLORS.primary }} name="Avg Rating" />
+              <Line type="monotone" dataKey="avgRating" stroke={primaryVar} strokeWidth={2.5} dot={{ fill: primaryVar }} name="Avg Rating" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -90,11 +90,17 @@ export function AnalyticsCharts({
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={daily}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--foreground-faint)" }} />
-              <YAxis tick={{ fontSize: 12, fill: "var(--foreground-faint)" }} />
+              <defs>
+                <linearGradient id="dailyVolumeGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={accentVar} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={accentVar} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-ios-border-subtle)" />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--color-ios-foreground-faint)" }} />
+              <YAxis tick={{ fontSize: 12, fill: "var(--color-ios-foreground-faint)" }} />
               <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="count" stroke={COLORS.accent} fill={COLORS.accent} fillOpacity={0.15} strokeWidth={2} name="Feedback" />
+              <Area type="monotone" dataKey="count" stroke={accentVar} fill="url(#dailyVolumeGrad)" strokeWidth={2} name="Feedback" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -107,13 +113,13 @@ export function AnalyticsCharts({
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={distData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 12, fill: "var(--foreground-faint)" }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "var(--foreground-faint)" }} width={90} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-ios-border-subtle)" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 12, fill: "var(--color-ios-foreground-faint)" }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "var(--color-ios-foreground-faint)" }} width={90} />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="value" radius={[0, 6, 6, 0]}>
                   {distData.map((entry) => (
-                    <Cell key={entry.name} fill={RATING_COLORS_CHART[entry.name] || COLORS.primary} />
+                    <Cell key={entry.name} fill={getRatingColor(entry.name)} />
                   ))}
                 </Bar>
               </BarChart>
@@ -127,13 +133,13 @@ export function AnalyticsCharts({
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categories}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--foreground-faint)" }} />
-                <YAxis domain={[0, 5]} tick={{ fontSize: 12, fill: "var(--foreground-faint)" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-ios-border-subtle)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--color-ios-foreground-faint)" }} />
+                <YAxis domain={[0, 5]} tick={{ fontSize: 12, fill: "var(--color-ios-foreground-faint)" }} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="average" radius={[6, 6, 0, 0]} fill={COLORS.primary}>
-                  {categories.map((_, i) => (
-                    <Cell key={i} fill={[COLORS.primary, COLORS.accent, COLORS.emerald, COLORS.amber][i % 4]} />
+                <Bar dataKey="average" radius={[6, 6, 0, 0]}>
+                  {categories.map((entry) => (
+                    <Cell key={entry.name} fill={getStableColor(entry.name)} />
                   ))}
                 </Bar>
               </BarChart>
@@ -151,7 +157,7 @@ export function AnalyticsCharts({
               <PieChart>
                 <Pie data={sentimentData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={3}>
                   {sentimentData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
+                    <Cell key={i} fill={getSentimentColor(entry.key)} />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
@@ -161,7 +167,7 @@ export function AnalyticsCharts({
           <div className="space-y-3">
             {sentimentData.map((s) => (
               <div key={s.name} className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getSentimentColor(s.key) }} />
                 <span className="text-label font-semibold text-ios-foreground-muted">{s.name}</span>
                 <span className="text-label font-bold text-ios-foreground">{s.value}</span>
                 <span className="text-caption text-ios-foreground-faint">
@@ -179,15 +185,18 @@ export function AnalyticsCharts({
         <p className="text-caption text-ios-foreground-subtle mb-4 font-medium">Company Average: {branchComparison.companyAvg.toFixed(1)}/5</p>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={branchComparison.branches.sort((a, b) => b.average - a.average).slice(0, 17)}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-              <XAxis dataKey="code" tick={{ fontSize: 10, fill: "var(--foreground-faint)" }} />
-              <YAxis domain={[0, 5]} tick={{ fontSize: 12, fill: "var(--foreground-faint)" }} />
+            <BarChart data={sortedBranches}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-ios-border-subtle)" />
+              <XAxis dataKey="code" tick={{ fontSize: 10, fill: "var(--color-ios-foreground-faint)" }} />
+              <YAxis domain={[0, 5]} tick={{ fontSize: 12, fill: "var(--color-ios-foreground-faint)" }} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="average" radius={[6, 6, 0, 0]}>
-                {branchComparison.branches.map((_, i) => (
-                  <Cell key={i} fill={branchComparison.branches[i].average >= branchComparison.companyAvg ? COLORS.emerald : COLORS.red} />
-                ))}
+                {sortedBranches.map((b) => {
+                  const delta = (b.average - branchComparison.companyAvg) / maxDelta;
+                  const normalized = Math.round(((delta + 1) / 2) * 4);
+                  const idx = Math.max(0, Math.min(4, normalized));
+                  return <Cell key={b.code} fill={SEQUENTIAL_COLORS[idx]} />;
+                })}
               </Bar>
             </BarChart>
           </ResponsiveContainer>

@@ -12,7 +12,7 @@ interface KpiCardProps {
 
 export function KpiCard({ title, value, icon: Icon, trend, change, subtext }: KpiCardProps) {
   return (
-    <div className="glass-card p-5 rounded-[1.5rem]">
+    <div className="glass-card p-5 rounded-3xl">
       <div className="flex items-start justify-between mb-3">
         <div className="w-10 h-10 rounded-xl bg-ios-primary/10 flex items-center justify-center">
           <Icon size={20} className="text-ios-primary" />

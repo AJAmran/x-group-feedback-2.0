@@ -61,17 +61,17 @@ export function ReportView({ data, dateFrom, dateTo }: ReportViewProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="print:hidden sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex justify-between items-center z-10 shadow-sm">
-        <h1 className="font-bold text-gray-800">Report Generator</h1>
+      <div className="print:hidden sticky top-0 glass-card rounded-none border-b border-ios-border-subtle p-4 flex justify-between items-center z-10 shadow-sm">
+        <h1 className="text-label font-bold text-ios-foreground">Report Generator</h1>
         <div className="flex gap-3">
-          <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition">
-            <FileDown size={16} /> CSV
+          <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-ios-border-subtle text-ios-foreground-subtle text-caption font-bold hover:bg-ios-border-subtle transition-colors">
+            <FileDown size={14} /> CSV
           </button>
-          <button onClick={handleExportExcel} className="flex items-center gap-2 px-4 py-2 bg-[#217346] hover:bg-[#1e6b41] text-white rounded-lg text-sm font-semibold transition">
-            <Download size={16} /> Excel
+          <button onClick={handleExportExcel} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-caption font-bold hover:bg-emerald-500/20 transition-colors">
+            <Download size={14} /> Excel
           </button>
-          <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition">
-            <Printer size={16} /> Print / PDF
+          <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-ios-primary/10 text-ios-primary text-caption font-bold hover:bg-ios-primary/20 transition-colors">
+            <Printer size={14} /> Print / PDF
           </button>
         </div>
       </div>
@@ -85,9 +85,9 @@ export function ReportView({ data, dateFrom, dateTo }: ReportViewProps) {
         <table className="w-full border-collapse border border-gray-300">
           <thead>
             <tr>
-              <th className="bg-[#4285F4] text-white font-bold p-4 text-left border border-gray-300 w-[20%]">Branch</th>
-              <th className="bg-[#4285F4] text-white font-bold p-4 text-center border border-gray-300 w-[10%]">Rating</th>
-              <th className="bg-[#4285F4] text-white font-bold p-4 text-left border border-gray-300 w-[70%]">Feedback</th>
+              <th className="bg-ios-primary text-white font-bold p-4 text-left border border-gray-300 w-[20%]">Branch</th>
+              <th className="bg-ios-primary text-white font-bold p-4 text-center border border-gray-300 w-[10%]">Rating</th>
+              <th className="bg-ios-primary text-white font-bold p-4 text-left border border-gray-300 w-[70%]">Feedback</th>
             </tr>
           </thead>
           <tbody>

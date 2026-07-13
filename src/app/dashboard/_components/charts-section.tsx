@@ -14,6 +14,12 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import {
+  getSentimentColor,
+  getRatingColor,
+  areaGradientId,
+  RATING_ORDER,
+} from "@/lib/chart-theme";
 
 type AnalyticsData = {
   trend: { month: string; avgRating: number; count: number }[];
@@ -22,33 +28,21 @@ type AnalyticsData = {
   sentiment: { positive: number; neutral: number; negative: number; total: number };
 };
 
-const COLORS = {
-  positive: "var(--color-ios-success)",
-  neutral: "var(--color-ios-warning)",
-  negative: "var(--color-ios-error)",
-};
-
 export function ChartsSection({ data }: { data: AnalyticsData }) {
-  // Format sentiment data
   const sentimentData = [
-    { name: "Positive", value: data.sentiment.positive, color: COLORS.positive },
-    { name: "Neutral", value: data.sentiment.neutral, color: COLORS.neutral },
-    { name: "Negative", value: data.sentiment.negative, color: COLORS.negative },
+    { name: "Positive", value: data.sentiment.positive, key: "positive" },
+    { name: "Neutral", value: data.sentiment.neutral, key: "neutral" },
+    { name: "Negative", value: data.sentiment.negative, key: "negative" },
   ].filter((d) => d.value > 0);
 
-  // Format ratings
-  const distributionData = [
-    { name: "Excellent", value: data.ratingDistribution.EXCELLENT || 0 },
-    { name: "Good", value: data.ratingDistribution.GOOD || 0 },
-    { name: "Average", value: data.ratingDistribution.AVERAGE || 0 },
-    { name: "Poor", value: data.ratingDistribution.POOR || 0 },
-    { name: "Very Poor", value: data.ratingDistribution.VERY_POOR || 0 },
-  ];
+  const distributionData = RATING_ORDER
+    .map((name) => ({ name, value: data.ratingDistribution[name] || 0 }))
+    .filter((d) => d.value > 0);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
       {/* Trend Chart */}
-      <div className="glass-card p-6 rounded-4xl">
+      <div className="glass-card p-6 rounded-3xl">
         <div className="mb-6">
           <h3 className="text-subtitle font-bold text-ios-foreground">Feedback Trend</h3>
           <p className="text-caption text-ios-foreground-subtle mt-1">Average rating over the last 6 months</p>
@@ -57,7 +51,7 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data.trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
-                <linearGradient id="colorAvg" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id={areaGradientId("avgRating")} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--color-ios-primary)" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="var(--color-ios-primary)" stopOpacity={0} />
                 </linearGradient>
@@ -76,15 +70,7 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
                 tickLine={false}
                 tick={{ fill: "var(--color-ios-foreground-subtle)", fontSize: 12 }}
               />
-              <Tooltip 
-                contentStyle={{ 
-                  borderRadius: '16px', 
-                  border: 'none', 
-                  boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)',
-                  backgroundColor: 'var(--color-ios-background)',
-                  color: 'var(--color-ios-foreground)'
-                }}
-              />
+              <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)', backgroundColor: 'var(--color-ios-background)', color: 'var(--color-ios-foreground)' }} />
               <Area 
                 type="monotone" 
                 dataKey="avgRating" 
@@ -92,7 +78,7 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
                 stroke="var(--color-ios-primary)" 
                 strokeWidth={3}
                 fillOpacity={1} 
-                fill="url(#colorAvg)" 
+                fill={`url(#${areaGradientId("avgRating")})`} 
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -103,7 +89,7 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
       <div className="grid grid-rows-2 gap-6">
         
         {/* Rating Distribution */}
-        <div className="glass-card p-6 rounded-4xl">
+        <div className="glass-card p-6 rounded-3xl">
           <div className="mb-2">
             <h3 className="text-subtitle font-bold text-ios-foreground">Rating Distribution</h3>
           </div>
@@ -120,14 +106,18 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
                   tick={{ fill: "var(--color-ios-foreground-subtle)", fontSize: 12 }}
                 />
                 <Tooltip cursor={{fill: 'var(--color-ios-border-subtle)', opacity: 0.4}} contentStyle={{ borderRadius: '12px' }} />
-                <Bar dataKey="value" fill="var(--color-ios-primary)" radius={[0, 4, 4, 0]} barSize={12} />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={12}>
+                  {distributionData.map((entry) => (
+                    <Cell key={entry.name} fill={getRatingColor(entry.name)} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Sentiment Analysis */}
-        <div className="glass-card p-6 rounded-4xl flex flex-col sm:flex-row items-center gap-6">
+        <div className="glass-card p-6 rounded-3xl flex flex-col sm:flex-row items-center gap-6">
           <div className="flex-1 w-full text-center sm:text-left">
             <h3 className="text-subtitle font-bold text-ios-foreground mb-1">Sentiment Breakdown</h3>
             <p className="text-caption text-ios-foreground-subtle mb-4">AI-driven analysis based on user rating trends.</p>
@@ -135,7 +125,7 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
               {sentimentData.map(item => (
                 <div key={item.name} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getSentimentColor(item.key) }} />
                     <span className="font-medium text-ios-foreground">{item.name}</span>
                   </div>
                   <span className="font-bold">{item.value}</span>
@@ -157,7 +147,7 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
                   stroke="none"
                 >
                   {sentimentData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={getSentimentColor(entry.key)} />
                   ))}
                 </Pie>
               </PieChart>

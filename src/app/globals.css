@@ -217,8 +217,6 @@
     position: relative;
     display: inline-flex;
     @apply items-center justify-center gap-2 font-bold transition-all duration-300 relative overflow-hidden;
-    min-height: 3.9rem;
-    padding: 0 1.4rem;
     border-radius: 1.5rem;
     background: linear-gradient(135deg, oklch(46% 0.15 274) 0%, oklch(var(--ios-primary)) 52%, oklch(50% 0.12 252) 100%);
     color: oklch(var(--on-primary));

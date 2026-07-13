@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X, FileText, SlidersHorizontal } from "lucide-react";
 import { useState, useCallback } from "react";
+import { Button } from "@/components/ui/Button";
 
 interface Branch {
   code: string;
@@ -58,13 +59,9 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
           )}
         </div>
         {hasFilters && (
-          <button
-            onClick={clearFilters}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-micro font-semibold text-ios-foreground-subtle hover:text-red-500 hover:bg-red-500/10 transition-colors"
-          >
-            <X size={12} />
+          <Button variant="ghost-red" size="sm" icon={X} onClick={clearFilters}>
             Clear all
-          </button>
+          </Button>
         )}
       </div>
       <div className="p-4">
@@ -101,8 +98,6 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
             <option value="EXCELLENT">Excellent</option>
             <option value="GOOD">Good</option>
             <option value="AVERAGE">Average</option>
-            <option value="POOR">Poor</option>
-            <option value="VERY_POOR">Very Poor</option>
           </select>
 
           <select
@@ -133,16 +128,17 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
           </div>
 
           <div className="flex-1" />
-          <button
+          <Button
+            variant="primary"
+            size="sm"
+            icon={FileText}
             onClick={() => {
               const params = new URLSearchParams(searchParams.toString());
               window.open(`/dashboard/feedback/report?${params.toString()}`, "_blank");
             }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-ios-primary text-white text-caption font-bold shadow-md hover:opacity-90 transition-opacity"
           >
-            <FileText size={14} />
             Generate Report
-          </button>
+          </Button>
         </div>
       </div>
     </div>

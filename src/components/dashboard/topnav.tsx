@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Menu, LogOut, User, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { logoutAction } from "@/features/auth/actions";
+import { Button } from "@/components/ui/Button";
 
 const ROUTE_LABELS: Record<string, string> = {
   "/dashboard": "Executive Overview",
@@ -12,14 +13,16 @@ const ROUTE_LABELS: Record<string, string> = {
   "/dashboard/branches": "Branch Performance",
   "/dashboard/reports": "Reports",
   "/dashboard/settings": "Settings",
+  "/dashboard/users": "User Management",
 };
 
 interface TopnavProps {
   onMenuClick: () => void;
   collapsed: boolean;
+  userName: string;
 }
 
-export function Topnav({ onMenuClick, collapsed }: TopnavProps) {
+export function Topnav({ onMenuClick, collapsed, userName }: TopnavProps) {
   const pathname = usePathname();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -43,13 +46,7 @@ export function Topnav({ onMenuClick, collapsed }: TopnavProps) {
       }`}
     >
       <div className="flex items-center gap-4">
-        <button
-          onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-lg hover:bg-ios-border-subtle text-ios-foreground-subtle"
-          aria-label="Toggle sidebar"
-        >
-          <Menu size={20} />
-        </button>
+        <Button variant="icon" onClick={onMenuClick} aria-label="Toggle sidebar" icon={Menu} className="lg:hidden" />
 
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-label">
@@ -74,14 +71,11 @@ export function Topnav({ onMenuClick, collapsed }: TopnavProps) {
 
           {userMenuOpen && (
             <div className="absolute right-0 top-full mt-1 w-56 glass-card rounded-xl p-1.5 shadow-xl z-50">
+              <div className="px-3 py-2 border-b border-ios-border-subtle mb-1">
+                <p className="text-label font-semibold text-ios-foreground truncate">{userName}</p>
+              </div>
               <form action={logoutAction}>
-                <button
-                  type="submit"
-                  className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-label font-semibold text-red-500 hover:bg-red-500/10 transition-colors"
-                >
-                  <LogOut size={16} />
-                  Sign Out
-                </button>
+                <Button variant="ghost-red" type="submit" icon={LogOut} className="w-full justify-start">Sign Out</Button>
               </form>
             </div>
           )}
