@@ -29,7 +29,7 @@ export const SOURCES = [
     { value: "Visited Before", label: "I’ve visited before" },
 ];
 
-import { RatingValue } from "../types";
+import { RatingCategory, RatingValue } from "../types";
 import { Smile, Meh, Star } from "lucide-react";
 
 export const RATING_OPTIONS = [
@@ -49,5 +49,13 @@ export const RATING_OPTIONS = [
         icon: Meh,
     },
 ];
+
+export const CATEGORY_LABELS: Record<RatingCategory, string> = {
+    [RatingCategory.FOOD]: "Food",
+    [RatingCategory.SERVICE]: "Service",
+    [RatingCategory.ENVIRONMENT]: "Environment",
+    [RatingCategory.EVENT]: "Event",
+    [RatingCategory.OVERALL]: "Overall",
+};
 
 

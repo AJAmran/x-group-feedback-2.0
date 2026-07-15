@@ -1,44 +1,39 @@
 import React, { useSyncExternalStore } from "react";
-import Image from "next/image";
-import { Loader2, Send, Lock } from "lucide-react";
+import { Loader2, Send, ShieldCheck } from "lucide-react";
 import { Input } from "./Input";
 import { RatingRow } from "./RatingRow";
 import { SuccessView } from "./SuccessView";
 import { ErrorView } from "./ErrorView";
 import { FormSection } from "./ui/FormSection";
 import { SelectionGrid } from "./ui/SelectionGrid";
+import { ThemeToggle } from "./ThemeToggle";
 import { RatingCategory } from "../types";
 import { useFeedbackForm } from "../hooks/useFeedbackForm";
 import { APP_CONFIG } from "../lib/config";
 import { AGE_GROUPS, SOURCES } from "../lib/constants";
-import logo from "../assets/logo.png";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 // ─────────────────────────────────────────────
-// Section divider — only used because this form
-// is a genuine three-step sequence (who / what / context).
+// Section label — a quiet eyebrow + rule. No numbering:
+// the three sections aren't a workflow the guest steps
+// through, so a sequence marker would claim an order
+// that isn't actually meaningful here.
 // ─────────────────────────────────────────────
-function SectionDivider({
-  number,
+const SectionLabel = React.memo(function SectionLabel({
   label,
 }: {
-  number: string;
   label: string;
 }) {
   return (
     <div className="flex items-center gap-3 py-1">
-      <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-ios-primary/10 ring-1 ring-ios-primary/20 shrink-0">
-        <span className="text-micro font-black text-ios-primary tracking-wide leading-none">
-          {number}
-        </span>
-      </div>
-      <span className="text-caption font-bold uppercase tracking-[0.14em] text-ios-foreground-subtle">
+      <span className="font-display text-caption font-semibold tracking-[0.16em] uppercase text-ios-primary shrink-0">
         {label}
       </span>
       <div className="flex-1 h-px bg-ios-border-subtle" />
     </div>
   );
-}
+});
 
 export function FeedbackForm() {
   const {
@@ -84,93 +79,81 @@ export function FeedbackForm() {
     );
   }
 
+  // const sealInitial = (branchCode || "X").replace(/[^A-Za-z]/g, "").charAt(0).toUpperCase() || "X";
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 pb-10 pt-[calc(var(--safe-top)+1rem)] sm:px-6 relative overflow-hidden">
-      {/* ── Header — compact inline layout ── */}
+    <div className="min-h-screen flex flex-col items-center px-3.5 xs:px-4 sm:px-6 pb-8 sm:pb-10 relative overflow-hidden">
+      {/* ── Letterhead ── */}
       <header
-        className="w-full max-w-[min(640px,100%)] mb-8 flex flex-col items-center gap-5"
+        className="w-full max-w-[min(640px,100%)] mt-4 sm:mt-6"
+        style={{ paddingTop: "var(--safe-top)" }}
         aria-label="Form header"
       >
-        <motion.div
-          initial={{ y: -14, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 220, damping: 22 }}
-          className="flex items-center gap-4"
-        >
-          {/* Logo */}
-          <div className="relative shrink-0">
-            <div className="absolute inset-0 bg-ios-primary/20 blur-2xl rounded-full opacity-60 pointer-events-none" />
-            <Image
-              src={logo}
-              alt="X-Group Logo"
-              width={64}
-              height={64}
-              className="h-16 w-16 object-contain relative drop-shadow-xl active:scale-95 transition-transform"
-              priority
-              fetchPriority="high"
-            />
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="bg-white w-11 h-11 sm:w-12 sm:h-12 text-base sm:text-lg font-semibold shrink-0">
+              {/* {sealInitial} */}
+              <Image
+                src="/logo.png"
+                alt="X Group Logo"
+                width={50}
+                height={50}
+              />
+            </div>
+            <div className="min-w-0">
+              <h1
+                id="form-heading"
+                className="font-display text-display font-semibold tracking-tight text-ios-foreground leading-none"
+              >
+                {APP_CONFIG.FEEDBACK.TITLE_PREFIX}{" "}
+                <span className="text-ios-primary">{APP_CONFIG.FEEDBACK.TITLE_SUFFIX}</span>
+              </h1>
+              <p className="text-caption text-ios-foreground-muted font-medium mt-1 tracking-wide truncate">
+                {APP_CONFIG.FEEDBACK.SUBTITLE}
+              </p>
+            </div>
           </div>
 
-          {/* Title block */}
-          <div className="text-left">
-            <h1
-              id="form-heading"
-              className="text-display font-extrabold tracking-tight text-ios-foreground leading-snug"
-            >
-              {APP_CONFIG.FEEDBACK.TITLE_PREFIX}{" "}
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-ios-primary to-ios-accent">
-                {APP_CONFIG.FEEDBACK.TITLE_SUFFIX}
-              </span>
-            </h1>
-            <p className="text-subtitle text-ios-foreground-muted font-medium mt-0.5 tracking-wide">
-              {APP_CONFIG.FEEDBACK.SUBTITLE}
-            </p>
-          </div>
-        </motion.div>
+          <ThemeToggle className="mt-0.5" />
+        </div>
 
-        {/* Location badge */}
+        {/* Location — a ticket-stub tag, not a live-status pill */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.88 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.14, type: "spring", stiffness: 260, damping: 22 }}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
           role="status"
           aria-label={`Selected location: ${branchName}`}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full liquid-glass text-label font-semibold text-ios-foreground tracking-wide shadow-sm"
+          className="mt-4 flex items-center gap-2.5 py-2.5 px-3.5 rounded-[var(--radius-ios-sm)] border border-dashed border-ios-border bg-surface-100"
         >
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-ios-primary opacity-60" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-ios-primary" />
+          <span className="w-1.5 h-1.5 rotate-45 bg-ios-accent shrink-0" aria-hidden="true" />
+          <span className="text-caption sm:text-label font-mono font-semibold text-ios-foreground truncate">
+            {branchName}
           </span>
-          {branchName}
+          {branchCode && (
+            <span className="ml-auto text-micro font-mono font-bold text-ios-foreground-faint tracking-wider shrink-0">
+              REF {branchCode}
+            </span>
+          )}
         </motion.div>
       </header>
 
       {/* ── Form card ── */}
       <motion.div
-        initial={{ y: 22, opacity: 0 }}
+        initial={{ y: 18, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 80, damping: 20, delay: 0.08 }}
-        className="w-full max-w-[min(640px,100%)] glass-card p-5 sm:p-8 relative mb-8 rounded-4xl overflow-visible"
+        transition={{ type: "spring", stiffness: 90, damping: 22, delay: 0.1 }}
+        className="w-full max-w-[min(640px,100%)] glass-card p-4 xs:p-5 sm:p-8 mt-5 sm:mt-6 mb-8"
       >
-        {/* Ambient glows */}
-        <div className="absolute -top-16 -left-16 w-64 h-64 bg-ios-primary/8 blur-[100px] rounded-full pointer-events-none" />
-        <div className="absolute -bottom-16 -right-16 w-56 h-56 bg-ios-accent/5 blur-[100px] rounded-full pointer-events-none" />
-
-        {/* Required fields note */}
-        <p className="text-caption font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle mb-7 px-0.5">
-          Fields marked{" "}
-          <span className="text-ios-primary font-black">*</span> are required
-        </p>
-
         <form
-          className="space-y-8 relative z-10"
+          className="space-y-6 sm:space-y-8"
           aria-labelledby="form-heading"
           onSubmit={(e) => e.preventDefault()}
         >
-          {/* ── 01 · Guest Information ── */}
-          <div className="space-y-5">
-            <SectionDivider number="01" label="Guest Information" />
-            <div className="space-y-4">
+          {/* ── Guest Information ── */}
+          <div className="space-y-4">
+            <SectionLabel label="Guest Information" />
+            <div className="space-y-3.5">
               <Input
                 label={APP_CONFIG.FORM.LABELS.GUEST_NAME}
                 placeholder={APP_CONFIG.FORM.PLACEHOLDERS.GUEST_NAME}
@@ -179,7 +162,6 @@ export function FeedbackForm() {
                 autoComplete="name"
                 error={!!errors.name}
                 errorMessage={errors.name?.message as string | undefined}
-                helperText="Helps us personalise our response"
                 {...register("name")}
               />
               <Input
@@ -189,17 +171,16 @@ export function FeedbackForm() {
                 autoComplete="email"
                 error={contactShowError}
                 errorMessage={errors.contact?.message as string | undefined}
-                helperText="Email or phone — never shared externally"
                 validationStatus={contactStatus}
                 {...register("contact")}
               />
             </div>
           </div>
 
-          {/* ── 02 · Rate Your Visit ── */}
+          {/* ── Rate Your Visit ── */}
           <div className="space-y-4">
-            <SectionDivider number="02" label="Rate Your Visit" />
-            <div className="liquid-glass rounded-2xl p-1.5 space-y-1">
+            <SectionLabel label="Rate Your Visit" />
+            <div className="rounded-[var(--radius-ios-md)] border border-ios-border-subtle overflow-hidden">
               {Object.values(RatingCategory).map((cat) => (
                 <RatingRow
                   key={cat}
@@ -211,9 +192,9 @@ export function FeedbackForm() {
             </div>
           </div>
 
-          {/* ── 03 · Tell Us More ── */}
-          <div className="space-y-6">
-            <SectionDivider number="03" label="Tell Us More" />
+          {/* ── Tell Us More ── */}
+          <div className="space-y-5">
+            <SectionLabel label="Tell Us More" />
 
             <FormSection title={APP_CONFIG.FORM.LABELS.SOURCE} id="source-label">
               <SelectionGrid
@@ -252,21 +233,16 @@ export function FeedbackForm() {
           </div>
 
           {/* ── Submit ── */}
-          <div className="space-y-4 pt-2">
+          <div className="space-y-3.5 pt-1">
             <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.97 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onSubmitWrapper}
               disabled={view === "submitting"}
-              className="btn-ios w-full h-16 text-body relative overflow-hidden group shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed"
+              className="btn-ios w-full h-13 sm:h-14 text-body relative overflow-hidden group disabled:opacity-60 disabled:cursor-not-allowed"
               aria-label={
-                view === "submitting"
-                  ? "Submitting your feedback…"
-                  : "Submit your feedback"
+                view === "submitting" ? "Submitting your feedback…" : "Submit your feedback"
               }
             >
-              <div className="absolute inset-0 bg-linear-to-tr from-white/10 to-transparent pointer-events-none" />
-
               <AnimatePresence mode="wait">
                 {view === "submitting" ? (
                   <motion.div
@@ -276,8 +252,8 @@ export function FeedbackForm() {
                     exit={{ opacity: 0 }}
                     className="flex items-center gap-3 relative z-10"
                   >
-                    <Loader2 className="animate-spin" size={18} aria-hidden />
-                    <span className="font-bold">{APP_CONFIG.FORM.BUTTONS.SUBMITTING}</span>
+                    <Loader2 className="animate-spin" size={17} aria-hidden />
+                    <span className="font-semibold">{APP_CONFIG.FORM.BUTTONS.SUBMITTING}</span>
                   </motion.div>
                 ) : (
                   <motion.div
@@ -285,36 +261,32 @@ export function FeedbackForm() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="flex items-center justify-center gap-3 w-full relative z-10"
+                    className="flex items-center justify-center gap-2.5 w-full relative z-10"
                   >
-                    <span className="font-extrabold tracking-tight">
+                    <span className="font-semibold tracking-wide">
                       {APP_CONFIG.FORM.BUTTONS.SUBMIT}
                     </span>
                     <Send
-                      size={18}
-                      strokeWidth={2.5}
-                      className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
+                      size={16}
+                      strokeWidth={2.4}
+                      className="transition-transform duration-300 group-hover:translate-x-0.5"
                       aria-hidden
                     />
                   </motion.div>
                 )}
               </AnimatePresence>
-
-              {/* Shine on hover */}
-              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shine pointer-events-none" />
+              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-shine pointer-events-none" />
             </motion.button>
 
-            {/* Privacy assurance — builds trust without being heavy */}
-            <div className="flex items-center justify-center gap-1.5 text-caption font-semibold text-ios-foreground-faint tracking-wide">
-              <Lock size={9} aria-hidden />
+            <div className="flex items-center justify-center gap-1.5 text-caption font-medium text-ios-foreground-faint">
+              <ShieldCheck size={12} className="shrink-0 text-ios-primary/70" aria-hidden />
               <span>Your feedback is encrypted and kept strictly confidential</span>
             </div>
 
-            {/* Reference ID (shown after first attempt if feedbackId exists) */}
             {feedbackId && (
               <div className="text-center">
-                <span className="text-micro font-bold uppercase tracking-[0.2em] text-ios-foreground-subtle bg-ios-border-subtle px-4 py-1.5 rounded-full ring-1 ring-ios-border">
-                  {APP_CONFIG.FEEDBACK.SECURE_BADGE} · Ref: {branchCode}-{feedbackId}
+                <span className="text-micro font-mono font-bold uppercase tracking-[0.16em] text-ios-foreground-subtle bg-ios-border-subtle px-3.5 py-1.5 rounded-[var(--radius-ios-sm)] border border-ios-border-subtle">
+                  {APP_CONFIG.FEEDBACK.SECURE_BADGE} · Ref {branchCode}-{feedbackId}
                 </span>
               </div>
             )}
@@ -322,14 +294,9 @@ export function FeedbackForm() {
         </form>
       </motion.div>
 
-      <footer className="mt-8 mb-6 text-center text-caption font-bold uppercase tracking-[0.15em] text-ios-foreground-faint">
+      <footer className="mb-6 text-center text-micro font-semibold uppercase tracking-[0.14em] text-ios-foreground-faint">
         {APP_CONFIG.COMPANY_NAME} &copy; {new Date().getFullYear()}
       </footer>
-
-      {/* iOS home-indicator mimic */}
-      <div className="flex justify-center w-full pb-3 pointer-events-none">
-        <div className="w-28 h-[4px] bg-ios-border rounded-full" />
-      </div>
     </div>
   );
 }

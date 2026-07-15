@@ -1,16 +1,30 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit } from "next/font/google";
+import { Fraunces, Manrope, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeToggle } from "../components/ThemeToggle";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const fraunces = Fraunces({
   subsets: ["latin"],
+  variable: "--font-display",
   display: "swap",
   preload: true,
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["500", "600", "700"],
 });
 
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+  preload: true,
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+  preload: true,
+  weight: ["500", "600"],
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -35,13 +49,15 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     title: "X-Group Feedback",
-    description: "Share your dining experience with X-Group Chain Restaurant and Hospitality",
+    description:
+      "Share your dining experience with X-Group Chain Restaurant and Hospitality",
     siteName: "X-Group Feedback",
   },
   twitter: {
     card: "summary_large_image",
     title: "X-Group Feedback",
-    description: "Share your dining experience with X-Group Chain Restaurant and Hospitality",
+    description:
+      "Share your dining experience with X-Group Chain Restaurant and Hospitality",
   },
   robots: {
     index: true,
@@ -58,8 +74,18 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preload" href="/logo.png" as="image" type="image/png" fetchPriority="high" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/logo.png"
+          as="image"
+          type="image/png"
+          fetchPriority="high"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -79,16 +105,21 @@ export default function RootLayout({
         />
       </head>
 
-      <body className={`${outfit.variable} font-sans antialiased min-h-screen relative`}>
-
-        <ThemeToggle />
+      <body
+        className={`
+    ${manrope.variable}
+    ${fraunces.variable}
+    ${plexMono.variable}
+    font-sans
+    antialiased
+    min-h-screen
+    relative
+  `}
+      >
         {/* iOS 26 Mesh Background */}
         <div className="mesh-bg" aria-hidden="true" />
 
-
-        <main className="relative z-10">
-          {children}
-        </main>
+        <main className="relative z-10">{children}</main>
       </body>
     </html>
   );
