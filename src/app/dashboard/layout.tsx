@@ -15,7 +15,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <DashboardLayoutClient role={user.role} userName={user.name}>
+    <DashboardLayoutClient role={user.role} userName={user.name} branchId={user.branchId}>
       {children}
     </DashboardLayoutClient>
   );

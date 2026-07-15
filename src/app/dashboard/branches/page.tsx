@@ -1,9 +1,13 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { getCurrentUserAction } from "@/features/auth/actions";
 import { getBranchPerformance } from "@/features/dashboard/actions";
 import { BranchGridView } from "./_components/branch-grid";
 import { BranchLeaderboard } from "./_components/branch-leaderboard";
 
 async function BranchContent() {
+  const user = await getCurrentUserAction();
+  if (user?.role === "BRANCH_MANAGER") redirect("/dashboard");
   const branches = await getBranchPerformance();
   const sorted = [...branches].sort((a, b) => b.healthScore - a.healthScore);
   const best = sorted.slice(0, 3);

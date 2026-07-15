@@ -55,7 +55,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
       type="button"
       className={`
         relative flex items-center w-[72px] h-[34px] shrink-0
-        liquid-glass !rounded-full px-1 cursor-pointer
+        liquid-glass rounded-full! px-1 cursor-pointer
         transition-colors duration-300
         ${className}
       `}

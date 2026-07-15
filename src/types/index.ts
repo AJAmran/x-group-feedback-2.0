@@ -10,6 +10,7 @@ export enum RatingValue {
   EXCELLENT = "EXCELLENT",
   GOOD = "GOOD",
   AVERAGE = "AVERAGE",
+  POOR = "POOR",
 }
 
 export enum AgeGroup {
@@ -179,6 +180,18 @@ export interface BranchReport {
   branch: { id: number; name: string; code: string };
   summary: { total: number; averageRating: number | null; negativeCount: number };
   recentFeedbacks: BackendFeedback[];
+}
+
+// ─── Branch ──────────────────
+
+export interface ActiveBranch {
+  id: number;
+  name: string;
+  code: string;
+  address: string;
+  phone: string | null;
+  latitude: number;
+  longitude: number;
 }
 
 // ─── Settings ────────────────

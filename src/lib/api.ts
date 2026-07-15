@@ -4,6 +4,7 @@ import type {
   FeedbackSubmissionRequest,
   FeedbackSubmissionResponse,
   ApiError,
+  ActiveBranch,
 } from "../types";
 
 /**
@@ -14,6 +15,7 @@ const RATING_VALUE_MAP: Record<string, number> = {
   EXCELLENT: 5,
   GOOD: 4,
   AVERAGE: 3,
+  POOR: 2,
 };
 
 /** Converts a RatingValue string to an integer, returning undefined for null/missing ratings. */
@@ -60,6 +62,18 @@ function createApiError(
 
 function getApiBase(): string {
   return process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
+}
+
+export async function fetchActiveBranches(): Promise<ActiveBranch[]> {
+  const apiBase = getApiBase();
+  try {
+    const res = await fetch(`${apiBase}/api/v1/branches/active`);
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data || [];
+  } catch {
+    return [];
+  }
 }
 
 export async function submitFeedback(

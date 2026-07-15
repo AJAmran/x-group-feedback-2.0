@@ -1,5 +1,5 @@
 interface BranchData {
-  id: number;
+  id: string;
   code: string;
   name: string;
   isActive: boolean;

@@ -1,11 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useDashboardUser } from "../dashboard-context";
 import { CheckCircle, AlertCircle, Save, Plus, Trash2 } from "lucide-react";
 import { getSettingsAction, updateSettingsAction } from "@/features/settings/actions";
 import { Button } from "@/components/ui/Button";
 
 export default function SettingsPage() {
+  const { role } = useDashboardUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (role !== "SUPER_ADMIN") router.replace("/dashboard");
+  }, [role, router]);
+
   const [entries, setEntries] = useState<{ key: string; value: string }[]>([]);
   const [original, setOriginal] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);

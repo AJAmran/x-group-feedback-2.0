@@ -3,21 +3,25 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topnav } from "@/components/dashboard/topnav";
+import { DashboardProvider } from "./dashboard-context";
 import type { UserRole } from "@/types";
 
 export function DashboardLayoutClient({
   children,
   role,
   userName,
+  branchId,
 }: {
   children: React.ReactNode;
   role: UserRole;
   userName: string;
+  branchId: number | null;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
+    <DashboardProvider value={{ role, userName, branchId }}>
     <div className="min-h-screen bg-ios-background">
       <Sidebar
         collapsed={collapsed}
@@ -41,5 +45,6 @@ export function DashboardLayoutClient({
         {children}
       </main>
     </div>
+    </DashboardProvider>
   );
 }

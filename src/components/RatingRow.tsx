@@ -16,6 +16,7 @@ const VALUE_TEXT: Record<RatingValue, string> = {
   [RatingValue.EXCELLENT]: "text-ios-primary",
   [RatingValue.GOOD]: "text-emerald-700 dark:text-emerald-400",
   [RatingValue.AVERAGE]: "text-ios-accent",
+  [RatingValue.POOR]: "text-red-600 dark:text-red-400",
 };
 
 export const RatingRow: React.FC<RatingRowProps> = React.memo(
@@ -55,7 +56,7 @@ export const RatingRow: React.FC<RatingRowProps> = React.memo(
         </div>
 
         {/* Segmented scorecard — one continuous bordered strip, not three separate cards */}
-        <div className="relative grid grid-cols-3 rounded-[var(--radius-ios-sm)] border border-ios-border-subtle bg-surface-100 overflow-hidden">
+        <div className="relative grid grid-cols-4 rounded-[var(--radius-ios-sm)] border border-ios-border-subtle bg-surface-100 overflow-hidden">
           {RATING_OPTIONS.map((opt, i) => {
             const Icon = opt.icon;
             const isSelected = value === opt.val;
@@ -98,7 +99,9 @@ export const RatingRow: React.FC<RatingRowProps> = React.memo(
                           ? "oklch(var(--ios-primary))"
                           : opt.val === RatingValue.GOOD
                             ? "oklch(55% 0.12 155)"
-                            : "oklch(var(--ios-accent))",
+                            : opt.val === RatingValue.AVERAGE
+                              ? "oklch(var(--ios-accent))"
+                              : "oklch(55% 0.18 30)",
                     }}
                     transition={{ type: "spring", stiffness: 500, damping: 34 }}
                   />

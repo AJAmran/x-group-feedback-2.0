@@ -64,7 +64,7 @@ This document serves as the single source of truth for the X-Group Feedback Syst
   - `GET /api/v1/feedbacks/:id` - Feedback details
 - **Authentication Flow**: 
   - Admin logs in via `/api/auth/login` (frontend route or backend endpoint depending on setup), which sets an `accessToken` httpOnly cookie.
-  - `src/middleware.ts` protects `/dashboard/*` by checking for the `accessToken`.
+  - `src/proxy.ts` (Next.js 16's route interception file) protects `/dashboard/*` by checking for the `accessToken`.
   - Server actions attach `Cookie: accessToken=${token}` to backend requests.
 - **Error Handling**: `src/lib/api.ts` handles fetch timeouts, parses API errors, and standardizes them into `ApiError` objects for the frontend to consume. Forms implement exponential backoff retry logic.
 

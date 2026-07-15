@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useDashboardUser } from "../../dashboard-context";
 import {
   ChevronLeft,
   ChevronRight,
@@ -332,7 +333,9 @@ export function UserTable({ data }: { data: UsersListData }) {
               {data.total} total
             </span>
           </div>
-          <Button variant="ghost" size="sm" icon={Plus} onClick={() => setShowCreate(true)}>New User</Button>
+          {useDashboardUser().role !== "BRANCH_MANAGER" && (
+            <Button variant="ghost" size="sm" icon={Plus} onClick={() => setShowCreate(true)}>New User</Button>
+          )}
         </div>
 
         <div className="overflow-x-auto">

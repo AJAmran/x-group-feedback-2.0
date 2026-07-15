@@ -98,6 +98,7 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
             <option value="EXCELLENT">Excellent</option>
             <option value="GOOD">Good</option>
             <option value="AVERAGE">Average</option>
+            <option value="POOR">Poor</option>
           </select>
 
           <select

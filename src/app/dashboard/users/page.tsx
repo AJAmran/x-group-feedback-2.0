@@ -1,9 +1,13 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { getCurrentUserAction } from "@/features/auth/actions";
 import { getUsers } from "@/features/users/actions";
 import { UserTable } from "./_components/user-table";
 import type { UserRole } from "@/types";
 
 async function UsersContent(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
+  const user = await getCurrentUserAction();
+  if (user?.role === "BRANCH_MANAGER") redirect("/dashboard");
   const params = await props.searchParams;
   const data = await getUsers({
     page: Number(params.page) || 1,

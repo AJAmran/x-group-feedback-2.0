@@ -17,6 +17,11 @@ export async function updateSettingsAction(
   settings: Record<string, string>,
 ): Promise<{ success: boolean; data?: Record<string, string>; error?: string }> {
   try {
+    const { getCurrentUserAction } = await import("@/features/auth/actions");
+    const user = await getCurrentUserAction();
+    if (user?.role === "BRANCH_MANAGER") {
+      return { success: false, error: "Branch managers cannot update settings" };
+    }
     const res = await authenticatedFetch("/api/v1/settings", {
       method: "PUT",
       body: JSON.stringify(settings),

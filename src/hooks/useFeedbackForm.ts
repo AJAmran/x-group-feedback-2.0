@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
 import { useForm, SubmitHandler, useWatch, Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -12,16 +11,13 @@ import {
     Source
 } from "../types";
 import { submitFeedbackWithRetry } from "../lib/api";
-import { BRANCH_MAP } from "../lib/constants";
 import { APP_CONFIG } from "../lib/config";
 
 // --- Validation Schema ---
 const feedbackSchema = z.object({
     name: z.string().min(1, "Name is required"),
     contact: z.string().trim().min(1, "Contact is required").refine((val) => {
-        // Loose email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        // Loose phone validation (at least 7 digits/symbols)
         const phoneRegex = /^[\d\s+\-()]{7,}$/;
         return emailRegex.test(val) || phoneRegex.test(val);
     }, {
@@ -51,26 +47,18 @@ const createFeedbackId = (branchCode: string) => {
     return `${branchPrefix}${month}${day}${random}`;
 };
 
-/**
- * Custom hook to manage Feedback Form state and logic.
- * Uses react-hook-form + zod for validation.
- */
-export function useFeedbackForm() {
+interface UseFeedbackFormOptions {
+    branchCode: string;
+    branchName: string;
+}
+
+export function useFeedbackForm({ branchCode, branchName }: UseFeedbackFormOptions) {
     const [view, setView] = useState<"form" | "submitting" | "success" | "error">("form");
     const [apiError, setApiError] = useState<string>("");
-
-    // Tracks if validation errors should be explicitly shown (e.g. after failed submit attempt)
     const [showValidation, setShowValidation] = useState(false);
 
-    const searchParams = useSearchParams();
-    const branchParam = searchParams.get("branch");
-    const branchCode = branchParam ? branchParam.toUpperCase() : APP_CONFIG.DEFAULT_BRANCH_CODE;
-    const branchName = BRANCH_MAP[branchCode] || APP_CONFIG.DEFAULT_BRANCH_NAME;
-
-    // Generate unique feedback ID based on branch and timestamp
     const [feedbackId, setFeedbackId] = useState<string>("");
 
-    // Initialize React Hook Form
     const {
         register,
         handleSubmit,
@@ -113,8 +101,6 @@ export function useFeedbackForm() {
 
     const contactShowError = Boolean(contactError) && (contactHasInput || showValidation);
 
-
-    // Watch values for UI updates (progress, custom select/chips)
     const ratings = useWatch({ control, name: "ratings" });
     const sourceValue = useWatch({ control, name: "source" });
     const ageGroupValue = useWatch({ control, name: "ageGroup" });
@@ -128,14 +114,11 @@ export function useFeedbackForm() {
         [setValue]
     );
 
-    // Generic handler for custom inputs (Age, Source)
     const setFieldValue = useCallback(<K extends keyof FeedbackFormValues>(field: K, value: FeedbackFormValues[K]) => {
         setValue(field as Path<FeedbackFormValues>, value, { 
             shouldValidate: true, shouldDirty: true, shouldTouch: true 
         });
     }, [setValue]);
-
-
 
     const onSubmit: SubmitHandler<FeedbackFormValues> = async (data) => {
         const submissionFeedbackId = feedbackId || createFeedbackId(branchCode);
@@ -167,7 +150,9 @@ export function useFeedbackForm() {
             const response = await submitFeedbackWithRetry(submittedData, 3);
             if (response.success) {
                 setView("success");
-                window.scrollTo({ top: 0, behavior: APP_CONFIG.ANIMATION.SCROLL_BEHAVIOR });
+                if (typeof window !== "undefined" && "scrollTo" in window) {
+                  window.scrollTo({ top: 0, behavior: APP_CONFIG.ANIMATION.SCROLL_BEHAVIOR });
+                }
             }
         } catch (err) {
             console.error("Submission error:", err);
@@ -177,7 +162,6 @@ export function useFeedbackForm() {
         }
     };
 
-    // Wrapper for form submit to handle validation visibility on error
     const onSubmitWrapper = async () => {
         const isFormValid = await trigger();
         if (!isFormValid) {
@@ -202,9 +186,9 @@ export function useFeedbackForm() {
         branchCode,
         branchName,
         ratings,
-        sourceValue, // Exported for UI
-        ageGroupValue, // Exported for UI
-        setFieldValue, // Exported for custom inputs
+        sourceValue,
+        ageGroupValue,
+        setFieldValue,
         handleRatingChange,
         resetForm,
         register,

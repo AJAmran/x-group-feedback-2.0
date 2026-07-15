@@ -7,7 +7,7 @@ import { updateBranchAction } from "@/features/dashboard/actions";
 import { Button } from "@/components/ui/Button";
 
 interface BranchData {
-  id: number;
+  id: string;
   code: string;
   name: string;
   isActive: boolean;

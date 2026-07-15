@@ -158,7 +158,7 @@ x-group-feedback-2.0/
 │   │   ├── layout.tsx              # Root layout (fonts, theme, mesh background)
 │   │   ├── page.tsx                # Public feedback form
 │   │   ├── globals.css             # Global styles (glassmorphism, squircle)
-│   │   └── middleware.ts           # JWT auth middleware (protects /dashboard/*)
+│   │   └── proxy.ts                # Next.js 16 route interception (protects /dashboard/*)
 │   ├── components/
 │   │   ├── FeedbackForm.tsx        # 3-step feedback form
 │   │   ├── Input.tsx               # Glassmorphism input/textarea component
@@ -363,7 +363,7 @@ The system uses **JWT-based authentication** with httpOnly cookies.
 | **Cookie name** | `xgroup_session` |
 | **Session duration** | 24 hours |
 | **Security** | httpOnly, secure (in production), sameSite: lax |
-| **Middleware** | `src/middleware.ts` — protects `/dashboard/*`, bypasses `/login`, `/api/auth/login`, `/api/feedback`, `/` |
+| **Route Interception** | `src/proxy.ts` — Next.js 16 route interceptor, protects `/dashboard/*`, bypasses `/login`, `/api/auth/login`, `/api/feedback`, `/` |
 
 ### Auth Flow
 1. Admin submits credentials at `/login`

@@ -40,6 +40,13 @@ export async function getUsers(params?: {
   }
 }
 
+async function assertNotManager(): Promise<string | null> {
+  const { getCurrentUserAction } = await import("@/features/auth/actions");
+  const user = await getCurrentUserAction();
+  if (user?.role === "BRANCH_MANAGER") return "Branch managers cannot perform this action";
+  return null;
+}
+
 export async function createUserAction(data: {
   name: string;
   email: string;
@@ -48,6 +55,8 @@ export async function createUserAction(data: {
   branchId?: number;
 }): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
+    const denied = await assertNotManager();
+    if (denied) return { success: false, error: denied };
     const res = await authenticatedFetch("/api/v1/users", {
       method: "POST",
       body: JSON.stringify(data),
@@ -57,17 +66,6 @@ export async function createUserAction(data: {
     return { success: true, user: json.data };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Failed to create user" };
-  }
-}
-
-async function getUserRole(userId: number): Promise<UserRole | null> {
-  try {
-    const res = await authenticatedFetch(`/api/v1/users/${userId}`);
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data?.role ?? null;
-  } catch {
-    return null;
   }
 }
 
@@ -83,10 +81,8 @@ export async function updateUserAction(
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const role = await getUserRole(id);
-    if (role === "SUPER_ADMIN") {
-      return { success: false, error: "Super Admin accounts cannot be modified" };
-    }
+    const denied = await assertNotManager();
+    if (denied) return { success: false, error: denied };
     const res = await authenticatedFetch(`/api/v1/users/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
@@ -106,10 +102,8 @@ export async function toggleUserActiveAction(
   isActive: boolean,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const role = await getUserRole(userId);
-    if (role === "SUPER_ADMIN") {
-      return { success: false, error: "Super Admin accounts cannot be modified" };
-    }
+    const denied = await assertNotManager();
+    if (denied) return { success: false, error: denied };
     const res = await authenticatedFetch(`/api/v1/users/${userId}/status`, {
       method: "PATCH",
       body: JSON.stringify({ isActive }),
@@ -129,10 +123,8 @@ export async function deleteUserAction(userId: number): Promise<{
   error?: string;
 }> {
   try {
-    const role = await getUserRole(userId);
-    if (role === "SUPER_ADMIN") {
-      return { success: false, error: "Super Admin accounts cannot be deleted" };
-    }
+    const denied = await assertNotManager();
+    if (denied) return { success: false, error: denied };
     const res = await authenticatedFetch(`/api/v1/users/${userId}`, {
       method: "DELETE",
     });
