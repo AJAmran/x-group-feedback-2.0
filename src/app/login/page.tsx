@@ -25,16 +25,16 @@ export default function LoginPage() {
         <form action={formAction} className="space-y-5">
           <div className="space-y-1.5">
             <label htmlFor="username" className="text-label font-semibold tracking-wide text-ios-foreground-muted">
-              Username
+              Email
             </label>
             <input
               id="username"
               name="username"
-              type="text"
-              autoComplete="username"
+              type="email"
+              autoComplete="email"
               required
               className="squircle-input w-full"
-              placeholder="Enter your username"
+              placeholder="Enter your email"
             />
           </div>
 
