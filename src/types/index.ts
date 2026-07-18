@@ -31,6 +31,7 @@ export interface FeedbackSubmissionRequest {
   feedbackId: string;
   branchCode: string;
   branchName: string;
+  branchId?: number;
   submittedAt: string;
   guest: {
     name: string;

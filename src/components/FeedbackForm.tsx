@@ -58,9 +58,13 @@ export function FeedbackForm({ initialBranches }: FeedbackFormProps) {
     branchList,
   } = useBranchSelection({ initialBranches });
 
+  const matchedBranch = initialBranches.find((b) => b.code === resolvedCode);
+  const branchId = matchedBranch?.id;
+
   const {
     view,
     error,
+    silentError,
     feedbackId,
     branchCode,
     branchName,
@@ -78,6 +82,7 @@ export function FeedbackForm({ initialBranches }: FeedbackFormProps) {
   } = useFeedbackForm({
     branchCode: resolvedCode,
     branchName: resolvedName,
+    branchId: branchId,
   });
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -102,6 +107,8 @@ export function FeedbackForm({ initialBranches }: FeedbackFormProps) {
         branchName={branchName}
         feedbackId={feedbackId}
         onClose={resetForm}
+        silentError={silentError}
+        onRetry={onSubmitWrapper}
       />
     );
   }

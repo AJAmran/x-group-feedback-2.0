@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, AlertCircle, RefreshCcw } from "lucide-react";
 import { APP_CONFIG } from "../lib/config";
 import { motion, type Variants } from "framer-motion";
 
@@ -7,6 +7,9 @@ interface SuccessViewProps {
   branchName: string;
   feedbackId: string;
   onClose: () => void;
+  /** Set if the optimistic background POST failed — lets user retry. */
+  silentError?: string;
+  onRetry?: () => void;
 }
 
 // ─────────────────────────────────────────────
@@ -84,7 +87,7 @@ const item: Variants = {
 };
 
 export const SuccessView: React.FC<SuccessViewProps> = React.memo(
-  ({ branchName, feedbackId, onClose }) => {
+  ({ branchName, feedbackId, onClose, silentError, onRetry }) => {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
         <motion.div
@@ -181,6 +184,36 @@ export const SuccessView: React.FC<SuccessViewProps> = React.memo(
               >
                 {APP_CONFIG.FORM.BUTTONS.CLOSE}
               </motion.button>
+
+              {/* Silent-error retry notice */}
+              {silentError && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 flex items-start gap-2.5 rounded-2xl border border-ios-lacquer/25 bg-ios-lacquer/8 px-4 py-3 text-left"
+                  role="alert"
+                >
+                  <AlertCircle size={15} className="mt-0.5 shrink-0 text-ios-lacquer" aria-hidden />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-caption font-semibold text-ios-lacquer leading-snug">
+                      Submission may not have been saved.
+                    </p>
+                    <p className="text-micro text-ios-foreground-muted mt-0.5 leading-snug">
+                      {silentError}
+                    </p>
+                  </div>
+                  {onRetry && (
+                    <button
+                      type="button"
+                      onClick={onRetry}
+                      className="shrink-0 flex items-center gap-1 text-micro font-bold text-ios-primary hover:underline"
+                      aria-label="Retry submission"
+                    >
+                      <RefreshCcw size={11} aria-hidden /> Retry
+                    </button>
+                  )}
+                </motion.div>
+              )}
             </motion.div>
           </motion.div>
         </motion.div>

@@ -60,10 +60,13 @@ function createApiError(
   return err;
 }
 
-function getApiBase(): string {
-  const url = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
-  return url.replace(/\/$/, "");
-}
+// Cache once — avoids re-reading env and doing string work on every retry.
+const API_BASE: string = (
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"
+).replace(/\/$/, "");
+
+/** @deprecated Use API_BASE directly */
+function getApiBase(): string { return API_BASE; }
 
 export async function fetchActiveBranches(): Promise<ActiveBranch[]> {
   const apiBase = getApiBase();
@@ -78,31 +81,38 @@ export async function fetchActiveBranches(): Promise<ActiveBranch[]> {
 }
 
 export async function submitFeedback(
-  data: any
+  data: any,
+  signal?: AbortSignal
 ): Promise<any> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+  const ownController = !signal ? new AbortController() : null;
+  const effectiveSignal = signal ?? ownController!.signal;
+  const timeoutId = ownController
+    ? setTimeout(() => ownController.abort(), 10000) // 10 s
+    : null;
 
   try {
-    const apiBase = getApiBase();
+    const apiBase = API_BASE;
 
-    // --- Branch lookup (uses public endpoint — no auth needed) ---
-    let branchList: any[] = [];
-    try {
-      const branchesRes = await fetch(`${apiBase}/api/v1/branches/active`);
-      if (branchesRes.ok) {
-        const branchesData = await branchesRes.json();
-        branchList = branchesData.data || [];
+    // ── Branch resolution ─────────────────────────────────────────────────────
+    // Fast path: branchId is pre-resolved server-side and passed as a prop.
+    // This eliminates the redundant GET /branches/active on every submission.
+    let branchId: number | undefined = data.branchId;
+
+    if (!branchId) {
+      // Fallback: branchId was not provided — resolve by name (legacy path).
+      try {
+        const branchesRes = await fetch(`${apiBase}/api/v1/branches/active`);
+        if (branchesRes.ok) {
+          const branchesData = await branchesRes.json();
+          const branchList: any[] = branchesData.data || [];
+          const frontendBranchName = data.branchName || "";
+          const matched = branchList.find((b: any) => b.name === frontendBranchName);
+          branchId = matched?.id ?? (branchList.length > 0 ? branchList[0].id : undefined);
+        }
+      } catch {
+        console.warn("[api] Branch fallback lookup failed.");
       }
-    } catch {
-      console.warn("[api] Branch lookup failed — submitting without matched branchId");
     }
-
-    // Match by branch name from the form
-    const frontendBranchName = data.branchName || "";
-    const matched = branchList.find((b: any) => b.name === frontendBranchName);
-    const branchId =
-      matched?.id ?? (branchList.length > 0 ? branchList[0].id : undefined);
 
     if (!branchId) {
       throw createApiError(
@@ -131,14 +141,14 @@ export async function submitFeedback(
 
     const response = await fetch(`${apiBase}/api/v1/feedbacks`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      signal: controller.signal,
+      signal: effectiveSignal,
+      // keepalive: request survives page navigation / tab close.
+      keepalive: true,
     });
 
-    clearTimeout(timeoutId);
+    if (timeoutId) clearTimeout(timeoutId);
 
     let result: any = {};
     try {
@@ -161,11 +171,9 @@ export async function submitFeedback(
 
     return result;
   } catch (error) {
-    clearTimeout(timeoutId);
+    if (timeoutId) clearTimeout(timeoutId);
 
-    if (error instanceof Error && "statusCode" in error) {
-      throw error;
-    }
+    if (error instanceof Error && "statusCode" in error) throw error;
 
     if (error instanceof Error && error.name === "AbortError") {
       throw createApiError("TIMEOUT", "Request timed out. Please try again.", 408);
@@ -174,52 +182,63 @@ export async function submitFeedback(
     if (error instanceof TypeError) {
       throw createApiError(
         "NETWORK_ERROR",
-        "Cannot reach the server. Please check your connection or try again later.",
+        "Cannot reach the server. Please check your connection.",
         0
       );
     }
 
-    const msg =
-      error instanceof Error ? error.message : "An unexpected error occurred.";
+    const msg = error instanceof Error ? error.message : "An unexpected error occurred.";
     throw createApiError("UNKNOWN_ERROR", msg, 500);
   }
 }
 
 /**
- * Retry a failed submission with exponential backoff
+ * Submits feedback with a single fast retry on transient failures (5xx / network).
+ * 4xx client errors are thrown immediately — no point retrying bad input.
+ * Uses a 2-second delay before the retry so the server has time to recover.
  */
 export async function submitFeedbackWithRetry(
   data: FeedbackSubmissionRequest,
-  maxRetries = 3
+  // maxRetries kept for API compat but capped at 1 for UX speed
+  _maxRetries = 1
 ): Promise<FeedbackSubmissionResponse> {
-  let lastError: ApiError | unknown;
+  try {
+    return await submitFeedback(data);
+  } catch (firstError) {
+    const isClientError =
+      typeof firstError === "object" &&
+      firstError !== null &&
+      "statusCode" in firstError &&
+      typeof (firstError as any).statusCode === "number" &&
+      (firstError as any).statusCode >= 400 &&
+      (firstError as any).statusCode < 500 &&
+      (firstError as any).statusCode !== 408; // 408 = timeout → worth retrying
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await submitFeedback(data);
-    } catch (error) {
-      lastError = error;
+    if (isClientError) throw firstError; // branch not found, validation error etc.
 
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "statusCode" in error &&
-        typeof error.statusCode === "number" &&
-        error.statusCode >= 400 &&
-        error.statusCode < 500 &&
-        error.statusCode !== 408
-      ) {
-        throw error;
-      }
-
-      if (attempt < maxRetries) {
-        const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-    }
+    // One retry after a short pause for 5xx / network / timeout.
+    await new Promise((r) => setTimeout(r, 1500));
+    return await submitFeedback(data);
   }
+}
 
-  throw lastError;
+/**
+ * Fire-and-forget optimistic submission.
+ * - Shows the success screen instantly (optimistic).
+ * - Sends the request in the background.
+ * - Reports silent failures via an optional callback.
+ *
+ * Use this when the probability of submission failure is low and you want
+ * the fastest possible perceived UX.
+ */
+export function submitFeedbackOptimistic(
+  data: FeedbackSubmissionRequest,
+  onSilentError?: (err: unknown) => void
+): void {
+  submitFeedbackWithRetry(data).catch((err) => {
+    console.error("[optimistic submission] background error:", err);
+    onSilentError?.(err);
+  });
 }
 
 

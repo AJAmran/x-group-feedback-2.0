@@ -10,7 +10,7 @@ import {
     AgeGroup,
     Source
 } from "../types";
-import { submitFeedbackWithRetry } from "../lib/api";
+import { submitFeedbackOptimistic } from "../lib/api";
 import { APP_CONFIG } from "../lib/config";
 
 // --- Validation Schema ---
@@ -50,12 +50,14 @@ const createFeedbackId = (branchCode: string) => {
 interface UseFeedbackFormOptions {
     branchCode: string;
     branchName: string;
+    branchId?: number;
 }
 
-export function useFeedbackForm({ branchCode, branchName }: UseFeedbackFormOptions) {
+export function useFeedbackForm({ branchCode, branchName, branchId }: UseFeedbackFormOptions) {
     const [view, setView] = useState<"form" | "submitting" | "success" | "error">("form");
     const [apiError, setApiError] = useState<string>("");
     const [showValidation, setShowValidation] = useState(false);
+    const [silentError, setSilentError] = useState<string>(""); // background POST failed
 
     const [feedbackId, setFeedbackId] = useState<string>("");
 
@@ -120,21 +122,18 @@ export function useFeedbackForm({ branchCode, branchName }: UseFeedbackFormOptio
         });
     }, [setValue]);
 
-    const onSubmit: SubmitHandler<FeedbackFormValues> = async (data) => {
+    const onSubmit: SubmitHandler<FeedbackFormValues> = (data) => {
         const submissionFeedbackId = feedbackId || createFeedbackId(branchCode);
 
-        if (!feedbackId) {
-            setFeedbackId(submissionFeedbackId);
-        }
-
-        setView("submitting");
-        setApiError("");
+        if (!feedbackId) setFeedbackId(submissionFeedbackId);
         setShowValidation(false);
+        setSilentError("");
 
         const submittedData: FeedbackSubmissionRequest = {
             feedbackId: submissionFeedbackId,
             branchCode,
             branchName,
+            branchId,
             submittedAt: new Date().toISOString(),
             guest: {
                 name: data.name.trim(),
@@ -146,20 +145,19 @@ export function useFeedbackForm({ branchCode, branchName }: UseFeedbackFormOptio
             comments: data.opinion?.trim() || null,
         };
 
-        try {
-            const response = await submitFeedbackWithRetry(submittedData, 3);
-            if (response.success) {
-                setView("success");
-                if (typeof window !== "undefined" && "scrollTo" in window) {
-                  window.scrollTo({ top: 0, behavior: APP_CONFIG.ANIMATION.SCROLL_BEHAVIOR });
-                }
-            }
-        } catch (err) {
-            console.error("Submission error:", err);
-            const apiErrorObj = err as ApiError;
-            setApiError(apiErrorObj.message || APP_CONFIG.FEEDBACK.ERROR_DEFAULT);
-            setView("error");
+        // ── Optimistic update ────────────────────────────────────────────────
+        // Show success instantly, then fire the POST in the background.
+        // If the background request fails, silentError triggers a retry notice.
+        setView("success");
+        if (typeof window !== "undefined" && "scrollTo" in window) {
+            window.scrollTo({ top: 0, behavior: APP_CONFIG.ANIMATION.SCROLL_BEHAVIOR });
         }
+
+        submitFeedbackOptimistic(submittedData, (err) => {
+            console.error("[silent] feedback POST failed:", err);
+            const apiErrorObj = err as ApiError;
+            setSilentError(apiErrorObj.message || APP_CONFIG.FEEDBACK.ERROR_DEFAULT);
+        });
     };
 
     const onSubmitWrapper = async () => {
@@ -174,6 +172,7 @@ export function useFeedbackForm({ branchCode, branchName }: UseFeedbackFormOptio
     const resetForm = useCallback(() => {
         setView("form");
         setApiError("");
+        setSilentError("");
         setShowValidation(false);
         setFeedbackId("");
         resetHookForm();
@@ -182,6 +181,7 @@ export function useFeedbackForm({ branchCode, branchName }: UseFeedbackFormOptio
     return {
         view,
         error: apiError,
+        silentError,
         feedbackId,
         branchCode,
         branchName,
