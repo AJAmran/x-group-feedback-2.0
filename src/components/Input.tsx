@@ -78,7 +78,7 @@ export const Input = React.forwardRef<
         <div className="flex items-center justify-between px-0.5">
           <label
             htmlFor={id}
-            className="text-micro font-bold tracking-[0.1em] uppercase text-ios-foreground-subtle transition-colors duration-200 group-focus-within:text-ios-primary"
+            className="text-micro font-bold tracking-widest uppercase text-ios-foreground-subtle transition-colors duration-200 group-focus-within:text-ios-primary"
           >
             {label}
             {props.required && (

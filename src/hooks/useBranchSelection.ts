@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { BRANCH_MAP, BRANCHES } from "../lib/constants";
 import { APP_CONFIG } from "../lib/config";
-import { fetchActiveBranches } from "../lib/api";
+import type { ActiveBranch } from "../types";
 
 const STORAGE_KEY = "selectedBranchCode";
 
@@ -59,16 +59,27 @@ async function getCurrentCoords(): Promise<GeolocationCoordinates | null> {
   }
 }
 
-export type BranchSelectionStatus = "loading" | "resolved" | "selecting";
+export type BranchSelectionStatus = "resolved" | "selecting";
 
-export function useBranchSelection() {
+interface UseBranchSelectionOptions {
+  /**
+   * Branch list pre-fetched on the server and passed down as a prop.
+   * Falls back to the static BRANCHES constant if empty.
+   */
+  initialBranches: ActiveBranch[];
+}
+
+export function useBranchSelection({ initialBranches }: UseBranchSelectionOptions) {
   const searchParams = useSearchParams();
 
   const urlCode = searchParams.get("branch")?.toUpperCase() || "";
   const urlBranchValid = urlCode ? Boolean(BRANCH_MAP[urlCode]) : false;
 
+  // Start as "resolved" if URL already contains a valid branch.
+  // Otherwise start as "selecting" — no loading state needed because
+  // branches are already available from the server (initialBranches prop).
   const [status, setStatus] = useState<BranchSelectionStatus>(() =>
-    urlBranchValid ? "resolved" : "loading"
+    urlBranchValid ? "resolved" : "selecting"
   );
   const [branchCode, setBranchCode] = useState<string>(() =>
     urlBranchValid ? urlCode : ""
@@ -85,21 +96,25 @@ export function useBranchSelection() {
   }, []);
 
   useEffect(() => {
+    // Branch already set from URL — nothing to do.
     if (urlBranchValid) return;
 
     let cancelled = false;
 
-    async function resolve() {
-      const [branchesFromApi, coords] = await Promise.all([
-        fetchActiveBranches(),
-        getCurrentCoords(),
-      ]);
+    async function autoResolve() {
+      // Use server-provided branches, falling back to static list.
+      const branches =
+        initialBranches.length > 0
+          ? initialBranches.map((b) => ({
+              code: b.code,
+              lat: Number(b.latitude),
+              lng: Number(b.longitude),
+            }))
+          : BRANCHES;
 
+      // Try geolocation to auto-select the nearest branch.
+      const coords = await getCurrentCoords();
       if (cancelled) return;
-
-      const branches = branchesFromApi.length > 0
-        ? branchesFromApi.map((b) => ({ code: b.code, lat: Number(b.latitude), lng: Number(b.longitude) }))
-        : BRANCHES;
 
       if (coords) {
         const nearest = findNearestBranch(coords.latitude, coords.longitude, branches);
@@ -109,26 +124,27 @@ export function useBranchSelection() {
         }
       }
 
+      // Fall back to last selection stored in localStorage.
       let saved: string | null = null;
-      try { saved = localStorage.getItem(STORAGE_KEY); } catch { /* localStorage unavailable */ }
+      try { saved = localStorage.getItem(STORAGE_KEY); } catch { /* unavailable */ }
       if (saved && BRANCH_MAP[saved]) {
         resolveBranch(saved);
         return;
       }
 
-      if (branches.length > 0) {
-        setStatus("selecting");
-      }
+      // No auto-resolution possible — show the dropdown for manual selection.
+      setStatus("selecting");
     }
 
-    resolve();
+    autoResolve();
     return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlBranchValid, resolveBranch]);
 
   const selectBranch = useCallback(
     (code: string) => {
       if (!BRANCH_MAP[code]) return;
-      try { localStorage.setItem(STORAGE_KEY, code); } catch { /* localStorage unavailable */ }
+      try { localStorage.setItem(STORAGE_KEY, code); } catch { /* unavailable */ }
       resolveBranch(code);
     },
     [resolveBranch]

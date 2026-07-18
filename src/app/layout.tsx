@@ -79,13 +79,7 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        <link
-          rel="preload"
-          href="/logo.png"
-          as="image"
-          type="image/png"
-          fetchPriority="high"
-        />
+
         <script
           dangerouslySetInnerHTML={{
             __html: `

@@ -25,7 +25,7 @@ export const SelectionGrid: React.FC<SelectionGridProps> = ({
     "aria-labelledby": ariaLabelledBy
 }) => {
     return (
-        <ul 
+        <div 
             className={`grid ${gridColsClass} gap-3`}
             role="radiogroup"
             aria-labelledby={ariaLabelledBy}
@@ -33,7 +33,7 @@ export const SelectionGrid: React.FC<SelectionGridProps> = ({
             {options.map((opt) => {
                 const isSelected = selectedValue === opt.value;
                 return (
-                    <li key={opt.value} className="list-none">
+                    <div key={opt.value}>
                         <motion.button
                             type="button"
                             role="radio"
@@ -55,9 +55,9 @@ export const SelectionGrid: React.FC<SelectionGridProps> = ({
                         >
                             {opt.label}
                         </motion.button>
-                    </li>
+                    </div>
                 );
             })}
-        </ul>
+        </div>
     );
 };

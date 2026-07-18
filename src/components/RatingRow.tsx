@@ -45,7 +45,7 @@ export const RatingRow: React.FC<RatingRowProps> = React.memo(
                 exit={{ opacity: 0, y: -3 }}
                 transition={{ duration: 0.15 }}
                 className={cn(
-                  "text-micro font-mono font-bold uppercase tracking-[0.1em]",
+                  "text-micro font-mono font-bold uppercase tracking-widest",
                   VALUE_TEXT[value],
                 )}
               >
@@ -56,7 +56,7 @@ export const RatingRow: React.FC<RatingRowProps> = React.memo(
         </div>
 
         {/* Segmented scorecard — one continuous bordered strip, not three separate cards */}
-        <div className="relative grid grid-cols-4 rounded-[var(--radius-ios-sm)] border border-ios-border-subtle bg-surface-100 overflow-hidden">
+        <div className="relative grid grid-cols-4 rounded-(--radius-ios-sm) border border-ios-border-subtle bg-surface-100 overflow-hidden">
           {RATING_OPTIONS.map((opt, i) => {
             const Icon = opt.icon;
             const isSelected = value === opt.val;

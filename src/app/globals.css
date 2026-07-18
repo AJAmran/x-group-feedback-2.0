@@ -71,7 +71,7 @@
     --foreground: 18% 0.03 274;
     --foreground-muted: 34% 0.026 274;
     --foreground-subtle: 46% 0.02 274;
-    --foreground-faint: 56% 0.014 274;
+    --foreground-faint: 48% 0.014 274;
 
     /* X Group navy — extracted from logo, primary */
     --ios-primary: 36% 0.124 274;
@@ -113,7 +113,7 @@
     --foreground: 95% 0.008 270;
     --foreground-muted: 80% 0.012 270;
     --foreground-subtle: 66% 0.012 270;
-    --foreground-faint: 54% 0.012 270;
+    --foreground-faint: 62% 0.012 270;
 
     --ios-primary: 68% 0.1 272;
     --ios-secondary: 55% 0.07 272;
@@ -139,7 +139,7 @@
       --foreground: 95% 0.008 270;
       --foreground-muted: 80% 0.012 270;
       --foreground-subtle: 66% 0.012 270;
-      --foreground-faint: 54% 0.012 270;
+      --foreground-faint: 62% 0.012 270;
       --ios-primary: 68% 0.1 272;
       --ios-secondary: 55% 0.07 272;
       --ios-accent: 78% 0.11 85;
