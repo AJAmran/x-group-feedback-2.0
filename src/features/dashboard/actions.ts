@@ -336,6 +336,25 @@ export async function getFeedbackMetrics(): Promise<{
   }
 }
 
+export async function getPaginatedBranches(params: { page?: number; limit?: number; search?: string }) {
+  try {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.search) query.set("search", params.search);
+
+    const res = await fetchApi(`/api/v1/branches?${query.toString()}`);
+    return {
+      branches: (res.data?.items || []) as any[],
+      total: res.data?.meta?.total || 0,
+      page: res.data?.meta?.page || 1,
+      totalPages: res.data?.meta?.totalPages || 1,
+    };
+  } catch {
+    return { branches: [], total: 0, page: 1, totalPages: 1 };
+  }
+}
+
 export async function getBranchList(): Promise<{ code: string; name: string }[]> {
   try {
     const res = await fetchApi("/api/v1/branches?limit=1000");
@@ -466,6 +485,8 @@ export async function updateBranchAction(
     code?: string;
     address?: string;
     phone?: string | null;
+    latitude?: number;
+    longitude?: number;
     isActive?: boolean;
   }
 ): Promise<{ success: boolean; error?: string }> {
@@ -485,5 +506,74 @@ export async function updateBranchAction(
     return { success: true };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Failed to update branch" };
+  }
+}
+
+export async function createBranchAction(
+  data: {
+    name: string;
+    code: string;
+    address: string;
+    phone?: string | null;
+    latitude: number;
+    longitude: number;
+  }
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const user = await getCurrentUserAction();
+    if (user && user.role === "BRANCH_MANAGER") {
+      return { success: false, error: "Branch managers cannot create branches" };
+    }
+    const res = await authenticatedFetch(`/api/v1/branches`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      return { success: false, error: json.message || "Failed to create branch" };
+    }
+    const json = await res.json();
+    return { success: true, data: json.data };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to create branch" };
+  }
+}
+
+export async function toggleBranchStatusAction(id: string | number, isActive: boolean): Promise<{ success: boolean; error?: string }> {
+  try {
+    const user = await getCurrentUserAction();
+    if (user && user.role === "BRANCH_MANAGER") {
+      return { success: false, error: "Branch managers cannot update branches" };
+    }
+    const res = await authenticatedFetch(`/api/v1/branches/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ isActive }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      return { success: false, error: json.message || "Failed to update branch status" };
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to update branch status" };
+  }
+}
+
+export async function deleteBranchAction(id: string | number): Promise<{ success: boolean; error?: string }> {
+  try {
+    const user = await getCurrentUserAction();
+    if (user && user.role === "BRANCH_MANAGER") {
+      return { success: false, error: "Branch managers cannot delete branches" };
+    }
+    const res = await authenticatedFetch(`/api/v1/branches/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      return { success: false, error: json.message || "Failed to delete branch" };
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to delete branch" };
   }
 }
