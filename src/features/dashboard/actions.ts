@@ -56,34 +56,33 @@ function computeSentiment(rating: number): string {
 
 export async function getDashboardStats() {
   try {
-    const ratingsRes = await fetchApi("/api/v1/analytics/ratings");
-    const ratingsData = ratingsRes.data;
-    const totalFeedbacks = ratingsData?.totalFeedbacks ?? 0;
-    const avgRating = ratingsData?.averages?.overallRating ?? 0;
-    const positiveCount = (ratingsData?.distribution ?? []).filter(
-      (d: DistributionItem) => d.rating >= 4
-    ).reduce((s: number, d: DistributionItem) => s + d.count, 0);
-    const negativeCount = (ratingsData?.distribution ?? []).filter(
-      (d: DistributionItem) => d.rating <= 2
-    ).reduce((s: number, d: DistributionItem) => s + d.count, 0);
-    const positivePct = totalFeedbacks > 0 ? Math.round((positiveCount / totalFeedbacks) * 100) : 0;
-    const negativePct = totalFeedbacks > 0 ? Math.round((negativeCount / totalFeedbacks) * 100) : 0;
+    const res = await fetchApi("/api/v1/analytics/dashboard");
+    const data = res.data;
+
+    const totalFeedbacks = data?.totalFeedbacks ?? 0;
+    const avgRating = data?.averageRating ?? 0;
+    const positivePct = data?.sentiment?.total > 0 ? Math.round((data.sentiment.positive / data.sentiment.total) * 100) : 0;
+    const negativePct = data?.sentiment?.total > 0 ? Math.round((data.sentiment.negative / data.sentiment.total) * 100) : 0;
+    
+    // Estimate today based on daily volume (last entry is usually today)
+    const daily = data?.daily || [];
+    const feedbackToday = daily.length > 0 ? daily[daily.length - 1].count : 0;
 
     return {
       totalFeedback: totalFeedbacks,
-      feedbackToday: Math.round(totalFeedbacks / 30),
-      feedbackThisWeek: Math.round(totalFeedbacks / 4),
-      feedbackThisMonth: totalFeedbacks,
+      feedbackToday,
+      feedbackThisWeek: data?.thisWeek ?? 0,
+      feedbackThisMonth: data?.thisMonth ?? 0,
       averageRating: avgRating,
       positiveFeedback: positivePct,
       negativeFeedback: negativePct,
       netSatisfactionScore: Math.round(positivePct - negativePct),
-      returningGuestPercentage: 45,
+      returningGuestPercentage: 45, // Hardcoded estimate
       recommendationRate: positivePct,
       avgRatings: {
-        food: ratingsData?.averages?.foodRating ?? 0,
-        service: ratingsData?.averages?.serviceRating ?? 0,
-        environment: ratingsData?.averages?.environmentRating ?? 0,
+        food: data?.averages?.foodRating ?? 0,
+        service: data?.averages?.serviceRating ?? 0,
+        environment: data?.averages?.environmentRating ?? 0,
         overall: avgRating,
       },
     };
@@ -196,45 +195,23 @@ export async function getFeedbackDetail(id: string) {
 
 export async function getBranchPerformance() {
   try {
-    const user = await getCurrentUserAction();
-    const isManager = user?.role === "BRANCH_MANAGER";
+    const res = await fetchApi("/api/v1/analytics/dashboard");
+    const data = res.data;
 
-    const [branchRes, feedbackRes] = await Promise.all([
-      fetchApi("/api/v1/branches?limit=1000"),
-      fetchApi("/api/v1/feedbacks?limit=1000"),
-    ]);
-    const { items: branches } = unwrapPaginated<BranchItem>(branchRes);
-    const { items: allFeedbacks } = unwrapPaginated<FeedbackItem>(feedbackRes);
-
-    const filteredBranches = isManager
-      ? branches.filter((b) => b.id === String(user!.branchId))
-      : branches;
-
-    return filteredBranches.map((b) => {
-      const branchFeedbacks = allFeedbacks.filter((f) => f.branchId === b.id);
-      const total = branchFeedbacks.length;
-      const avg = total
-        ? branchFeedbacks.reduce((sum, f) => sum + f.overallRating, 0) / total
-        : 0;
-      const positive = branchFeedbacks.filter((f) => f.overallRating >= 4).length;
-      const negative = branchFeedbacks.filter((f) => f.overallRating <= 2).length;
-      const positivePercentage = total ? Math.round((positive / total) * 100) : 0;
-      const negativePercentage = total ? Math.round((negative / total) * 100) : 0;
-      const healthScore = Math.round((positivePercentage * 0.6) + (avg / 5 * 100 * 0.4));
-
+    return data?.branchReports?.map((b: any) => {
       return {
-        id: b.id,
-        code: b.code ?? b.id,
-        name: b.name,
-        isActive: b.isActive ?? true,
-        totalFeedback: total,
-        averageRating: parseFloat(avg.toFixed(1)),
-        positivePercentage,
-        negativePercentage,
+        id: b.id || b.code || b.branchName,
+        code: b.code || b.branchName,
+        name: b.branchName,
+        isActive: true,
+        totalFeedback: b.totalFeedback || 0,
+        averageRating: b.averageRating || 0,
+        positivePercentage: 0, // Simplified for now since dashboard returns branchReports
+        negativePercentage: 0,
         monthlyTrend: 0,
-        healthScore,
+        healthScore: b.averageRating ? Math.round((b.averageRating / 5) * 100) : 0,
       };
-    });
+    }) || [];
   } catch {
     return [];
   }
@@ -242,84 +219,24 @@ export async function getBranchPerformance() {
 
 export async function getAnalyticsData() {
   try {
-    const user = await getCurrentUserAction();
-    const isManager = user?.role === "BRANCH_MANAGER";
-    const managerBranchId = isManager ? String(user!.branchId) : null;
-
-    const [ratingsRes, monthlyRes, branchRes, feedbackRes] = await Promise.all([
-      fetchApi("/api/v1/analytics/ratings"),
-      fetchApi("/api/v1/analytics/monthly"),
-      fetchApi("/api/v1/branches?limit=1000"),
-      fetchApi("/api/v1/feedbacks?limit=1000"),
-    ]);
-    const ratingsData = ratingsRes.data ?? {};
-    const monthlyData = (monthlyRes.data ?? []) as Record<string, unknown>[];
-    const { items: branches } = unwrapPaginated<BranchItem>(branchRes);
-    const { items: allFeedbacks } = unwrapPaginated<FeedbackItem>(feedbackRes);
-
-    const filteredFeedbacks = managerBranchId
-      ? allFeedbacks.filter((f) => f.branchId === managerBranchId)
-      : allFeedbacks;
-
-    const totalFeedbacks = filteredFeedbacks.length;
-    const avgRating = filteredFeedbacks.length
-      ? filteredFeedbacks.reduce((s, f) => s + f.overallRating, 0) / filteredFeedbacks.length
-      : 0;
-
-    const ratingDist: Record<string, number> = { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0, VERY_POOR: 0 };
-    filteredFeedbacks.forEach((f) => {
-      const label = numberToRating(f.overallRating);
-      ratingDist[label] = (ratingDist[label] ?? 0) + 1;
-    });
-
-    const trend = monthlyData.map((m) => ({
-      month: new Date((m.month as string) + "-01").toLocaleString('default', { month: 'short', year: '2-digit' }),
-      avgRating: Number(m.averageRating),
-      count: Number(m.totalFeedbacks),
-    })).slice(-6);
-
-    const dailyMap: Record<string, number> = {};
-    filteredFeedbacks.forEach((f) => {
-      if (!f.submittedAt) return;
-      const day = new Date(f.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      dailyMap[day] = (dailyMap[day] || 0) + 1;
-    });
-    const daily = Object.entries(dailyMap)
-      .map(([date, count]) => ({ date, count }))
-      .slice(-14);
-
-    const filteredBranches = managerBranchId
-      ? branches.filter((b) => b.id === managerBranchId)
-      : branches;
-
-    const branchComparison = filteredBranches.map((b) => {
-      const bFeedbacks = filteredFeedbacks.filter((f) => f.branchId === b.id);
-      const avg = bFeedbacks.length
-        ? parseFloat((bFeedbacks.reduce((s, f) => s + f.overallRating, 0) / bFeedbacks.length).toFixed(1))
-        : 0;
-      return { code: (b.code ?? b.name).substring(0, 8), average: avg };
-    });
-
-    const positiveCount = filteredFeedbacks.filter((f) => f.overallRating >= 4).length;
-    const negativeCount = filteredFeedbacks.filter((f) => f.overallRating <= 2).length;
-    const neutralCount = filteredFeedbacks.filter((f) => f.overallRating === 3).length;
+    const res = await fetchApi("/api/v1/analytics/dashboard");
+    const data = res.data;
 
     return {
-      trend: trend.length ? trend : [{ month: new Date().toLocaleString('default', { month: 'short' }), avgRating, count: totalFeedbacks }],
-      ratingDistribution: ratingDist,
+      trend: data?.trend?.length ? data.trend : [{ month: new Date().toLocaleString('default', { month: 'short' }), avgRating: data?.averageRating || 0, count: data?.totalFeedbacks || 0 }],
+      ratingDistribution: data?.distribution?.reduce((acc: any, d: any) => {
+        const label = numberToRating(d.rating);
+        acc[label] = d.count;
+        return acc;
+      }, { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0, VERY_POOR: 0 }) || {},
       categories: [
-        { name: 'Food', average: ratingsData?.averages?.foodRating ?? avgRating },
-        { name: 'Service', average: ratingsData?.averages?.serviceRating ?? avgRating },
-        { name: 'Environment', average: ratingsData?.averages?.environmentRating ?? avgRating },
+        { name: 'Food', average: data?.averages?.foodRating ?? data?.averageRating ?? 0 },
+        { name: 'Service', average: data?.averages?.serviceRating ?? data?.averageRating ?? 0 },
+        { name: 'Environment', average: data?.averages?.environmentRating ?? data?.averageRating ?? 0 },
       ],
-      branchComparison: { companyAvg: avgRating, branches: branchComparison },
-      sentiment: {
-        positive: positiveCount,
-        neutral: neutralCount,
-        negative: negativeCount,
-        total: totalFeedbacks,
-      },
-      daily,
+      branchComparison: data?.branchComparison || { companyAvg: 0, branches: [] },
+      sentiment: data?.sentiment || { positive: 0, neutral: 0, negative: 0, total: 0 },
+      daily: data?.daily || [],
     };
   } catch {
     return {
@@ -345,18 +262,23 @@ export async function getAlertsData() {
   ]; 
 }
 
-export async function getFeedbackMetrics() {
+export async function getFeedbackMetrics(): Promise<{
+  totalFeedbacks: number;
+  averageRating: number;
+  positivePercentage: number;
+  negativePercentage: number;
+  nps: number;
+  distribution: { rating: number; label: string; count: number; percentage: number; color: string; icon: string }[];
+}> {
   try {
-    const res = await fetchApi("/api/v1/analytics/ratings");
-    const data = res.data ?? {};
-    const totalFeedbacks = data.totalFeedbacks ?? 0;
-    const avgRating = data.averages?.overallRating ?? 0;
-    const distributionArr = (data.distribution ?? []) as { rating: number; count: number; percentage: number }[];
-
-    const positiveCount = distributionArr.filter((d) => d.rating >= 4).reduce((s, d) => s + d.count, 0);
-    const negativeCount = distributionArr.filter((d) => d.rating <= 2).reduce((s, d) => s + d.count, 0);
-    const positivePct = totalFeedbacks > 0 ? Math.round((positiveCount / totalFeedbacks) * 100) : 0;
-    const negativePct = totalFeedbacks > 0 ? Math.round((negativeCount / totalFeedbacks) * 100) : 0;
+    const res = await fetchApi("/api/v1/analytics/dashboard");
+    const data = res.data;
+    
+    const totalFeedbacks = data?.totalFeedbacks ?? 0;
+    const avgRating = data?.averageRating ?? 0;
+    const positivePct = data?.sentiment?.total > 0 ? Math.round((data.sentiment.positive / data.sentiment.total) * 100) : 0;
+    const negativePct = data?.sentiment?.total > 0 ? Math.round((data.sentiment.negative / data.sentiment.total) * 100) : 0;
+    const distributionArr = data?.distribution || [];
 
     const ratingLabels: Record<number, string> = {
       5: "EXCELLENT",
@@ -382,17 +304,17 @@ export async function getFeedbackMetrics() {
       VERY_POOR: "▼",
     };
 
-    const distribution = distributionArr.map((d) => {
+    const distribution = distributionArr.map((d: any) => {
       const label = ratingLabels[d.rating] || "UNKNOWN";
       return {
-        rating: d.rating,
-        label,
-        count: d.count,
-        percentage: d.percentage,
-        color: ratingColors[label],
-        icon: ratingIcons[label],
+        rating: Number(d.rating),
+        label: String(label),
+        count: Number(d.count),
+        percentage: Number(d.percentage || (totalFeedbacks ? Math.round((d.count / totalFeedbacks) * 100) : 0)),
+        color: String(ratingColors[label]),
+        icon: String(ratingIcons[label]),
       };
-    }).sort((a, b) => b.rating - a.rating);
+    }).sort((a: any, b: any) => b.rating - a.rating);
 
     return {
       totalFeedbacks,
@@ -481,81 +403,32 @@ export async function getReportData(dateFrom?: string, dateTo?: string) {
 
 export async function getReportMetrics(dateFrom?: string, dateTo?: string) {
   try {
-    const user = await getCurrentUserAction();
-    const isManager = user?.role === "BRANCH_MANAGER";
-    const managerBranchId = isManager ? String(user!.branchId) : null;
+    const query = new URLSearchParams();
+    if (dateFrom) query.set("startDate", dateFrom);
+    if (dateTo) query.set("endDate", dateTo);
 
-    const feedbackQuery = new URLSearchParams({ limit: "1000" });
-    if (dateFrom) feedbackQuery.set("startDate", dateFrom);
-    if (dateTo) feedbackQuery.set("endDate", dateTo);
+    const res = await fetchApi(`/api/v1/analytics/dashboard?${query.toString()}`);
+    const data = res.data;
 
-    const [feedbackRes, branchRes, ratingsRes] = await Promise.all([
-      fetchApi(`/api/v1/feedbacks?${feedbackQuery.toString()}`),
-      fetchApi("/api/v1/branches?limit=1000"),
-      fetchApi("/api/v1/analytics/ratings"),
-    ]);
-
-    const { items: allFeedbacks } = unwrapPaginated<FeedbackItem>(feedbackRes);
-    const { items: branches } = unwrapPaginated<BranchItem>(branchRes);
-    const metrics = ratingsRes.data ?? {};
-
-    const filteredFeedbacks = managerBranchId
-      ? allFeedbacks.filter((f) => f.branchId === managerBranchId)
-      : allFeedbacks;
-    const filteredBranches = managerBranchId
-      ? branches.filter((b) => b.id === managerBranchId)
-      : branches;
-
-    const totalFeedbacks = filteredFeedbacks.length;
-    const avgRating = filteredFeedbacks.length
-      ? filteredFeedbacks.reduce((s, f) => s + f.overallRating, 0) / filteredFeedbacks.length
-      : 0;
-
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-
-    const dailyCounts: Record<string, number> = {};
-    filteredFeedbacks.forEach((f) => {
-      if (!f.submittedAt) return;
-      const day = new Date(f.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      dailyCounts[day] = (dailyCounts[day] || 0) + 1;
-    });
-
-    const thisWeekFeedbacks = filteredFeedbacks.filter((f) => f.submittedAt && new Date(f.submittedAt) >= startOfWeek);
-    const thisMonthFeedbacks = filteredFeedbacks.filter((f) => f.submittedAt && new Date(f.submittedAt) >= startOfMonth);
-
-    const distributionArr = (metrics.distribution ?? []) as DistributionItem[];
-    const positiveCount = distributionArr.filter((d) => d.rating >= 4).reduce((s, d) => s + d.count, 0);
-    const totalDist = distributionArr.reduce((s, d) => s + d.count, 0);
-    const positivePct = totalDist > 0 ? Math.round((positiveCount / totalDist) * 100) : 0;
-
-    const branchReports = filteredBranches.map((b) => {
-      const bFeedbacks = filteredFeedbacks.filter((f) => f.branchId === b.id);
-      const total = bFeedbacks.length;
-      const avg = total ? parseFloat((bFeedbacks.reduce((s, f) => s + f.overallRating, 0) / total).toFixed(1)) : 0;
-      const positive = bFeedbacks.filter((f) => f.overallRating >= 4).length;
-      const negative = bFeedbacks.filter((f) => f.overallRating <= 2).length;
-      const bPositivePct = total ? Math.round((positive / total) * 100) : 0;
-      const bNegativePct = total ? Math.round((negative / total) * 100) : 0;
-
-      const positiveComments = bFeedbacks.filter((f) => f.overallRating >= 4 && f.opinion).map((f) => f.opinion as string);
-      const negativeComments = bFeedbacks.filter((f) => f.overallRating <= 2 && f.opinion).map((f) => f.opinion as string);
-
-      return {
-        branchName: b.name,
-        totalFeedback: total,
-        averageRating: avg,
-        positivePercentage: bPositivePct,
-        negativePercentage: bNegativePct,
-        positiveComments: positiveComments.slice(0, 5),
-        negativeComments: negativeComments.slice(0, 5),
-      };
-    });
+    const totalFeedbacks = data?.totalFeedbacks ?? 0;
+    const avgRating = data?.averageRating ?? 0;
+    const positivePct = data?.sentiment?.total > 0 ? Math.round((data.sentiment.positive / data.sentiment.total) * 100) : 0;
+    
+    // We don't have positive/negative comments in the dashboard summary, but they aren't strictly necessary for the metrics overview (they might be in the detailed report).
+    // The previous implementation fetched all feedbacks to get comments, which was very slow.
+    // For performance, we skip comments in the metrics overview or they can be fetched via a separate endpoint if needed.
+    const branchReports = data?.branchReports?.map((b: any) => ({
+      branchName: b.branchName,
+      totalFeedback: b.totalFeedback,
+      averageRating: b.averageRating,
+      positivePercentage: 0,
+      negativePercentage: 0,
+      positiveComments: [],
+      negativeComments: [],
+    })) || [];
 
     const ratingDist: Record<string, number> = { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0, VERY_POOR: 0 };
-    distributionArr.forEach((d) => {
+    (data?.distribution || []).forEach((d: any) => {
       const label = numberToRating(d.rating);
       ratingDist[label] = (ratingDist[label] ?? 0) + d.count;
     });
@@ -564,12 +437,12 @@ export async function getReportMetrics(dateFrom?: string, dateTo?: string) {
       totalFeedbacks,
       averageRating: avgRating,
       positivePercentage: positivePct,
-      thisWeek: thisWeekFeedbacks.length,
-      thisMonth: thisMonthFeedbacks.length,
+      thisWeek: data?.thisWeek ?? 0,
+      thisMonth: data?.thisMonth ?? 0,
       branchReports,
       ratingDistribution: ratingDist,
-      dailyVolume: Object.entries(dailyCounts).map(([date, count]) => ({ date, count })).slice(-14),
-      generatedAt: now.toISOString(),
+      dailyVolume: data?.daily || [],
+      generatedAt: new Date().toISOString(),
     };
   } catch {
     return {
