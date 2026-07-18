@@ -11,7 +11,7 @@ export function numberToRating(num: number): string {
   if (num >= 4) return "GOOD";
   if (num >= 3) return "AVERAGE";
   if (num >= 2) return "POOR";
-  return "VERY_POOR";
+  return "POOR";
 }
 
 /** Converts a numeric rating to a numeric value for bar widths etc. */
@@ -20,7 +20,6 @@ export function ratingValue(label: string | null): number {
   if (label === "GOOD") return 4;
   if (label === "AVERAGE") return 3;
   if (label === "POOR") return 2;
-  if (label === "VERY_POOR") return 1;
   return 0;
 }
 
@@ -30,5 +29,4 @@ export const ratingLabels: Record<number, string> = {
   4: "GOOD",
   3: "AVERAGE",
   2: "POOR",
-  1: "VERY_POOR",
 };

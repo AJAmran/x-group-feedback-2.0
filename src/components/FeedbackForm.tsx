@@ -148,9 +148,7 @@ export function FeedbackForm({ initialBranches }: FeedbackFormProps) {
               <span className="text-caption sm:text-label font-mono font-semibold text-ios-foreground truncate">
                 {branchName}
               </span>
-              <span className="text-micro font-mono font-bold text-ios-foreground-faint tracking-wider shrink-0">
-                REF {branchCode}
-              </span>
+
             </>
           ) : status === "selecting" ? (
             <span className="text-caption sm:text-label font-medium text-ios-foreground-muted truncate">
@@ -189,11 +187,10 @@ export function FeedbackForm({ initialBranches }: FeedbackFormProps) {
                         selectBranch(branch.code);
                         setDropdownOpen(false);
                       }}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-(--radius-ios-sm) text-left transition-colors duration-150 ${
-                        branch.code === resolvedCode
-                          ? "bg-ios-primary/10 text-ios-primary font-semibold"
-                          : "text-ios-foreground font-medium hover:bg-ios-border-subtle"
-                      }`}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-(--radius-ios-sm) text-left transition-colors duration-150 ${branch.code === resolvedCode
+                        ? "bg-ios-primary/10 text-ios-primary font-semibold"
+                        : "text-ios-foreground font-medium hover:bg-ios-border-subtle"
+                        }`}
                     >
                       <MapPin
                         size={14}
@@ -201,9 +198,7 @@ export function FeedbackForm({ initialBranches }: FeedbackFormProps) {
                       />
                       <div className="min-w-0 flex-1">
                         <span className="text-label block truncate">{branch.name}</span>
-                        <span className="text-micro font-mono text-ios-foreground-faint tracking-wider">
-                          REF {branch.code}
-                        </span>
+
                       </div>
                       {branch.code === resolvedCode && (
                         <span className="text-micro font-bold text-ios-primary shrink-0">Selected</span>
@@ -365,7 +360,7 @@ export function FeedbackForm({ initialBranches }: FeedbackFormProps) {
             {feedbackId && (
               <div className="text-center">
                 <span className="text-micro font-mono font-bold uppercase tracking-[0.16em] text-ios-foreground-subtle bg-ios-border-subtle px-3.5 py-1.5 rounded-(--radius-ios-sm) border border-ios-border-subtle">
-                  {APP_CONFIG.FEEDBACK.SECURE_BADGE} · Ref {branchCode}-{feedbackId}
+                  {APP_CONFIG.FEEDBACK.SECURE_BADGE}
                 </span>
               </div>
             )}

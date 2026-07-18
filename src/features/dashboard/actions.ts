@@ -101,7 +101,6 @@ const RATING_LABEL_TO_INT: Record<string, string> = {
   GOOD: "4",
   AVERAGE: "3",
   POOR: "2",
-  VERY_POOR: "1",
 };
 
 export async function getFeedbackList(params: {
@@ -228,7 +227,7 @@ export async function getAnalyticsData() {
         const label = numberToRating(d.rating);
         acc[label] = d.count;
         return acc;
-      }, { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0, VERY_POOR: 0 }) || {},
+      }, { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0 }) || {},
       categories: [
         { name: 'Food', average: data?.averages?.foodRating ?? data?.averageRating ?? 0 },
         { name: 'Service', average: data?.averages?.serviceRating ?? data?.averageRating ?? 0 },
@@ -241,7 +240,7 @@ export async function getAnalyticsData() {
   } catch {
     return {
       trend: [],
-      ratingDistribution: { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0, VERY_POOR: 0 },
+      ratingDistribution: { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0 },
       categories: [],
       branchComparison: { companyAvg: 0, branches: [] },
       sentiment: { positive: 0, neutral: 0, negative: 0, total: 0 },
@@ -285,7 +284,6 @@ export async function getFeedbackMetrics(): Promise<{
       4: "GOOD",
       3: "AVERAGE",
       2: "POOR",
-      1: "VERY_POOR",
     };
 
     const ratingColors: Record<string, string> = {
@@ -293,7 +291,6 @@ export async function getFeedbackMetrics(): Promise<{
       GOOD: "bg-sky-500",
       AVERAGE: "bg-amber-500",
       POOR: "bg-orange-500",
-      VERY_POOR: "bg-red-500",
     };
 
     const ratingIcons: Record<string, string> = {
@@ -301,7 +298,6 @@ export async function getFeedbackMetrics(): Promise<{
       GOOD: "●",
       AVERAGE: "◆",
       POOR: "▲",
-      VERY_POOR: "▼",
     };
 
     const distribution = distributionArr.map((d: any) => {
@@ -446,7 +442,7 @@ export async function getReportMetrics(dateFrom?: string, dateTo?: string) {
       negativeComments: [],
     })) || [];
 
-    const ratingDist: Record<string, number> = { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0, VERY_POOR: 0 };
+    const ratingDist: Record<string, number> = { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0 };
     (data?.distribution || []).forEach((d: any) => {
       const label = numberToRating(d.rating);
       ratingDist[label] = (ratingDist[label] ?? 0) + d.count;
@@ -471,7 +467,7 @@ export async function getReportMetrics(dateFrom?: string, dateTo?: string) {
       thisWeek: 0,
       thisMonth: 0,
       branchReports: [],
-      ratingDistribution: { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0, VERY_POOR: 0 },
+      ratingDistribution: { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0 },
       dailyVolume: [],
       generatedAt: new Date().toISOString(),
     };

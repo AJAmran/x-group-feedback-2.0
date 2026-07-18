@@ -23,10 +23,9 @@ export const RATING_COLORS: Record<string, string> = {
   GOOD: "oklch(64% 0.13 210)",
   AVERAGE: "oklch(62% 0.14 80)",
   POOR: "oklch(57% 0.15 45)",
-  VERY_POOR: "oklch(51% 0.17 25)",
 };
 
-export const RATING_ORDER = ["EXCELLENT", "GOOD", "AVERAGE", "POOR", "VERY_POOR"] as const;
+export const RATING_ORDER = ["EXCELLENT", "GOOD", "AVERAGE", "POOR"] as const;
 
 // ─── Sentiment Colors ───────────────────────────────────────
 export const SENTIMENT_COLORS: Record<string, string> = {

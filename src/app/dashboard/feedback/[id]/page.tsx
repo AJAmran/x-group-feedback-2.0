@@ -13,7 +13,6 @@ const RATING_BADGE: Record<string, string> = {
   GOOD: "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/20",
   AVERAGE: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
   POOR: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/20",
-  VERY_POOR: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20",
 };
 
 const RATING_BAR_BG: Record<string, string> = {
@@ -21,7 +20,6 @@ const RATING_BAR_BG: Record<string, string> = {
   4: "bg-sky-500",
   3: "bg-amber-500",
   2: "bg-orange-500",
-  1: "bg-red-500",
 };
 
 function RatingBar({ label, value }: { label: string; value: string | null }) {
@@ -84,7 +82,7 @@ export default async function FeedbackDetailPage({ params }: Props) {
               </span>
               <span className="inline-flex items-center gap-1.5 text-caption text-ios-foreground-faint">
                 <Calendar size={13} className="text-ios-foreground-subtle" />
-                {new Date(details.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                {new Date(details.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
               </span>
               <span className="inline-flex items-center gap-1.5 text-caption text-ios-foreground-faint">
                 <Hash size={13} className="text-ios-foreground-subtle" />

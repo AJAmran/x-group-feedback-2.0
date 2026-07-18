@@ -48,8 +48,6 @@ const RATING_STYLES: Record<string, string> = {
   AVERAGE:
     "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
   POOR: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/20",
-  VERY_POOR:
-    "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20",
 };
 
 interface ReportClientProps {
@@ -200,7 +198,7 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
             Rating Distribution
           </span>
         </div>
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           {[
             {
               label: "Excellent",
@@ -229,13 +227,6 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
               color: "bg-orange-500",
               light: "bg-orange-500/10",
               text: "text-orange-600 dark:text-orange-400",
-            },
-            {
-              label: "Very Poor",
-              key: "VERY_POOR",
-              color: "bg-red-500",
-              light: "bg-red-500/10",
-              text: "text-red-600 dark:text-red-400",
             },
           ].map((r) => {
             const count = data.ratingDistribution[r.key] || 0;

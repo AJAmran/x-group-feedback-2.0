@@ -18,14 +18,12 @@ async function RatingDistribution({ metrics }: { metrics: Awaited<ReturnType<typ
     GOOD: "Good",
     AVERAGE: "Average",
     POOR: "Poor",
-    VERY_POOR: "Very Poor",
   };
   const ratingBgs: Record<string, string> = {
     EXCELLENT: "bg-emerald-500",
     GOOD: "bg-sky-500",
     AVERAGE: "bg-amber-500",
     POOR: "bg-orange-500",
-    VERY_POOR: "bg-red-500",
   };
 
 
