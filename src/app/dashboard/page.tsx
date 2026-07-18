@@ -16,16 +16,7 @@ import { KpiCard } from "@/components/dashboard/kpi-card";
 import { InsightCard } from "./_components/insight-card";
 import { AlertCard } from "./_components/alert-card";
 import { ChartsSection } from "./_components/charts-section";
-
-function SkeletonCard() {
-  return (
-    <div className="glass-card p-5 rounded-3xl animate-pulse">
-      <div className="w-10 h-10 rounded-xl bg-ios-border-subtle mb-3" />
-      <div className="h-3 w-20 bg-ios-border-subtle rounded mb-2" />
-      <div className="h-8 w-28 bg-ios-border-subtle rounded" />
-    </div>
-  );
-}
+import { Bone, KpiCardSkeleton } from "../_components/skeleton";
 
 async function KpiGrid() {
   const stats = await getDashboardStats();
@@ -98,7 +89,7 @@ export default function DashboardPage() {
 
       <Suspense fallback={
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}
+          {Array.from({ length: 10 }).map((_, i) => <KpiCardSkeleton key={i} />)}
         </div>
       }>
         <KpiGrid />
@@ -109,8 +100,8 @@ export default function DashboardPage() {
         <Suspense fallback={
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="glass-card p-5 rounded-3xl animate-pulse">
-                <div className="h-4 w-3/4 bg-ios-border-subtle rounded" />
+              <div key={i} className="glass-card p-5 rounded-3xl">
+                <Bone className="h-4 w-3/4" />
               </div>
             ))}
           </div>
@@ -123,10 +114,10 @@ export default function DashboardPage() {
         <h2 className="text-subtitle font-bold text-ios-foreground mb-4 tracking-tight">Performance Analytics</h2>
         <Suspense fallback={
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-            <div className="glass-card h-[400px] rounded-4xl animate-pulse" />
+            <div className="glass-card h-[400px] rounded-4xl" />
             <div className="grid grid-rows-2 gap-6">
-              <div className="glass-card rounded-4xl animate-pulse" />
-              <div className="glass-card rounded-4xl animate-pulse" />
+              <div className="glass-card rounded-4xl" />
+              <div className="glass-card rounded-4xl" />
             </div>
           </div>
         }>

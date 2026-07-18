@@ -6,6 +6,7 @@ import { BranchGridView } from "./_components/branch-grid";
 import { BranchLeaderboard } from "./_components/branch-leaderboard";
 import { BranchManagement } from "./_components/branch-management";
 import { BranchTabsSwitcher } from "./_components/branch-tabs-switcher";
+import { Bone } from "../../_components/skeleton";
 
 async function BranchPerformanceContent() {
   const branches = await getBranchPerformance();
@@ -110,13 +111,13 @@ export default async function BranchesPage(props: {
         key={tab + page + (search ?? "")}
         fallback={
           <div className="space-y-6">
-            <div className="glass-card p-6 rounded-3xl animate-pulse">
+            <div className="glass-card p-6 rounded-3xl">
               <div className="h-64 bg-ios-border-subtle rounded-xl" />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="glass-card p-6 rounded-3xl animate-pulse">
-                  <div className="h-4 w-24 bg-ios-border-subtle rounded mb-4" />
+                <div key={i} className="glass-card p-6 rounded-3xl">
+                  <Bone className="h-4 w-24 mb-4" />
                   <div className="space-y-3">
                     {Array.from({ length: 3 }).map((_, j) => <div key={j} className="h-12 bg-ios-border-subtle rounded-xl" />)}
                   </div>

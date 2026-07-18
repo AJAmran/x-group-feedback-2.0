@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getAnalyticsData } from "@/features/dashboard/actions";
 import { AnalyticsCharts } from "./_components/analytics-charts";
+import { Bone, ChartCardSkeleton } from "../../_components/skeleton";
 
 async function AnalyticsContent() {
   const data = await getAnalyticsData();
@@ -17,12 +18,7 @@ export default function AnalyticsPage() {
 
       <Suspense fallback={
         <div className="space-y-6">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="glass-card p-6 rounded-[1.5rem] animate-pulse">
-              <div className="h-4 w-32 bg-ios-border-subtle rounded mb-6" />
-              <div className="h-64 bg-ios-border-subtle rounded-xl" />
-            </div>
-          ))}
+          {Array.from({ length: 4 }).map((_, i) => <ChartCardSkeleton key={i} />)}
         </div>
       }>
         <AnalyticsContent />

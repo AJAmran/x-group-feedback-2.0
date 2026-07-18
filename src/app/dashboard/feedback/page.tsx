@@ -10,6 +10,7 @@ import { getFeedbackList, getBranchList, getFeedbackMetrics } from "@/features/d
 import { FeedbackTable } from "./_components/feedback-table";
 import { FeedbackFilters } from "./_components/feedback-filters";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { Bone, KpiCardSkeleton } from "../../_components/skeleton";
 
 async function RatingDistribution({ metrics }: { metrics: Awaited<ReturnType<typeof getFeedbackMetrics>> }) {
   const ratingLabels: Record<string, string> = {
@@ -150,24 +151,14 @@ async function FeedbackContent({
   );
 }
 
-function SkeletonKpi() {
-  return (
-    <div className="glass-card p-5 rounded-3xl animate-pulse">
-      <div className="w-10 h-10 rounded-xl bg-ios-border-subtle mb-3" />
-      <div className="h-3 w-20 bg-ios-border-subtle rounded mb-2" />
-      <div className="h-8 w-28 bg-ios-border-subtle rounded" />
-    </div>
-  );
-}
-
 function SkeletonRatingDist() {
   return (
-    <div className="glass-card rounded-3xl p-6 animate-pulse">
-      <div className="h-5 w-36 bg-ios-border-subtle rounded mb-5" />
+    <div className="glass-card rounded-3xl p-6">
+      <Bone className="h-5 w-36 mb-5" />
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="mb-4">
-          <div className="h-3 w-full bg-ios-border-subtle rounded mb-1.5" />
-          <div className="h-2 w-full bg-ios-border-subtle rounded" />
+          <Bone className="h-3 w-full mb-1.5" />
+          <Bone className="h-2 w-full" />
         </div>
       ))}
     </div>
@@ -177,10 +168,10 @@ function SkeletonRatingDist() {
 function SkeletonFiltersTable() {
   return (
     <div className="space-y-6">
-      <div className="glass-card p-4 rounded-3xl animate-pulse">
-        <div className="h-11 w-full bg-ios-border-subtle rounded-xl" />
+      <div className="glass-card p-4 rounded-3xl">
+        <Bone className="h-11 w-full" />
       </div>
-      <div className="glass-card rounded-3xl animate-pulse">
+      <div className="glass-card rounded-3xl">
         <div className="h-64 w-full bg-ios-border-subtle rounded-xl" />
       </div>
     </div>
@@ -200,7 +191,7 @@ export default function FeedbackPage(props: {
       <Suspense fallback={
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => <SkeletonKpi key={i} />)}
+            {Array.from({ length: 4 }).map((_, i) => <KpiCardSkeleton key={i} />)}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1"><SkeletonRatingDist /></div>

@@ -3,6 +3,7 @@ import { getReportMetrics } from "@/features/dashboard/actions";
 import { ReportClient } from "./report-client";
 import { MessageSquare, Star, CalendarCheck, TrendingUp } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { Bone, KpiCardSkeleton } from "../../_components/skeleton";
 
 async function ReportContent(props: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
@@ -28,15 +29,9 @@ function SkeletonSection() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="glass-card p-5 rounded-3xl animate-pulse">
-            <div className="w-10 h-10 rounded-xl bg-ios-border-subtle mb-3" />
-            <div className="h-3 w-20 bg-ios-border-subtle rounded mb-2" />
-            <div className="h-8 w-28 bg-ios-border-subtle rounded" />
-          </div>
-        ))}
+        {Array.from({ length: 4 }).map((_, i) => <KpiCardSkeleton key={i} />)}
       </div>
-      <div className="glass-card rounded-3xl animate-pulse">
+      <div className="glass-card rounded-3xl">
         <div className="h-64 w-full bg-ios-border-subtle rounded-xl" />
       </div>
     </div>

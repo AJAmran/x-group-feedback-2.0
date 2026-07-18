@@ -1,22 +1,15 @@
-import { redirect } from "next/navigation";
-import { getCurrentUserAction } from "@/features/auth/actions";
-import { DashboardLayoutClient } from "./dashboard-layout-client";
+import { Suspense } from "react";
+import AuthCheck from "./auth-check";
+import DashboardLoading from "./loading";
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUserAction();
-
-  // No session — redirect to login
-  if (!user) {
-    redirect("/login");
-  }
-
   return (
-    <DashboardLayoutClient role={user.role} userName={user.name} branchId={user.branchId}>
-      {children}
-    </DashboardLayoutClient>
+    <Suspense fallback={<DashboardLoading />}>
+      <AuthCheck>{children}</AuthCheck>
+    </Suspense>
   );
 }

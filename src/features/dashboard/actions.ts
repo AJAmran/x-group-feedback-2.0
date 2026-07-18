@@ -478,6 +478,46 @@ export async function getReportMetrics(dateFrom?: string, dateTo?: string) {
   }
 }
 
+export async function getBranchByIdAction(id: string | number): Promise<{
+  success: boolean;
+  data?: {
+    id: number;
+    name: string;
+    code: string;
+    address: string;
+    phone: string | null;
+    latitude: number;
+    longitude: number;
+    isActive: boolean;
+  };
+  error?: string;
+}> {
+  try {
+    const res = await authenticatedFetch(`/api/v1/branches/${id}`);
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      return { success: false, error: json.message || "Failed to fetch branch" };
+    }
+    const json = await res.json();
+    const b = json.data;
+    return {
+      success: true,
+      data: {
+        id: b.id,
+        name: b.name,
+        code: b.code,
+        address: b.address,
+        phone: b.phone,
+        latitude: b.latitude,
+        longitude: b.longitude,
+        isActive: b.isActive,
+      },
+    };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to fetch branch" };
+  }
+}
+
 export async function updateBranchAction(
   id: string | number,
   data: {

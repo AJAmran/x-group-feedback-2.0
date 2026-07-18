@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUserAction } from "@/features/auth/actions";
 import { getUsers } from "@/features/users/actions";
 import { UserTable } from "./_components/user-table";
+import { TableSkeleton } from "../../_components/skeleton";
 import type { UserRole } from "@/types";
 
 async function UsersContent(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
@@ -27,18 +28,7 @@ export default function UsersPage(props: { searchParams: Promise<{ [key: string]
         <p className="text-subtitle text-ios-foreground-muted mt-1">Create and manage admin and branch manager accounts</p>
       </div>
 
-      <Suspense fallback={
-        <div className="glass-card rounded-3xl overflow-hidden animate-pulse">
-          <div className="px-5 py-4 border-b border-ios-border-subtle">
-            <div className="h-4 w-32 bg-ios-border-subtle rounded" />
-          </div>
-          <div className="p-8 space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-12 bg-ios-border-subtle rounded-xl" />
-            ))}
-          </div>
-        </div>
-      }>
+      <Suspense fallback={<TableSkeleton rows={6} />}>
         <UsersContent searchParams={props.searchParams} />
       </Suspense>
     </div>
