@@ -111,9 +111,9 @@
   .dark {
     --background: 13% 0.025 274;
     --foreground: 95% 0.008 270;
-    --foreground-muted: 80% 0.012 270;
-    --foreground-subtle: 66% 0.012 270;
-    --foreground-faint: 62% 0.012 270;
+    --foreground-muted: 92% 0.010 270;
+    --foreground-subtle: 88% 0.008 270;
+    --foreground-faint: 85% 0.006 270;
 
     --ios-primary: 68% 0.1 272;
     --ios-secondary: 55% 0.07 272;
@@ -137,9 +137,9 @@
     :root:not(.light) {
       --background: 13% 0.025 274;
       --foreground: 95% 0.008 270;
-      --foreground-muted: 80% 0.012 270;
-      --foreground-subtle: 66% 0.012 270;
-      --foreground-faint: 62% 0.012 270;
+      --foreground-muted: 92% 0.010 270;
+      --foreground-subtle: 88% 0.008 270;
+      --foreground-faint: 85% 0.006 270;
       --ios-primary: 68% 0.1 272;
       --ios-secondary: 55% 0.07 272;
       --ios-accent: 78% 0.11 85;
