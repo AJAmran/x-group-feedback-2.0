@@ -73,6 +73,7 @@ export async function refreshAccessTokenAction(): Promise<string | null> {
         Cookie: `refreshToken=${refreshToken}`,
         "Content-Type": "application/json",
       },
+      cache: "no-store",
     });
 
     if (!res.ok) return null;
@@ -126,7 +127,7 @@ export async function authenticatedFetch(
     headers.set("Content-Type", "application/json");
   }
 
-  const firstRes = await fetch(url, { ...options, headers });
+  const firstRes = await fetch(url, { ...options, headers, cache: "no-store" });
 
   // Fast path: success or non-401 error
   if (firstRes.status !== 401) return firstRes;
@@ -142,7 +143,7 @@ export async function authenticatedFetch(
     retryHeaders.set("Content-Type", "application/json");
   }
 
-  const retryRes = await fetch(url, { ...options, headers: retryHeaders });
+  const retryRes = await fetch(url, { ...options, headers: retryHeaders, cache: "no-store" });
 
   // If the retry also fails with 401, the session is truly gone
   if (retryRes.status === 401) redirect("/login");

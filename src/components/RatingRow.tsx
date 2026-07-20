@@ -91,7 +91,7 @@ export const RatingRow: React.FC<RatingRowProps> = React.memo(
 
                 {isSelected && (
                   <motion.div
-                    layoutId={`underline-${category}`}
+                    layoutId={`underline-${groupId}-${category}`}
                     className="absolute left-0 right-0 bottom-0 h-[2.5px]"
                     style={{
                       background:

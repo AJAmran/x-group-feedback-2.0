@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -134,7 +134,7 @@ export function FeedbackTable({ data }: FeedbackTableProps) {
                   </td>
                   <td className="px-4 py-3.5">
                     <span className="text-caption text-ios-foreground-subtle font-medium">
-                      {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "�"}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-right">

@@ -70,9 +70,9 @@ export default async function FeedbackDetailPage({ params }: Props) {
                 <h1 className="text-title font-extrabold text-ios-foreground tracking-tight truncate">{details.guestName}</h1>
                 <p className="text-label text-ios-foreground-muted mt-0.5">{details.guestContact}</p>
               </div>
-              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-micro font-bold uppercase tracking-wider border shrink-0 ${RATING_BADGE[details.overallRating] || "bg-ios-border-subtle text-ios-foreground-subtle border-ios-border-subtle"}`}>
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-micro font-bold uppercase tracking-wider border shrink-0 ${(details.overallRating && RATING_BADGE[details.overallRating]) || "bg-ios-border-subtle text-ios-foreground-subtle border-ios-border-subtle"}`}>
                 <Star size={11} className="fill-current" />
-                {details.overallRating}
+                {details.overallRating ?? "—"}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3">
@@ -103,6 +103,7 @@ export default async function FeedbackDetailPage({ params }: Props) {
               <RatingBar label="Food" value={details.foodRating} />
               <RatingBar label="Service" value={details.serviceRating} />
               <RatingBar label="Environment" value={details.environmentRating} />
+              <RatingBar label="Event" value={details.eventRating} />
             </div>
           </div>
 

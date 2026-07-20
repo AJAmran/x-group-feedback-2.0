@@ -1,9 +1,10 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X, FileText, SlidersHorizontal } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { useFilterParams } from "@/hooks/useFilterParams";
 
 interface Branch {
   code: string;
@@ -15,38 +16,30 @@ interface FeedbackFiltersProps {
 }
 
 export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [branch, setBranch] = useState(searchParams.get("branch") || "");
-  const [rating, setRating] = useState(searchParams.get("rating") || "");
-  const [status, setStatus] = useState(searchParams.get("status") || "");
-  const [dateFrom, setDateFrom] = useState(searchParams.get("dateFrom") || "");
-  const [dateTo, setDateTo] = useState(searchParams.get("dateTo") || "");
+  const { filters, setFilter, clearFilters: clearUrlFilters, hasFilters: urlHasFilters, filterCount: urlFilterCount } = useFilterParams("/dashboard/feedback");
+  const [searchInput, setSearchInput] = useState(filters.search);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const updateFilter = useCallback((key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-    params.set("page", "1");
-    router.push(`/dashboard/feedback?${params.toString()}`);
-  }, [router, searchParams]);
+  useEffect(() => {
+    setSearchInput(filters.search);
+  }, [filters.search]);
+
+  const handleSearch = useCallback(() => {
+    setFilter("search", searchInput);
+  }, [setFilter, searchInput]);
+
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSearch();
+  }, [handleSearch]);
 
   const clearFilters = useCallback(() => {
-    setSearch("");
-    setBranch("");
-    setRating("");
-    setStatus("");
-    setDateFrom("");
-    setDateTo("");
-    router.push("/dashboard/feedback");
-  }, [router]);
+    setSearchInput("");
+    clearUrlFilters();
+  }, [clearUrlFilters]);
 
-  const hasFilters = search || branch || rating || status || dateFrom || dateTo;
-  const filterCount = [search, branch, rating, status, dateFrom, dateTo].filter(Boolean).length;
+  const hasFilters = urlHasFilters || searchInput !== filters.search;
+  const activeFilterCount = urlFilterCount + (filters.search ? 1 : 0);
 
   return (
     <div className="glass-card rounded-3xl">
@@ -54,11 +47,11 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
         <div className="flex items-center gap-2.5">
           <SlidersHorizontal size={15} className="text-ios-foreground-subtle" />
           <span className="text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Filters</span>
-          {hasFilters && (
-            <span className="text-micro font-bold text-ios-primary bg-ios-primary/10 px-2 py-0.5 rounded-full">{filterCount} active</span>
+          {urlHasFilters && (
+            <span className="text-micro font-bold text-ios-primary bg-ios-primary/10 px-2 py-0.5 rounded-full">{activeFilterCount} active</span>
           )}
         </div>
-        {hasFilters && (
+        {urlHasFilters && (
           <Button variant="ghost-red" size="sm" icon={X} onClick={clearFilters}>
             Clear all
           </Button>
@@ -66,21 +59,30 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
       </div>
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="relative flex-1 min-w-[180px]">
+          <div className="relative flex-1 min-w-[180px] flex items-center">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ios-foreground-faint" />
             <input
+              ref={inputRef}
               type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") updateFilter("search", search); }}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               placeholder="Search by name, contact, or comments..."
-              className="squircle-input w-full pl-9 h-10 text-caption"
+              className="squircle-input w-full pl-9 pr-16 h-10 text-caption"
             />
+            <Button 
+              variant="primary" 
+              size="sm" 
+              className="absolute right-1 h-8 px-3 text-[11px]"
+              onClick={handleSearch}
+            >
+              Search
+            </Button>
           </div>
 
           <select
-            value={branch}
-            onChange={(e) => { setBranch(e.target.value); updateFilter("branch", e.target.value); }}
+            value={filters.branch}
+            onChange={(e) => setFilter("branch", e.target.value)}
             className="squircle-input h-10 text-caption min-w-[140px]"
           >
             <option value="">All Branches</option>
@@ -90,8 +92,8 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
           </select>
 
           <select
-            value={rating}
-            onChange={(e) => { setRating(e.target.value); updateFilter("rating", e.target.value); }}
+            value={filters.rating}
+            onChange={(e) => setFilter("rating", e.target.value)}
             className="squircle-input h-10 text-caption min-w-[120px]"
           >
             <option value="">All Ratings</option>
@@ -101,29 +103,18 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
             <option value="POOR">Poor</option>
           </select>
 
-          <select
-            value={status}
-            onChange={(e) => { setStatus(e.target.value); updateFilter("status", e.target.value); }}
-            className="squircle-input h-10 text-caption min-w-[120px]"
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="reviewed">Reviewed</option>
-            <option value="flagged">Flagged</option>
-          </select>
-
           <div className="flex items-center gap-1.5">
             <input
               type="date"
-              value={dateFrom}
-              onChange={(e) => { setDateFrom(e.target.value); updateFilter("dateFrom", e.target.value); }}
+              value={filters.dateFrom}
+              onChange={(e) => setFilter("dateFrom", e.target.value)}
               className="squircle-input h-10 text-caption w-[130px]"
             />
             <span className="text-micro text-ios-foreground-faint">—</span>
             <input
               type="date"
-              value={dateTo}
-              onChange={(e) => { setDateTo(e.target.value); updateFilter("dateTo", e.target.value); }}
+              value={filters.dateTo}
+              onChange={(e) => setFilter("dateTo", e.target.value)}
               className="squircle-input h-10 text-caption w-[130px]"
             />
           </div>

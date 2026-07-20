@@ -93,26 +93,30 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
           <div className="mb-2">
             <h3 className="text-subtitle font-bold text-ios-foreground">Rating Distribution</h3>
           </div>
-          <div className="h-[140px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={distributionData} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <XAxis type="number" hide />
-                <YAxis 
-                  dataKey="name" 
-                  type="category" 
-                  axisLine={false} 
-                  tickLine={false}
-                  width={80}
-                  tick={{ fill: "var(--color-ios-foreground-subtle)", fontSize: 12 }}
-                />
-                <Tooltip cursor={{fill: 'var(--color-ios-border-subtle)', opacity: 0.4}} contentStyle={{ borderRadius: '12px' }} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={12}>
-                  {distributionData.map((entry) => (
-                    <Cell key={entry.name} fill={getRatingColor(entry.name)} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-[140px] w-full flex items-center justify-center">
+            {distributionData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={distributionData} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <XAxis type="number" hide />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    axisLine={false} 
+                    tickLine={false}
+                    width={80}
+                    tick={{ fill: "var(--color-ios-foreground-subtle)", fontSize: 12 }}
+                  />
+                  <Tooltip cursor={{fill: 'var(--color-ios-border-subtle)', opacity: 0.4}} contentStyle={{ borderRadius: '12px' }} />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={12}>
+                    {distributionData.map((entry) => (
+                      <Cell key={entry.name} fill={getRatingColor(entry.name)} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-caption text-ios-foreground-faint italic">No rating data available.</p>
+            )}
           </div>
         </div>
 
@@ -134,24 +138,30 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
             </div>
           </div>
           <div className="w-[120px] h-[120px] shrink-0 relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={sentimentData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={35}
-                  outerRadius={55}
-                  paddingAngle={5}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {sentimentData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={getSentimentColor(entry.key)} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
+            {sentimentData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={sentimentData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={35}
+                    outerRadius={55}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {sentimentData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getSentimentColor(entry.key)} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-micro text-ios-foreground-faint">No data</span>
+              </div>
+            )}
           </div>
         </div>
 

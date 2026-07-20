@@ -176,7 +176,7 @@ export function FeedbackForm({ initialBranches }: FeedbackFormProps) {
               transition={{ duration: 0.15 }}
               className="absolute left-0 right-0 z-50 mt-1.5 glass-card p-1.5 rounded-(--radius-ios-md) border border-ios-border shadow-lg origin-top"
             >
-              <ul role="listbox" aria-label="Select a branch" className="space-y-0.5 max-h-64 overflow-y-auto">
+              <ul role="listbox" aria-label="Select a branch" className="space-y-0.5 max-h-64 overflow-y-auto">{branchList.length === 0 && <li className="px-3 py-4 text-center text-caption text-ios-foreground-faint">No branches available</li>}
                 {branchList.map((branch) => (
                   <li key={branch.code}>
                     <button

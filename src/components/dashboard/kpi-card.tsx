@@ -18,7 +18,7 @@ export function KpiCard({ title, value, icon: Icon, trend, change, subtext }: Kp
           <Icon size={20} className="text-ios-primary" />
         </div>
         {trend && (
-          <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-micro font-bold uppercase tracking-wider
+          <div aria-label={`Trend: ${trend} ${change}`} className={`flex items-center gap-1 px-2 py-1 rounded-lg text-micro font-bold uppercase tracking-wider
             ${trend === "up" ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10" : ""}
             ${trend === "down" ? "text-red-600 dark:text-red-400 bg-red-500/10" : ""}
             ${trend === "neutral" ? "text-ios-foreground-subtle bg-ios-border-subtle" : ""}

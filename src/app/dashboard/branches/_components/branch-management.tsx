@@ -45,11 +45,13 @@ export function BranchManagement({ data }: { data: BranchesListData }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const currentUser = useDashboardUser();
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [toggling, setToggling] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Branch | null>(null);
   const [editing, setEditing] = useState<Branch | null>(null);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState("");
@@ -112,10 +114,10 @@ export function BranchManagement({ data }: { data: BranchesListData }) {
   };
 
   const handleDelete = async (branch: Branch) => {
-    if (!confirm(`Delete branch "${branch.name}"? This action cannot be undone.`)) return;
     setDeleting(branch.id);
     await deleteBranchAction(branch.id);
     setDeleting(null);
+    setConfirmDelete(null);
     router.refresh();
   };
 
@@ -257,6 +259,22 @@ export function BranchManagement({ data }: { data: BranchesListData }) {
       )}
 
       {/* Edit Branch Modal */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmDelete(null)} />
+          <div className="relative w-full max-w-sm glass-card p-6 rounded-3xl shadow-2xl">
+            <h2 className="text-subtitle font-bold text-ios-foreground mb-2">Delete Branch</h2>
+            <p className="text-caption text-ios-foreground-subtle mb-6">
+              Are you sure you want to delete "{confirmDelete.name}"? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setConfirmDelete(null)} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={() => handleDelete(confirmDelete)} loading={deleting === confirmDelete.id} className="flex-1 bg-red-500 hover:bg-red-600 text-white border-transparent">Delete</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEditing(null)} />
@@ -372,7 +390,7 @@ export function BranchManagement({ data }: { data: BranchesListData }) {
               {data.total} total
             </span>
           </div>
-          {useDashboardUser().role !== "BRANCH_MANAGER" && (
+          {currentUser.role !== "BRANCH_MANAGER" && (
             <Button variant="ghost" size="sm" icon={Plus} onClick={() => setShowCreate(true)}>New Branch</Button>
           )}
         </div>
@@ -443,10 +461,10 @@ export function BranchManagement({ data }: { data: BranchesListData }) {
                           title={branch.isActive ? "Deactivate" : "Activate"}
                         />
                         <Button variant="icon" onClick={() => openEdit(branch)} title="Edit branch" icon={Pencil} />
-                        {useDashboardUser().role !== "BRANCH_MANAGER" && (
+                        {currentUser.role !== "BRANCH_MANAGER" && (
                           <Button
                             variant="ghost-red"
-                            onClick={() => handleDelete(branch)}
+                            onClick={() => setConfirmDelete(branch)}
                             disabled={deleting === branch.id}
                             loading={deleting === branch.id}
                             icon={Trash2}

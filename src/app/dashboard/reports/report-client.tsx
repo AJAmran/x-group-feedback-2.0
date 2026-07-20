@@ -348,7 +348,7 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
                 filteredBranches.map((b) => {
                   const ratingLabel = numberToRating(
                     Math.round(b.averageRating),
-                  );
+                  ) ?? "AVERAGE";
                   return (
                     <tr
                       key={b.branchName}

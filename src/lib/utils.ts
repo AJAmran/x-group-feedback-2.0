@@ -5,13 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Converts a backend numeric rating (1–5) to a UI label string. */
-export function numberToRating(num: number): string {
+/** Converts a backend numeric rating (2–5) to a UI label string. Returns null for null/undefined/invalid. */
+export function numberToRating(num: number | null | undefined): string | null {
+  if (num == null) return null;
   if (num >= 5) return "EXCELLENT";
   if (num >= 4) return "GOOD";
   if (num >= 3) return "AVERAGE";
   if (num >= 2) return "POOR";
-  return "POOR";
+  return null;
 }
 
 /** Converts a numeric rating to a numeric value for bar widths etc. */

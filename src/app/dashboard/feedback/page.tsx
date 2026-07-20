@@ -12,6 +12,8 @@ import { FeedbackFilters } from "./_components/feedback-filters";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Bone, KpiCardSkeleton } from "../../_components/skeleton";
 
+export const dynamic = "force-dynamic";
+
 async function RatingDistribution({ metrics }: { metrics: Awaited<ReturnType<typeof getFeedbackMetrics>> }) {
   const ratingLabels: Record<string, string> = {
     EXCELLENT: "Excellent",
@@ -25,7 +27,6 @@ async function RatingDistribution({ metrics }: { metrics: Awaited<ReturnType<typ
     AVERAGE: "bg-amber-500",
     POOR: "bg-orange-500",
   };
-
 
   return (
     <div className="glass-card rounded-3xl p-6">
@@ -49,7 +50,7 @@ async function RatingDistribution({ metrics }: { metrics: Awaited<ReturnType<typ
 
       <div className="space-y-3">
         {metrics.distribution.map((d) => (
-          <div key={d.label} className="group">
+          <div key={d.rating} className="group">
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${ratingBgs[d.label]}`} />
@@ -84,7 +85,11 @@ async function FeedbackContent({
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
   const params = await searchParams;
-  const [data, branches, metrics] = await Promise.all([
+  const branches = await getBranchList();
+  const branchCode = params.branch;
+  const matchedBranch = branches.find((b) => b.code === branchCode || b.id === branchCode);
+  const branchId = matchedBranch?.id;
+  const [data, metrics] = await Promise.all([
     getFeedbackList({
       page: Number(params.page) || 1,
       pageSize: 20,
@@ -95,48 +100,51 @@ async function FeedbackContent({
       dateFrom: params.dateFrom,
       dateTo: params.dateTo,
     }),
-    getBranchList(),
-    getFeedbackMetrics(),
+    getFeedbackMetrics(params.dateFrom, params.dateTo, branchId),
   ]);
+
+  const filterKey = `${params.dateFrom || ""}|${params.dateTo || ""}|${params.branch || ""}|${params.rating || ""}|${params.status || ""}|${params.search || ""}|${params.page || "1"}`;
 
   return (
     <div className="space-y-6">
       {/* KPI Summary Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          title="Total Feedback"
-          value={metrics.totalFeedbacks}
-          icon={MessageSquare}
-          subtext="All time submissions"
-        />
-        <KpiCard
-          title="Average Rating"
-          value={metrics.averageRating.toFixed(1)}
-          icon={Star}
-          trend={metrics.averageRating >= 4 ? "up" : metrics.averageRating >= 3 ? "neutral" : "down"}
-          change={`${metrics.averageRating.toFixed(1)} / 5`}
-          subtext="Overall satisfaction"
-        />
-        <KpiCard
-          title="Net Satisfaction (NPS)"
-          value={metrics.nps.toFixed(0)}
-          icon={SmilePlus}
-          trend={metrics.nps >= 50 ? "up" : metrics.nps >= 0 ? "neutral" : "down"}
-          change={`${metrics.nps.toFixed(0)} pts`}
-          subtext="Net Promoter Score"
-        />
-        <KpiCard
-          title="Positive Rate"
-          value={`${metrics.positivePercentage}%`}
-          icon={ThumbsUp}
-          trend={metrics.positivePercentage >= 70 ? "up" : "down"}
-          change={`${metrics.positivePercentage}%`}
-          subtext="Rating 4 & 5"
-        />
+      <div key={`fb-kpi-${filterKey}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            title="Total Feedback"
+            value={metrics.totalFeedbacks}
+            icon={MessageSquare}
+            subtext="All time submissions"
+          />
+          <KpiCard
+            title="Average Rating"
+            value={metrics.averageRating.toFixed(1)}
+            icon={Star}
+            trend={metrics.averageRating >= 4 ? "up" : metrics.averageRating >= 3 ? "neutral" : "down"}
+            change={`${metrics.averageRating.toFixed(1)} / 5`}
+            subtext="Overall satisfaction"
+          />
+          <KpiCard
+            title="Net Satisfaction (NPS)"
+            value={metrics.nps.toFixed(0)}
+            icon={SmilePlus}
+            trend={metrics.nps >= 50 ? "up" : metrics.nps >= 0 ? "neutral" : "down"}
+            change={`${metrics.nps.toFixed(0)} pts`}
+            subtext="Net Promoter Score"
+          />
+          <KpiCard
+            title="Positive Rate"
+            value={`${metrics.positivePercentage}%`}
+            icon={ThumbsUp}
+            trend={metrics.positivePercentage >= 70 ? "up" : "down"}
+            change={`${metrics.positivePercentage}%`}
+            subtext="Rating 4 & 5"
+          />
+        </div>
       </div>
 
       {/* Rating Distribution + Filters side by side on large screens */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div key={`fb-main-${filterKey}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <RatingDistribution metrics={metrics} />
         </div>
