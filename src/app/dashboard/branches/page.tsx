@@ -87,10 +87,9 @@ async function BranchManagementContent({ page, search }: { page: number; search?
 export default async function BranchesPage(props: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
+  const params = await props.searchParams;
   const user = await getCurrentUserAction();
   if (user?.role === "BRANCH_MANAGER") redirect("/dashboard");
-
-  const params = await props.searchParams;
   const tab = params.tab === "management" ? "management" : "performance";
   const page = Number(params.page) || 1;
   const search = params.search;

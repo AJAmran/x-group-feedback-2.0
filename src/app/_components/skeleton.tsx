@@ -43,6 +43,19 @@ export function ChartCardSkeleton({ height = "h-64" }: { height?: string }) {
   );
 }
 
+export function PageSkeleton() {
+  return (
+    <div className="min-h-screen bg-ios-background flex items-center justify-center" aria-label="Loading dashboard…" aria-busy="true">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-ios-primary/10 flex items-center justify-center">
+          <div className="w-4 h-4 border-2 border-ios-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+        <p className="text-caption font-medium text-ios-foreground-subtle">Loading dashboard…</p>
+      </div>
+    </div>
+  );
+}
+
 export function CardSkeleton({ children }: { children?: React.ReactNode }) {
   return (
     <div className="glass-card p-5 rounded-3xl">

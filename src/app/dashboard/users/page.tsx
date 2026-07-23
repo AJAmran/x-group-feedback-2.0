@@ -7,15 +7,17 @@ import { TableSkeleton } from "../../_components/skeleton";
 import type { UserRole } from "@/types";
 
 async function UsersContent(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
-  const user = await getCurrentUserAction();
-  if (user?.role === "BRANCH_MANAGER") redirect("/dashboard");
   const params = await props.searchParams;
-  const data = await getUsers({
-    page: Number(params.page) || 1,
-    limit: 20,
-    search: params.search,
-    role: params.role as UserRole | undefined,
-  });
+  const [user, data] = await Promise.all([
+    getCurrentUserAction(),
+    getUsers({
+      page: Number(params.page) || 1,
+      limit: 20,
+      search: params.search,
+      role: params.role as UserRole | undefined,
+    }),
+  ]);
+  if (user?.role === "BRANCH_MANAGER") redirect("/dashboard");
 
   return <UserTable data={data} />;
 }

@@ -19,8 +19,6 @@ import { ChartsSection } from "./_components/charts-section";
 import { DashboardFilterBar } from "@/components/dashboard/dashboard-filter-bar";
 import { Bone, KpiCardSkeleton } from "../_components/skeleton";
 
-export const dynamic = "force-dynamic";
-
 interface BranchSummary {
   id: string;
   code: string;

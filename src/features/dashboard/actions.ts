@@ -1,5 +1,6 @@
 "use server";
 
+import { cache } from "react";
 import { authenticatedFetch, getCurrentUserAction } from "@/features/auth/actions";
 import { numberToRating } from "@/lib/utils";
 
@@ -9,8 +10,27 @@ interface DistributionItem {
   percentage: number;
 }
 
+const getCachedAnalytics = cache(async (dateFrom?: string, dateTo?: string, branchId?: string) => {
+  const query = new URLSearchParams();
+  if (dateFrom) query.set("startDate", dateFrom);
+  if (dateTo) query.set("endDate", dateTo);
+  if (branchId) query.set("branchId", branchId);
+  const qs = query.toString();
+  const res = await fetchApi(`/api/v1/analytics/dashboard${qs ? `?${qs}` : ""}`);
+  return res.data;
+});
+
+const getCachedAnalyticsSafe = cache(async (dateFrom?: string, dateTo?: string, branchId?: string) => {
+  try {
+    return await getCachedAnalytics(dateFrom, dateTo, branchId);
+  } catch {
+    return null;
+  }
+});
+
 interface FeedbackItem {
   id: string;
+  feedbackId?: string;
   branchId: string;
   overallRating: number;
   opinion?: string;
@@ -58,13 +78,8 @@ function computeSentiment(rating: number | null | undefined): string {
 
 export async function getDashboardStats(dateFrom?: string, dateTo?: string, branchId?: string) {
   try {
-    const query = new URLSearchParams();
-    if (dateFrom) query.set("startDate", dateFrom);
-    if (dateTo) query.set("endDate", dateTo);
-    if (branchId) query.set("branchId", branchId);
-    const qs = query.toString();
-    const res = await fetchApi(`/api/v1/analytics/dashboard${qs ? `?${qs}` : ""}`);
-    const data = res.data;
+    const data = await getCachedAnalyticsSafe(dateFrom, dateTo, branchId);
+    if (!data) throw new Error("No data");
 
     const totalFeedbacks = data?.totalFeedbacks ?? 0;
     const avgRating = data?.averageRating ?? 0;
@@ -72,9 +87,8 @@ export async function getDashboardStats(dateFrom?: string, dateTo?: string, bran
     const positivePct = sentiment.total > 0 ? Math.round((sentiment.positive / sentiment.total) * 100) : 0;
     const negativePct = sentiment.total > 0 ? Math.round((sentiment.negative / sentiment.total) * 100) : 0;
     
-    // Estimate today based on daily volume (match today's date string, e.g. "Jul 19")
     const daily = data?.daily || [];
-    const todayStr = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit" }).replace(/(\w{3})\s(\d{2})/, "$1 $2"); // Format match
+    const todayStr = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit" }).replace(/(\w{3})\s(\d{2})/, "$1 $2");
     const todayMatch = daily.find((d: any) => d.date === todayStr || d.date === new Date().toLocaleString('en-US', { month: 'short', day: 'numeric' }));
     const feedbackToday = todayMatch ? todayMatch.count : 0;
 
@@ -87,7 +101,7 @@ export async function getDashboardStats(dateFrom?: string, dateTo?: string, bran
       positiveFeedback: positivePct,
       negativeFeedback: negativePct,
       netSatisfactionScore: Math.round(positivePct - negativePct),
-      returningGuestPercentage: 0, // Not available in current API
+      returningGuestPercentage: 0,
       recommendationRate: positivePct,
       avgRatings: {
         food: data?.averages?.foodRating ?? 0,
@@ -150,7 +164,7 @@ export async function getFeedbackList(params: {
     return {
       items: items.map((f) => ({
         id: f.id,
-        feedbackId: String(f.id).substring(0, 8),
+        feedbackId: f.feedbackId || String(f.id).substring(0, 8),
         guestName: f.guestName || "Anonymous",
         branchCode: f.branch?.code ?? f.branchId,
         branchName: f.branch?.name || "Unknown Branch",
@@ -183,7 +197,7 @@ export async function getFeedbackDetail(id: string) {
     
     return {
       id: f.id,
-      feedbackId: String(f.id).substring(0, 8),
+      feedbackId: f.feedbackId || String(f.id).substring(0, 8),
       guestName: f.guestName || "Anonymous",
       guestContact: f.contact || "—",
       comments: f.opinion || null,
@@ -206,8 +220,8 @@ export async function getFeedbackDetail(id: string) {
 
 export async function getBranchPerformance() {
   try {
-    const res = await fetchApi("/api/v1/analytics/dashboard");
-    const data = res.data;
+    const data = await getCachedAnalyticsSafe();
+    if (!data) throw new Error("No data");
 
     return data?.branchReports?.map((b: any) => {
       return {
@@ -230,13 +244,8 @@ export async function getBranchPerformance() {
 
 export async function getAnalyticsData(dateFrom?: string, dateTo?: string, branchId?: string) {
   try {
-    const query = new URLSearchParams();
-    if (dateFrom) query.set("startDate", dateFrom);
-    if (dateTo) query.set("endDate", dateTo);
-    if (branchId) query.set("branchId", branchId);
-    const qs = query.toString();
-    const res = await fetchApi(`/api/v1/analytics/dashboard${qs ? `?${qs}` : ""}`);
-    const data = res.data;
+    const data = await getCachedAnalyticsSafe(dateFrom, dateTo, branchId);
+    if (!data) throw new Error("No data");
 
     return {
       trend: data?.trend?.length ? data.trend : [{ month: new Date().toISOString().slice(0, 7), avgRating: data?.averageRating || 0, count: data?.totalFeedbacks || 0 }],
@@ -269,13 +278,8 @@ export async function getAnalyticsData(dateFrom?: string, dateTo?: string, branc
 
 export async function getInsights(dateFrom?: string, dateTo?: string, branchId?: string) {
   try {
-    const query = new URLSearchParams();
-    if (dateFrom) query.set("startDate", dateFrom);
-    if (dateTo) query.set("endDate", dateTo);
-    if (branchId) query.set("branchId", branchId);
-    const qs = query.toString();
-    const res = await fetchApi(`/api/v1/analytics/dashboard${qs ? `?${qs}` : ""}`);
-    const data = res.data;
+    const data = await getCachedAnalyticsSafe(dateFrom, dateTo, branchId);
+    if (!data) throw new Error("No data");
     const avgRating = data?.averageRating || 0;
     
     if (avgRating >= 4.5) {
@@ -293,13 +297,8 @@ export async function getInsights(dateFrom?: string, dateTo?: string, branchId?:
 
 export async function getAlertsData(dateFrom?: string, dateTo?: string, branchId?: string) {
   try {
-    const query = new URLSearchParams();
-    if (dateFrom) query.set("startDate", dateFrom);
-    if (dateTo) query.set("endDate", dateTo);
-    if (branchId) query.set("branchId", branchId);
-    const qs = query.toString();
-    const res = await fetchApi(`/api/v1/analytics/dashboard${qs ? `?${qs}` : ""}`);
-    const data = res.data;
+    const data = await getCachedAnalyticsSafe(dateFrom, dateTo, branchId);
+    if (!data) throw new Error("No data");
     const branches = data?.branchReports || [];
     
     const alerts: any[] = [];
@@ -332,13 +331,8 @@ export async function getFeedbackMetrics(dateFrom?: string, dateTo?: string, bra
   distribution: { rating: number; label: string; count: number; percentage: number; color: string; icon: string }[];
 }> {
   try {
-    const query = new URLSearchParams();
-    if (dateFrom) query.set("startDate", dateFrom);
-    if (dateTo) query.set("endDate", dateTo);
-    if (branchId) query.set("branchId", branchId);
-    const qs = query.toString();
-    const res = await fetchApi(`/api/v1/analytics/dashboard${qs ? `?${qs}` : ""}`);
-    const data = res.data;
+    const data = await getCachedAnalyticsSafe(dateFrom, dateTo, branchId);
+    if (!data) throw new Error("No data");
     
     const totalFeedbacks = data?.totalFeedbacks ?? 0;
     const avgRating = data?.averageRating ?? 0;
@@ -442,15 +436,24 @@ export async function updateFeedbackStatus(_id: string, _status: string) {
   return { success: true };
 }
 
-export async function getReportData(dateFrom?: string, dateTo?: string) {
+export async function getReportData(params: {
+  dateFrom?: string;
+  dateTo?: string;
+  branch?: string;
+  rating?: string;
+  search?: string;
+}) {
   try {
     const user = await getCurrentUserAction();
     const isManager = user?.role === "BRANCH_MANAGER";
     const managerBranchId = isManager ? String(user!.branchId) : null;
 
     const query = new URLSearchParams({ limit: "1000" });
-    if (dateFrom) query.set("startDate", dateFrom);
-    if (dateTo) query.set("endDate", dateTo);
+    if (params.dateFrom) query.set("startDate", params.dateFrom);
+    if (params.dateTo) query.set("endDate", params.dateTo);
+    if (params.branch && !managerBranchId) query.set("branchId", params.branch);
+    if (params.rating) query.set("rating", RATING_LABEL_TO_INT[params.rating] ?? params.rating);
+    if (params.search) query.set("search", params.search);
 
     const [feedbackRes, branchRes] = await Promise.all([
       fetchApi(`/api/v1/feedbacks?${query.toString()}`),
@@ -460,15 +463,15 @@ export async function getReportData(dateFrom?: string, dateTo?: string) {
     const { items: allFeedbacks } = unwrapPaginated<FeedbackItem>(feedbackRes);
     const { items: branches } = unwrapPaginated<BranchItem>(branchRes);
 
-    const filteredFeedbacks = managerBranchId
+    const feedbacks = isManager
       ? allFeedbacks.filter((f) => f.branchId === managerBranchId)
       : allFeedbacks;
-    const filteredBranches = managerBranchId
+    const filteredBranches = isManager
       ? branches.filter((b) => b.id === managerBranchId)
       : branches;
 
     return filteredBranches.map((b) => {
-      const bFeedbacks = filteredFeedbacks.filter((f) => f.branchId === b.id);
+      const bFeedbacks = feedbacks.filter((f) => f.branchId === b.id);
       const total = bFeedbacks.length;
       const avg = total ? parseFloat((bFeedbacks.reduce((s, f) => s + f.overallRating, 0) / total).toFixed(1)) : 0;
 
@@ -489,12 +492,8 @@ export async function getReportData(dateFrom?: string, dateTo?: string) {
 
 export async function getReportMetrics(dateFrom?: string, dateTo?: string) {
   try {
-    const query = new URLSearchParams();
-    if (dateFrom) query.set("startDate", dateFrom);
-    if (dateTo) query.set("endDate", dateTo);
-
-    const res = await fetchApi(`/api/v1/analytics/dashboard?${query.toString()}`);
-    const data = res.data;
+    const data = await getCachedAnalyticsSafe(dateFrom, dateTo);
+    if (!data) throw new Error("No data");
 
     const totalFeedbacks = data?.totalFeedbacks ?? 0;
     const avgRating = data?.averageRating ?? 0;

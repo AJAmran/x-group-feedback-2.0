@@ -8,14 +8,20 @@ export default async function ReportPage({
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
   const params = await searchParams;
-  const data = await getReportData(params.dateFrom, params.dateTo);
+  const data = await getReportData({
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+    branch: params.branch,
+    rating: params.rating,
+    search: params.search,
+  });
 
   return (
     <Suspense fallback={<div className="p-8 text-center">Loading Report...</div>}>
-      <ReportView 
-        data={data} 
-        dateFrom={params.dateFrom} 
-        dateTo={params.dateTo} 
+      <ReportView
+        data={data}
+        dateFrom={params.dateFrom}
+        dateTo={params.dateTo}
       />
     </Suspense>
   );

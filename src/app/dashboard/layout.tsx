@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import AuthCheck from "./auth-check";
-import DashboardLoading from "./loading";
+import { PageSkeleton } from "../_components/skeleton";
 
 export default function DashboardLayout({
   children,
@@ -8,7 +8,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Suspense fallback={<DashboardLoading />}>
+    <Suspense fallback={<PageSkeleton />}>
       <AuthCheck>{children}</AuthCheck>
     </Suspense>
   );

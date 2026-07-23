@@ -125,7 +125,8 @@ export async function submitFeedback(
     const overallRating = toRatingInt(data.ratings?.OVERALL);
     const contact: string = data.guest?.contact?.trim() || "";
 
-    const payload = {
+    const payload: Record<string, unknown> = {
+      feedbackId: data.feedbackId || undefined,
       guestName: data.guest?.name || "Anonymous",
       contact: contact || "Anonymous",
       branchId,

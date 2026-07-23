@@ -2,9 +2,7 @@ import { Suspense } from "react";
 import { getAnalyticsData, getBranchList } from "@/features/dashboard/actions";
 import { AnalyticsCharts } from "./_components/analytics-charts";
 import { DashboardFilterBar } from "@/components/dashboard/dashboard-filter-bar";
-import { Bone, ChartCardSkeleton } from "../../_components/skeleton";
-
-export const dynamic = "force-dynamic";
+import { ChartCardSkeleton } from "../../_components/skeleton";
 
 function resolveBranchId(branchCode: string | undefined, branches: { id: string; code: string; name: string }[]): string | undefined {
   if (!branchCode) return undefined;

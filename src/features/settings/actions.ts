@@ -1,6 +1,6 @@
 "use server";
 
-import { authenticatedFetch } from "@/features/auth/actions";
+import { authenticatedFetch, getCurrentUserAction } from "@/features/auth/actions";
 
 export async function getSettingsAction(): Promise<Record<string, string>> {
   try {
@@ -17,7 +17,6 @@ export async function updateSettingsAction(
   settings: Record<string, string>,
 ): Promise<{ success: boolean; data?: Record<string, string>; error?: string }> {
   try {
-    const { getCurrentUserAction } = await import("@/features/auth/actions");
     const user = await getCurrentUserAction();
     if (user?.role === "BRANCH_MANAGER") {
       return { success: false, error: "Branch managers cannot update settings" };

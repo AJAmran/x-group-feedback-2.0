@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { z } from "zod";
 import type { User } from "@/types";
 
@@ -232,8 +233,10 @@ export async function logoutAction() {
 /**
  * Fetches the current authenticated user from the backend.
  * Returns null if no valid session exists.
+ * Uses React cache() to deduplicate calls within the same request scope,
+ * eliminating redundant API calls when called from layout + page + actions.
  */
-export async function getCurrentUserAction(): Promise<User | null> {
+const getCachedUser = cache(async (): Promise<User | null> => {
   try {
     const res = await authenticatedFetch("/api/v1/auth/me");
     if (!res.ok) return null;
@@ -242,6 +245,10 @@ export async function getCurrentUserAction(): Promise<User | null> {
   } catch {
     return null;
   }
+});
+
+export async function getCurrentUserAction(): Promise<User | null> {
+  return getCachedUser();
 }
 
 export async function changePasswordAction(

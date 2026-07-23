@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import * as XLSX from "xlsx";
 import { format } from "date-fns";
 import {
   Download,
@@ -62,12 +61,13 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
   const [search, setSearch] = useState("");
   const [exporting, setExporting] = useState(false);
 
-  // Local date state initialised from search params
   const [localFrom, setLocalFrom] = useState(dateFrom || "");
   const [localTo, setLocalTo] = useState(dateTo || "");
 
-  const filteredBranches = data.branchReports.filter((b) =>
-    b.branchName.toLowerCase().includes(search.toLowerCase()),
+  const filteredBranches = useMemo(() =>
+    data.branchReports.filter((b) =>
+      b.branchName.toLowerCase().includes(search.toLowerCase()),
+    ), [data.branchReports, search],
   );
 
   const applyDateFilter = useCallback(() => {
@@ -78,7 +78,8 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
     router.push(`/dashboard/reports${qs ? `?${qs}` : ""}`);
   }, [localFrom, localTo, router]);
 
-  const handleExportExcel = () => {
+  const handleExportExcel = useCallback(async () => {
+    const XLSX = await import("xlsx");
     const rows = filteredBranches.map((b) => ({
       Branch: b.branchName,
       "Total Feedback": b.totalFeedback,
@@ -93,9 +94,10 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
       wb,
       `Branch_Report_${format(new Date(), "yyyy-MM-dd")}.xlsx`,
     );
-  };
+  }, [filteredBranches]);
 
-  const handleExportCSV = () => {
+  const handleExportCSV = useCallback(async () => {
+    const XLSX = await import("xlsx");
     const rows = filteredBranches.map((b) => ({
       Branch: b.branchName,
       "Total Feedback": b.totalFeedback,
@@ -110,7 +112,7 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
     link.href = URL.createObjectURL(blob);
     link.download = `Branch_Report_${format(new Date(), "yyyy-MM-dd")}.csv`;
     link.click();
-  };
+  }, [filteredBranches]);
 
   const handleBackendExport = async () => {
     setExporting(true);
@@ -135,10 +137,10 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
     window.print();
   };
 
-  const distTotal = Object.values(data.ratingDistribution).reduce(
+  const distTotal = useMemo(() => Object.values(data.ratingDistribution).reduce(
     (s, v) => s + v,
     0,
-  );
+  ), [data.ratingDistribution]);
 
   return (
     <div className="space-y-6">

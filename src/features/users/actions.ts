@@ -1,6 +1,6 @@
 "use server";
 
-import { authenticatedFetch } from "@/features/auth/actions";
+import { authenticatedFetch, getCurrentUserAction } from "@/features/auth/actions";
 import type { User, UserRole } from "@/types";
 
 export interface UsersListResult {
@@ -41,7 +41,6 @@ export async function getUsers(params?: {
 }
 
 async function assertNotManager(): Promise<string | null> {
-  const { getCurrentUserAction } = await import("@/features/auth/actions");
   const user = await getCurrentUserAction();
   if (user?.role === "BRANCH_MANAGER") return "Branch managers cannot perform this action";
   return null;

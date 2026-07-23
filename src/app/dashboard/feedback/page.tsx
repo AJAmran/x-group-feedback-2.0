@@ -12,8 +12,6 @@ import { FeedbackFilters } from "./_components/feedback-filters";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Bone, KpiCardSkeleton } from "../../_components/skeleton";
 
-export const dynamic = "force-dynamic";
-
 async function RatingDistribution({ metrics }: { metrics: Awaited<ReturnType<typeof getFeedbackMetrics>> }) {
   const ratingLabels: Record<string, string> = {
     EXCELLENT: "Excellent",
