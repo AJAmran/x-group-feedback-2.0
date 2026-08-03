@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import {
   MessageSquare,
   TrendingUp,
@@ -10,8 +11,11 @@ import {
   SmilePlus,
   Users,
   Award,
+  Clock,
+  ClipboardList,
+  PackageCheck,
 } from "lucide-react";
-import { getDashboardStats, getInsights, getAlertsData, getAnalyticsData, getBranchList } from "@/features/dashboard/actions";
+import { getDashboardStats, getInsights, getAlertsData, getAnalyticsData, getBranchList, getOperationalWidgets } from "@/features/dashboard/actions";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { InsightCard } from "./_components/insight-card";
 import { AlertCard } from "./_components/alert-card";
@@ -51,6 +55,51 @@ async function KpiGrid({ dateFrom, dateTo, branchId }: { dateFrom?: string; date
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       {cards.map((card) => (
         <KpiCard key={card.title} {...card} />
+      ))}
+    </div>
+  );
+}
+
+async function OperationalSection() {
+  const widgets = await getOperationalWidgets();
+
+  const cards = [
+    {
+      title: "Pending Approvals",
+      value: widgets.pendingApprovals.total,
+      icon: Clock,
+      subtext: `${widgets.pendingApprovals.discounts} discounts · ${widgets.pendingApprovals.entertainments} entertainment`,
+      href: "/dashboard/guest-offers",
+    },
+    {
+      title: "Manager Reports Today",
+      value: widgets.managerReportsSubmittedToday,
+      icon: ClipboardList,
+      subtext: "submitted today",
+      href: "/dashboard/manager-report",
+    },
+    {
+      title: "Inventory This Month",
+      value: widgets.inventoryThisMonth.branchesWithStatement,
+      icon: PackageCheck,
+      subtext: `${widgets.inventoryThisMonth.submitted} submitted · ${widgets.inventoryThisMonth.draft} draft`,
+      href: "/dashboard/inventory",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {cards.map((card) => (
+        <Link key={card.title} href={card.href}>
+          <div className="glass-card p-5 rounded-3xl hover:bg-ios-border-subtle/50 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">{card.title}</span>
+              <card.icon size={18} className="text-ios-primary" />
+            </div>
+            <p className="text-display font-extrabold text-ios-foreground">{card.value}</p>
+            <p className="text-caption text-ios-foreground-subtle mt-1">{card.subtext}</p>
+          </div>
+        </Link>
       ))}
     </div>
   );
@@ -121,6 +170,19 @@ async function OverviewContent({
       }>
         <KpiGrid dateFrom={dateFrom} dateTo={dateTo} branchId={branchId} />
       </Suspense>
+
+      <div className="mt-8">
+        <h2 className="text-subtitle font-bold text-ios-foreground mb-4 tracking-tight">Daily Operations</h2>
+        <Suspense fallback={
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="glass-card h-32 rounded-3xl" />
+            ))}
+          </div>
+        }>
+          <OperationalSection />
+        </Suspense>
+      </div>
 
       <div className="mt-8">
         <h2 className="text-subtitle font-bold text-ios-foreground mb-4 tracking-tight">Intelligence & Insights</h2>

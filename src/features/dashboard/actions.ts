@@ -665,6 +665,27 @@ export async function toggleBranchStatusAction(id: string | number, isActive: bo
   }
 }
 
+export interface OperationalWidgets {
+  pendingApprovals: { total: number; discounts: number; entertainments: number };
+  managerReportsSubmittedToday: number;
+  inventoryThisMonth: { submitted: number; draft: number; branchesWithStatement: number };
+}
+
+export async function getOperationalWidgets(): Promise<OperationalWidgets> {
+  try {
+    const res = await fetchApi("/api/v1/dashboard/operational-widgets");
+    const data = res.data as OperationalWidgets | undefined;
+    if (!data) throw new Error("No data");
+    return data;
+  } catch {
+    return {
+      pendingApprovals: { total: 0, discounts: 0, entertainments: 0 },
+      managerReportsSubmittedToday: 0,
+      inventoryThisMonth: { submitted: 0, draft: 0, branchesWithStatement: 0 },
+    };
+  }
+}
+
 export async function deleteBranchAction(id: string | number): Promise<{ success: boolean; error?: string }> {
   try {
     const user = await getCurrentUserAction();
