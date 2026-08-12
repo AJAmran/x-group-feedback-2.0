@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
@@ -11,11 +11,14 @@ import {
   ThumbsUp,
   ThumbsDown,
   Star,
-  Search,
   Database,
   Calendar,
   RefreshCw,
 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { TextInput } from "@/components/ui/TextInput";
+import { SearchInput } from "@/components/dashboard/search-input";
+import { Table, THead, THeadRow, TH, TD, TR, TableEmpty } from "@/components/dashboard/table";
 import { numberToRating } from "@/lib/utils";
 
 interface BranchReport {
@@ -57,7 +60,6 @@ interface ReportClientProps {
 
 export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
   const router = useRouter();
-  const tableRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState("");
   const [exporting, setExporting] = useState(false);
 
@@ -157,37 +159,31 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
             <label className="text-caption font-semibold text-ios-foreground-muted">
               From
             </label>
-            <input
+            <TextInput
               type="date"
               value={localFrom}
               onChange={(e) => setLocalFrom(e.target.value)}
-              className="squircle-input h-10 px-3"
+              className="h-10 px-3"
             />
           </div>
           <div className="space-y-1">
             <label className="text-caption font-semibold text-ios-foreground-muted">
               To
             </label>
-            <input
+            <TextInput
               type="date"
               value={localTo}
               onChange={(e) => setLocalTo(e.target.value)}
-              className="squircle-input h-10 px-3"
+              className="h-10 px-3"
             />
           </div>
-          <button
-            onClick={applyDateFilter}
-            className="flex items-center gap-1.5 h-10 px-4 rounded-xl bg-ios-primary/10 text-ios-primary text-micro font-bold hover:bg-ios-primary/20 transition-colors"
-          >
-            <RefreshCw size={13} /> Apply
-          </button>
+          <Button variant="ghost" size="sm" icon={RefreshCw} onClick={applyDateFilter}>
+            Apply
+          </Button>
           {(dateFrom || dateTo) && (
-            <button
-              onClick={() => router.push("/dashboard/reports")}
-              className="flex items-center gap-1.5 h-10 px-4 rounded-xl border border-ios-border-subtle text-ios-foreground-subtle text-micro font-bold hover:bg-ios-border-subtle transition-colors"
-            >
+            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard/reports")}>
               Clear
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -200,7 +196,7 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
             Rating Distribution
           </span>
         </div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {[
             {
               label: "Excellent",
@@ -257,7 +253,7 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
 
       {/* Branch Report Table */}
       <div className="glass-card rounded-3xl overflow-hidden print:border print:border-gray-300">
-        <div className="px-5 py-3.5 border-b border-ios-border-subtle flex items-center justify-between print:hidden">
+        <div className="px-5 py-3.5 border-b border-ios-border-subtle flex items-center justify-between gap-3 flex-wrap print:hidden">
           <div className="flex items-center gap-2.5">
             <BarChart3 size={15} className="text-ios-foreground-subtle" />
             <span className="text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">
@@ -267,106 +263,64 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
               {filteredBranches.length} branches
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search
-                size={13}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ios-foreground-faint"
-              />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Filter branches..."
-                className="squircle-input h-8 text-caption pl-8 w-40 py-0"
-              />
-            </div>
-            <button
-              onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-ios-primary/10 text-ios-primary text-micro font-bold hover:bg-ios-primary/20 transition-colors"
-            >
-              <FileDown size={13} /> CSV
-            </button>
-            <button
-              onClick={handleExportExcel}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-micro font-bold hover:bg-emerald-500/20 transition-colors"
-            >
-              <Download size={13} /> Excel
-            </button>
-            <button
-              onClick={handleBackendExport}
-              disabled={exporting}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-ios-primary/10 text-ios-primary text-micro font-bold hover:bg-ios-primary/20 transition-colors disabled:opacity-50"
-            >
-              <Database size={13} />{" "}
-              {exporting ? "Exporting..." : "Export (Server)"}
-            </button>
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-ios-primary/10 text-ios-primary text-micro font-bold hover:bg-ios-primary/20 transition-colors"
-            >
-              <Printer size={13} /> Print
-            </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Filter branches..."
+              className="w-40"
+            />
+            <Button variant="ghost" size="sm" icon={FileDown} onClick={handleExportCSV}>
+              CSV
+            </Button>
+            <Button variant="ghost-green" size="sm" icon={Download} onClick={handleExportExcel}>
+              Excel
+            </Button>
+            <Button variant="ghost" size="sm" icon={Database} loading={exporting} onClick={handleBackendExport}>
+              Export (Server)
+            </Button>
+            <Button variant="ghost" size="sm" icon={Printer} onClick={handlePrint}>
+              Print
+            </Button>
           </div>
         </div>
 
-        <div className="overflow-x-auto" ref={tableRef}>
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-ios-border-subtle">
-                <th className="text-left px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">
-                  Branch
-                </th>
-                <th className="text-center px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">
-                  Feedback
-                </th>
-                <th className="text-center px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">
-                  Avg Rating
-                </th>
-                <th className="text-center px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">
-                  Positive
-                </th>
-                <th className="text-center px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">
-                  Negative
-                </th>
-                <th className="text-center px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">
-                  Bar
-                </th>
-              </tr>
-            </thead>
+        <Table>
+          <THead>
+              <THeadRow>
+                <TH>Branch</TH>
+                <TH align="center">Feedback</TH>
+                <TH align="center">Avg Rating</TH>
+                <TH align="center">Positive</TH>
+                <TH align="center">Negative</TH>
+                <TH align="center">Bar</TH>
+              </THeadRow>
+            </THead>
             <tbody>
               {filteredBranches.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="text-center py-12 text-caption text-ios-foreground-faint"
-                  >
-                    {search
-                      ? "No branches match your search"
-                      : "No feedback data available"}
-                  </td>
-                </tr>
+                <TableEmpty
+                  colSpan={6}
+                  icon={BarChart3}
+                  title={search ? "No branches match your search" : "No feedback data available"}
+                />
               ) : (
                 filteredBranches.map((b) => {
                   const ratingLabel = numberToRating(
                     Math.round(b.averageRating),
                   ) ?? "AVERAGE";
                   return (
-                    <tr
-                      key={b.branchName}
-                      className="border-b border-ios-border-subtle last:border-0 hover:bg-ios-border-subtle/50 transition-colors"
-                    >
-                      <td className="px-4 py-3.5">
+                    <TR key={b.branchName}>
+                      <TD>
                         <span className="text-label font-semibold text-ios-foreground">
                           {b.branchName}
                         </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
+                      </TD>
+                      <TD align="center">
                         <span className="text-label font-bold text-ios-foreground">
                           {b.totalFeedback}
                         </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
+                      </TD>
+                      <TD align="center">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-lg text-micro font-bold uppercase tracking-wider border ${
                             RATING_STYLES[ratingLabel] ||
@@ -376,18 +330,18 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
                           <Star size={10} className="fill-current mr-1" />
                           {b.averageRating.toFixed(1)}
                         </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
+                      </TD>
+                      <TD align="center">
                         <span className="inline-flex items-center gap-1 text-micro font-bold text-emerald-600 dark:text-emerald-400">
                           <ThumbsUp size={12} /> {b.positivePercentage}%
                         </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
+                      </TD>
+                      <TD align="center">
                         <span className="inline-flex items-center gap-1 text-micro font-bold text-red-600 dark:text-red-400">
                           <ThumbsDown size={12} /> {b.negativePercentage}%
                         </span>
-                      </td>
-                      <td className="px-4 py-3.5">
+                      </TD>
+                      <TD align="center">
                         <div className="flex items-center gap-1 h-4">
                           <div
                             className="h-full rounded-full bg-emerald-500"
@@ -398,14 +352,13 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
                             style={{ width: `${b.negativePercentage}%` }}
                           />
                         </div>
-                      </td>
-                    </tr>
+                      </TD>
+                    </TR>
                   );
                 })
               )}
             </tbody>
-          </table>
-        </div>
+          </Table>
 
         <div className="px-5 py-2.5 border-t border-ios-border-subtle flex items-center justify-between text-caption text-ios-foreground-faint print:hidden">
           <span>

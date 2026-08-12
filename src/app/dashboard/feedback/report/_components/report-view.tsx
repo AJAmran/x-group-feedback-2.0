@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Download, FileDown, Printer, FileText } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { format } from "date-fns";
 
 interface BranchReportRow {
@@ -16,6 +18,18 @@ interface ReportViewProps {
 }
 
 export function ReportView({ data, dateFrom, dateTo }: ReportViewProps) {
+  const [exporting, setExporting] = useState<"csv" | "excel" | "pdf" | null>(null);
+
+  const runExport = async <T,>(kind: "csv" | "excel" | "pdf", fn: () => Promise<T> | T) => {
+    if (exporting) return;
+    setExporting(kind);
+    try {
+      await fn();
+    } finally {
+      setExporting(null);
+    }
+  };
+
   const formatRange = () => {
     if (dateFrom && dateTo) {
       return `${format(new Date(dateFrom), "dd MMM")} - ${format(new Date(dateTo), "dd MMM, yyyy")}`;
@@ -104,18 +118,45 @@ export function ReportView({ data, dateFrom, dateTo }: ReportViewProps) {
           <p className="text-caption text-ios-foreground-subtle">{data.length} branches • {formatRange()}</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={handleExportCSV} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-ios-border-subtle text-ios-foreground-subtle text-caption font-bold hover:bg-ios-border-subtle transition-colors">
-            <FileDown size={14} /> CSV
-          </button>
-          <button onClick={handleExportExcel} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-caption font-bold hover:bg-emerald-500/20 transition-colors">
-            <Download size={14} /> Excel
-          </button>
-          <button onClick={handleExportPDF} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-caption font-bold hover:bg-red-500/20 transition-colors">
-            <FileText size={14} /> PDF
-          </button>
-          <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-ios-primary/10 text-ios-primary text-caption font-bold hover:bg-ios-primary/20 transition-colors">
-            <Printer size={14} /> Print
-          </button>
+          <Button
+            variant="outline"
+            size="sm"
+            icon={FileDown}
+            loading={exporting === "csv"}
+            disabled={exporting != null}
+            onClick={() => void runExport("csv", handleExportCSV)}
+          >
+            CSV
+          </Button>
+          <Button
+            variant="ghost-green"
+            size="sm"
+            icon={Download}
+            loading={exporting === "excel"}
+            disabled={exporting != null}
+            onClick={() => void runExport("excel", handleExportExcel)}
+          >
+            Excel
+          </Button>
+          <Button
+            variant="ghost-danger"
+            size="sm"
+            icon={FileText}
+            loading={exporting === "pdf"}
+            disabled={exporting != null}
+            onClick={() => void runExport("pdf", handleExportPDF)}
+          >
+            PDF
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={Printer}
+            disabled={exporting != null}
+            onClick={handlePrint}
+          >
+            Print
+          </Button>
         </div>
       </div>
 

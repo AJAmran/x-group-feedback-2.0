@@ -1,7 +1,9 @@
 import { Suspense } from "react";
+import { BarChart3 } from "lucide-react";
 import { getAnalyticsData, getBranchList } from "@/features/dashboard/actions";
 import { AnalyticsCharts } from "./_components/analytics-charts";
 import { DashboardFilterBar } from "@/components/dashboard/dashboard-filter-bar";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { ChartCardSkeleton } from "../../_components/skeleton";
 
 function resolveBranchId(branchCode: string | undefined, branches: { id: string; code: string; name: string }[]): string | undefined {
@@ -26,10 +28,11 @@ async function AnalyticsContent({
 
   return (
     <div className="space-y-6 pb-8">
-      <div>
-        <h1 className="text-display font-extrabold text-ios-foreground tracking-tight">Analytics</h1>
-        <p className="text-subtitle text-ios-foreground-muted mt-1">Advanced feedback analytics and performance metrics</p>
-      </div>
+      <PageHeader
+        icon={BarChart3}
+        title="Analytics"
+        description="Advanced feedback analytics and performance metrics"
+      />
 
       <DashboardFilterBar branches={branches} basePath="/dashboard/analytics" />
 
@@ -46,10 +49,11 @@ export default function AnalyticsPage(props: {
   return (
     <Suspense fallback={
       <div className="space-y-6 pb-8">
-        <div>
-          <h1 className="text-display font-extrabold text-ios-foreground tracking-tight">Analytics</h1>
-          <p className="text-subtitle text-ios-foreground-muted mt-1">Advanced feedback analytics and performance metrics</p>
-        </div>
+        <PageHeader
+          icon={BarChart3}
+          title="Analytics"
+          description="Advanced feedback analytics and performance metrics"
+        />
         <div className="space-y-6">
           {Array.from({ length: 4 }).map((_, i) => <ChartCardSkeleton key={i} />)}
         </div>

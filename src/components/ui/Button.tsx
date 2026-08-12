@@ -2,7 +2,17 @@
 
 import { Loader2 } from "lucide-react";
 
-type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "ghost-green" | "ghost-red" | "outline" | "icon";
+type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "danger"
+  | "ghost"
+  | "ghost-green"
+  | "ghost-red"
+  | "ghost-danger"
+  | "outline"
+  | "icon"
+  | "icon-danger";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -20,8 +30,10 @@ const variantStyles: Record<ButtonVariant, string> = {
   ghost: "bg-ios-primary/10 text-ios-primary hover:bg-ios-primary/20 transition-colors",
   "ghost-green": "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors",
   "ghost-red": "text-ios-foreground-subtle hover:text-red-500 hover:bg-red-500/10 transition-colors",
+  "ghost-danger": "bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 transition-colors",
   outline: "border border-ios-border-subtle text-ios-foreground-subtle hover:bg-ios-border-subtle transition-colors",
   icon: "rounded-lg hover:bg-ios-border-subtle text-ios-foreground-subtle transition-colors",
+  "icon-danger": "rounded-lg hover:bg-red-500/10 text-ios-foreground-subtle hover:text-red-500 transition-colors",
 };
 
 const sizeStyles: Record<ButtonVariant, Record<ButtonSize, string>> = {
@@ -31,8 +43,10 @@ const sizeStyles: Record<ButtonVariant, Record<ButtonSize, string>> = {
   ghost: { sm: "px-2.5 py-1.5 text-micro rounded-lg", md: "px-3.5 py-2 text-caption rounded-xl", lg: "px-5 py-2.5 text-label rounded-xl" },
   "ghost-green": { sm: "px-2.5 py-1.5 text-micro rounded-lg", md: "px-3.5 py-2 text-caption rounded-xl", lg: "px-5 py-2.5 text-label rounded-xl" },
   "ghost-red": { sm: "px-2.5 py-1.5 text-micro rounded-lg", md: "px-3.5 py-2 text-caption rounded-xl", lg: "px-5 py-2.5 text-label rounded-xl" },
+  "ghost-danger": { sm: "px-2.5 py-1.5 text-micro rounded-lg", md: "px-3.5 py-2 text-caption rounded-xl", lg: "px-5 py-2.5 text-label rounded-xl" },
   outline: { sm: "h-9 px-3 text-micro rounded-lg", md: "h-11 px-5 text-label rounded-xl", lg: "h-13 px-7 text-body rounded-xl" },
   icon: { sm: "p-1.5", md: "p-2", lg: "p-2.5" },
+  "icon-danger": { sm: "p-1.5", md: "p-2", lg: "p-2.5" },
 };
 
 const iconSizes: Record<ButtonSize, number> = { sm: 13, md: 16, lg: 18 };

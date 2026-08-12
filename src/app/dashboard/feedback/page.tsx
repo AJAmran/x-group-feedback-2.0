@@ -10,6 +10,8 @@ import { getFeedbackList, getBranchList, getFeedbackMetrics } from "@/features/d
 import { FeedbackTable } from "./_components/feedback-table";
 import { FeedbackFilters } from "./_components/feedback-filters";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Bone, KpiCardSkeleton } from "../../_components/skeleton";
 
 async function RatingDistribution({ metrics }: { metrics: Awaited<ReturnType<typeof getFeedbackMetrics>> }) {
@@ -39,10 +41,7 @@ async function RatingDistribution({ metrics }: { metrics: Awaited<ReturnType<typ
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10">
-            <span className="text-micro font-bold text-emerald-600 dark:text-emerald-400">{metrics.positivePercentage}%</span>
-            <span className="text-micro text-ios-foreground-faint">Positive</span>
-          </div>
+          <StatusBadge variant="success">{metrics.positivePercentage}% Positive</StatusBadge>
         </div>
       </div>
 
@@ -112,12 +111,14 @@ async function FeedbackContent({
             title="Total Feedback"
             value={metrics.totalFeedbacks}
             icon={MessageSquare}
+            accent="navy"
             subtext="All time submissions"
           />
           <KpiCard
             title="Average Rating"
             value={metrics.averageRating.toFixed(1)}
             icon={Star}
+            accent="gold"
             trend={metrics.averageRating >= 4 ? "up" : metrics.averageRating >= 3 ? "neutral" : "down"}
             change={`${metrics.averageRating.toFixed(1)} / 5`}
             subtext="Overall satisfaction"
@@ -126,6 +127,7 @@ async function FeedbackContent({
             title="Net Satisfaction (NPS)"
             value={metrics.nps.toFixed(0)}
             icon={SmilePlus}
+            accent="navy"
             trend={metrics.nps >= 50 ? "up" : metrics.nps >= 0 ? "neutral" : "down"}
             change={`${metrics.nps.toFixed(0)} pts`}
             subtext="Net Promoter Score"
@@ -134,6 +136,7 @@ async function FeedbackContent({
             title="Positive Rate"
             value={`${metrics.positivePercentage}%`}
             icon={ThumbsUp}
+            accent="green"
             trend={metrics.positivePercentage >= 70 ? "up" : "down"}
             change={`${metrics.positivePercentage}%`}
             subtext="Rating 4 & 5"
@@ -187,10 +190,11 @@ export default function FeedbackPage(props: {
 }) {
   return (
     <div className="space-y-6 pb-8">
-      <div>
-        <h1 className="text-display font-extrabold text-ios-foreground tracking-tight">Feedback Management</h1>
-        <p className="text-subtitle text-ios-foreground-muted mt-1">Review and manage guest feedback across all branches</p>
-      </div>
+      <PageHeader
+        icon={MessageSquare}
+        title="Feedback Management"
+        description="Review and manage guest feedback across all branches"
+      />
 
       <Suspense fallback={
         <div className="space-y-6">

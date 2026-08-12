@@ -3,6 +3,7 @@
 // app/global-error.tsx — catches errors in the root layout itself.
 // This is the last line of defence — it replaces the entire <html> shell.
 // Keep it ultra-minimal: no external fonts or providers are available here.
+import Link from "next/link";
 export default function GlobalError({
   error,
   reset,
@@ -100,7 +101,7 @@ export default function GlobalError({
             >
               Reload
             </button>
-            <a
+            <Link
               href="/"
               style={{
                 background: "#f5f5f7",
@@ -114,7 +115,7 @@ export default function GlobalError({
               }}
             >
               Home
-            </a>
+            </Link>
           </div>
         </div>
       </body>

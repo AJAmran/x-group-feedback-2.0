@@ -1,9 +1,13 @@
 "use client";
 
-import { Search, X, FileText, SlidersHorizontal } from "lucide-react";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { X, FileText, SlidersHorizontal } from "lucide-react";
+import { useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { TextInput } from "@/components/ui/TextInput";
+import { SelectInput } from "@/components/ui/SelectInput";
+import { SearchInput } from "@/components/dashboard/search-input";
+import { BranchSelect } from "@/components/dashboard/branch-select";
 import { useFilterParams } from "@/hooks/useFilterParams";
 
 interface Branch {
@@ -19,27 +23,25 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
   const searchParams = useSearchParams();
   const { filters, setFilter, clearFilters: clearUrlFilters, hasFilters: urlHasFilters, filterCount: urlFilterCount } = useFilterParams("/dashboard/feedback");
   const [searchInput, setSearchInput] = useState(filters.search);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [prevSearch, setPrevSearch] = useState(filters.search);
 
-  useEffect(() => {
+  // Keep the local draft input in sync with URL without an effect
+  // (React 19 recommendation: adjust state during render).
+  if (prevSearch !== filters.search) {
+    setPrevSearch(filters.search);
     setSearchInput(filters.search);
-  }, [filters.search]);
+  }
 
   const handleSearch = useCallback(() => {
     setFilter("search", searchInput);
   }, [setFilter, searchInput]);
-
-  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handleSearch();
-  }, [handleSearch]);
 
   const clearFilters = useCallback(() => {
     setSearchInput("");
     clearUrlFilters();
   }, [clearUrlFilters]);
 
-  const hasFilters = urlHasFilters || searchInput !== filters.search;
-  const activeFilterCount = urlFilterCount + (filters.search ? 1 : 0);
+  const activeFilterCount = urlFilterCount;
 
   return (
     <div className="glass-card rounded-3xl">
@@ -60,15 +62,13 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="relative flex-1 min-w-[180px] flex items-center">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ios-foreground-faint" />
-            <input
-              ref={inputRef}
-              type="text"
+            <SearchInput
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
+              onChange={setSearchInput}
+              onEnter={handleSearch}
               placeholder="Search by name, contact, or comments..."
-              className="squircle-input w-full pl-9 pr-16 h-10 text-caption"
+              className="flex-1"
+              inputClassName="pr-16"
             />
             <Button 
               variant="primary" 
@@ -80,42 +80,39 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
             </Button>
           </div>
 
-          <select
+          <BranchSelect
+            branches={branches}
             value={filters.branch}
-            onChange={(e) => setFilter("branch", e.target.value)}
-            className="squircle-input h-10 text-caption min-w-[140px]"
-          >
-            <option value="">All Branches</option>
-            {branches.map((b) => (
-              <option key={b.code} value={b.code}>{b.name}</option>
-            ))}
-          </select>
+            onSelect={(code) => setFilter("branch", code)}
+            placeholder="All Branches"
+          />
 
-          <select
+          <SelectInput
             value={filters.rating}
             onChange={(e) => setFilter("rating", e.target.value)}
-            className="squircle-input h-10 text-caption min-w-[120px]"
-          >
-            <option value="">All Ratings</option>
-            <option value="EXCELLENT">Excellent</option>
-            <option value="GOOD">Good</option>
-            <option value="AVERAGE">Average</option>
-            <option value="POOR">Poor</option>
-          </select>
+            className="h-10 text-caption min-w-[120px]"
+            placeholder="All Ratings"
+            options={[
+              { value: "EXCELLENT", label: "Excellent" },
+              { value: "GOOD", label: "Good" },
+              { value: "AVERAGE", label: "Average" },
+              { value: "POOR", label: "Poor" },
+            ]}
+          />
 
           <div className="flex items-center gap-1.5">
-            <input
+            <TextInput
               type="date"
               value={filters.dateFrom}
               onChange={(e) => setFilter("dateFrom", e.target.value)}
-              className="squircle-input h-10 text-caption w-[130px]"
+              className="h-10 text-caption w-[130px]"
             />
             <span className="text-micro text-ios-foreground-faint">—</span>
-            <input
+            <TextInput
               type="date"
               value={filters.dateTo}
               onChange={(e) => setFilter("dateTo", e.target.value)}
-              className="squircle-input h-10 text-caption w-[130px]"
+              className="h-10 text-caption w-[130px]"
             />
           </div>
 

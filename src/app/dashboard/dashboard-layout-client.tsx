@@ -22,29 +22,32 @@ export function DashboardLayoutClient({
 
   return (
     <DashboardProvider value={{ role, userName, branchId }}>
-    <div className="min-h-screen bg-ios-background">
-      <Sidebar
-        collapsed={collapsed}
-        onToggle={() => setCollapsed(!collapsed)}
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
-        role={role}
-      />
+      <div className="min-h-screen bg-ios-background relative">
+        <div className="dashboard-bg" aria-hidden="true" />
 
-      <Topnav
-        onMenuClick={() => setMobileOpen(true)}
-        collapsed={collapsed}
-        userName={userName}
-      />
+        <Sidebar
+          collapsed={collapsed}
+          onToggle={() => setCollapsed(!collapsed)}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
+          role={role}
+        />
 
-      <main
-        className={`pt-4 px-4 sm:px-6 lg:px-8 pb-8 transition-all duration-300 ${
-          collapsed ? "lg:ml-16" : "lg:ml-60"
-        }`}
-      >
-        {children}
-      </main>
-    </div>
+        <Topnav
+          onMenuClick={() => setMobileOpen(true)}
+          collapsed={collapsed}
+          userName={userName}
+          role={role}
+        />
+
+        <main
+          className={`pt-6 px-4 sm:px-6 lg:px-8 pb-10 transition-all duration-300 animate-in fade-in duration-300 ${
+            collapsed ? "lg:ml-[4.25rem]" : "lg:ml-60"
+          }`}
+        >
+          <div className="dashboard-page">{children}</div>
+        </main>
+      </div>
     </DashboardProvider>
   );
 }

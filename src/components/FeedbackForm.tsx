@@ -66,7 +66,6 @@ export function FeedbackForm({ initialBranches }: FeedbackFormProps) {
     error,
     silentError,
     feedbackId,
-    branchCode,
     branchName,
     ratings,
     handleRatingChange,

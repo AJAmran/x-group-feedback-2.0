@@ -200,8 +200,8 @@ export async function submitFeedback(
  */
 export async function submitFeedbackWithRetry(
   data: FeedbackSubmissionRequest,
-  // maxRetries kept for API compat but capped at 1 for UX speed
-  _maxRetries = 1
+  // maxRetries kept for API compat but defaults to 1 retry for UX speed
+  maxRetries = 1
 ): Promise<FeedbackSubmissionResponse> {
   try {
     return await submitFeedback(data);
@@ -218,6 +218,7 @@ export async function submitFeedbackWithRetry(
     if (isClientError) throw firstError; // branch not found, validation error etc.
 
     // One retry after a short pause for 5xx / network / timeout.
+    if (maxRetries <= 0) throw firstError;
     await new Promise((r) => setTimeout(r, 1500));
     return await submitFeedback(data);
   }

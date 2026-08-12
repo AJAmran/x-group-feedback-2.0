@@ -1,25 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDashboardUser } from "../../dashboard-context";
 import {
-  ChevronLeft,
-  ChevronRight,
   Users,
-  Shield,
-  ShieldCheck,
-  UserCog,
   ToggleLeft,
   ToggleRight,
   Trash2,
   Plus,
   Pencil,
-  X,
 } from "lucide-react";
 import type { User, UserRole } from "@/types";
-import { createUserAction, toggleUserActiveAction, deleteUserAction, updateUserAction } from "@/features/users/actions";
+import {
+  createUserAction,
+  toggleUserActiveAction,
+  deleteUserAction,
+  updateUserAction,
+} from "@/features/users/actions";
+import { getBranchList } from "@/features/dashboard/actions";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { FormField } from "@/components/ui/FormField";
+import { TextInput } from "@/components/ui/TextInput";
+import { SelectInput } from "@/components/ui/SelectInput";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { Table, THead, THeadRow, TH, TD, TR, TableEmpty } from "@/components/dashboard/table";
+import { Pagination } from "@/components/dashboard/pagination";
+import { CardHeader } from "@/components/dashboard/card-header";
+import { Avatar } from "@/components/dashboard/avatar";
+import { RoleBadge } from "@/components/dashboard/role-badge";
+import { StatusBadge } from "@/components/dashboard/status-badge";
+import { SearchInput } from "@/components/dashboard/search-input";
+import { MANAGEMENT_ROLES } from "@/lib/roles";
 
 interface UsersListData {
   users: User[];
@@ -28,40 +42,79 @@ interface UsersListData {
   totalPages: number;
 }
 
-const ROLE_STYLES: Record<string, string> = {
-  SUPER_ADMIN: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/20",
-  ADMIN: "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/20",
-  BRANCH_MANAGER: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+interface BranchOption {
+  id: string;
+  code: string;
+  name: string;
+}
+
+interface UserFormState {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  branchId: string;
+}
+
+const EMPTY_FORM: UserFormState = {
+  name: "",
+  email: "",
+  password: "",
+  role: "BRANCH_MANAGER",
+  branchId: "",
 };
 
-const ROLE_ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
-  SUPER_ADMIN: ShieldCheck,
-  ADMIN: Shield,
-  BRANCH_MANAGER: UserCog,
-};
+const ROLE_OPTIONS = [
+  { value: "BRANCH_MANAGER", label: "Branch Manager" },
+  { value: "ADMIN", label: "Admin" },
+];
+
+function branchIdValue(update: { branchId?: number | null }): string {
+  return update.branchId != null ? String(update.branchId) : "";
+}
 
 export function UserTable({ data }: { data: UsersListData }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const currentUser = useDashboardUser();
+  const canManage = MANAGEMENT_ROLES.includes(currentUser.role);
 
+  const [branches, setBranches] = useState<BranchOption[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [formData, setFormData] = useState<UserFormState>(EMPTY_FORM);
+
   const [toggling, setToggling] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+
   const [editing, setEditing] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState("");
-  const [editData, setEditData] = useState({ name: "", email: "", password: "", role: "BRANCH_MANAGER" as UserRole, branchId: "", isActive: true });
-
-  // Create form state
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "BRANCH_MANAGER" as UserRole,
-    branchId: "",
+  const [editData, setEditData] = useState<UserFormState & { isActive: boolean }>({
+    ...EMPTY_FORM,
+    isActive: true,
   });
+
+  const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
+  const [roleFilter, setRoleFilter] = useState(searchParams.get("role") || "");
+
+  useEffect(() => {
+    getBranchList().then((list) =>
+      setBranches(list.map((b) => ({ id: b.id, code: b.code, name: b.name }))),
+    );
+  }, []);
+
+  const applyFilters = (updates: { search?: string; role?: string }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(updates)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
+    params.set("page", "1");
+    router.push(`/dashboard/users?${params.toString()}`);
+  };
 
   const goToPage = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -86,7 +139,7 @@ export function UserTable({ data }: { data: UsersListData }) {
 
     if (result.success) {
       setShowCreate(false);
-      setFormData({ name: "", email: "", password: "", role: "BRANCH_MANAGER", branchId: "" });
+      setFormData(EMPTY_FORM);
       router.refresh();
     } else {
       setCreateError(result.error || "Failed to create user");
@@ -100,11 +153,12 @@ export function UserTable({ data }: { data: UsersListData }) {
     router.refresh();
   };
 
-  const handleDelete = async (user: User) => {
-    if (!confirm(`Delete user "${user.name}"? This action cannot be undone.`)) return;
-    setDeleting(user.id);
-    await deleteUserAction(user.id);
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(deleteTarget.id);
+    await deleteUserAction(deleteTarget.id);
     setDeleting(null);
+    setDeleteTarget(null);
     router.refresh();
   };
 
@@ -115,7 +169,7 @@ export function UserTable({ data }: { data: UsersListData }) {
       email: user.email,
       password: "",
       role: user.role,
-      branchId: user.branchId ? String(user.branchId) : "",
+      branchId: branchIdValue({ branchId: user.branchId }),
       isActive: user.isActive,
     });
     setEditError("");
@@ -143,343 +197,310 @@ export function UserTable({ data }: { data: UsersListData }) {
     }
   };
 
+  const branchOptions = [
+    { value: "", label: "No branch (global access)" },
+    ...branches.map((b) => ({ value: b.id, label: `${b.code} — ${b.name}` })),
+  ];
+
+  const roleFilterOptions = [
+    { value: "", label: "All Roles" },
+    { value: "SUPER_ADMIN", label: "Super Admin" },
+    { value: "ADMIN", label: "Admin" },
+    { value: "BRANCH_MANAGER", label: "Branch Manager" },
+  ];
+
   return (
     <>
       {/* Create User Modal */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
-          <div className="relative w-full max-w-md glass-card p-6 rounded-3xl shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-label font-bold text-ios-foreground">Create User</h2>
-                <p className="text-caption text-ios-foreground-muted mt-0.5">Add a new admin or branch manager</p>
-              </div>
-              <Button variant="icon" size="sm" onClick={() => setShowCreate(false)} aria-label="Close" icon={X} />
-            </div>
+      <Modal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        title="Create User"
+        description="Add a new admin or branch manager"
+      >
+        <form onSubmit={handleCreate} className="space-y-4">
+          <FormField label="Full Name" required>
+            <TextInput
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="John Doe"
+            />
+          </FormField>
 
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-caption font-semibold text-ios-foreground-muted">Full Name</label>
-                <input
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="squircle-input w-full"
-                  placeholder="John Doe"
-                />
-              </div>
+          <FormField label="Email" required>
+            <TextInput
+              required
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="john@xgroup.com"
+            />
+          </FormField>
 
-              <div className="space-y-1.5">
-                <label className="text-caption font-semibold text-ios-foreground-muted">Email</label>
-                <input
-                  required
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="squircle-input w-full"
-                  placeholder="john@xgroup.com"
-                />
-              </div>
+          <FormField label="Password" required hint="Minimum 6 characters">
+            <TextInput
+              required
+              type="password"
+              minLength={6}
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="Minimum 6 characters"
+            />
+          </FormField>
 
-              <div className="space-y-1.5">
-                <label className="text-caption font-semibold text-ios-foreground-muted">Password</label>
-                <input
-                  required
-                  type="password"
-                  minLength={6}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="squircle-input w-full"
-                  placeholder="Minimum 6 characters"
-                />
-              </div>
+          <FormField label="Role" required>
+            <SelectInput
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+              options={ROLE_OPTIONS}
+            />
+          </FormField>
 
-              <div className="space-y-1.5">
-                <label className="text-caption font-semibold text-ios-foreground-muted">Role</label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                  className="squircle-input w-full appearance-none"
-                >
-                  <option value="BRANCH_MANAGER">Branch Manager</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </div>
+          <FormField label="Assigned Branch" hint="Branch managers should be scoped to one branch">
+            <SelectInput
+              value={formData.branchId}
+              onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
+              options={branchOptions}
+            />
+          </FormField>
 
-              {formData.role === "BRANCH_MANAGER" && (
-                <div className="space-y-1.5">
-                  <label className="text-caption font-semibold text-ios-foreground-muted">Branch ID (optional)</label>
-                  <input
-                    type="number"
-                    value={formData.branchId}
-                    onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
-                    className="squircle-input w-full"
-                    placeholder="Numeric branch ID"
-                  />
-                </div>
-              )}
+          {createError && <ErrorMessage>{createError}</ErrorMessage>}
 
-              {createError && (
-                <div className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-caption font-semibold">
-                  {createError}
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-2">
-                <Button variant="outline" type="button" onClick={() => setShowCreate(false)} className="flex-1">Cancel</Button>
-                <Button variant="primary" type="submit" loading={creating} className="flex-1">Create User</Button>
-              </div>
-            </form>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" type="button" onClick={() => setShowCreate(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" loading={creating} className="flex-1">
+              Create User
+            </Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
 
       {/* Edit User Modal */}
-      {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEditing(null)} />
-          <div className="relative w-full max-w-md glass-card p-6 rounded-3xl shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-label font-bold text-ios-foreground">Edit User</h2>
-                <p className="text-caption text-ios-foreground-muted mt-0.5">{editing.email}</p>
-              </div>
-              <Button variant="icon" size="sm" onClick={() => setEditing(null)} aria-label="Close" icon={X} />
+      <Modal
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        title="Edit User"
+        description={editing?.email}
+      >
+        <div className="space-y-4">
+          <FormField label="Full Name" required>
+            <TextInput
+              required
+              value={editData.name}
+              onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+            />
+          </FormField>
+
+          <FormField label="Email" required>
+            <TextInput
+              required
+              type="email"
+              value={editData.email}
+              onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+            />
+          </FormField>
+
+          <FormField label="Role" required>
+            <SelectInput
+              value={editData.role}
+              onChange={(e) => setEditData({ ...editData, role: e.target.value as UserRole })}
+              options={ROLE_OPTIONS}
+            />
+          </FormField>
+
+          {editData.role === "BRANCH_MANAGER" && (
+            <FormField label="Assigned Branch">
+              <SelectInput
+                value={editData.branchId}
+                onChange={(e) => setEditData({ ...editData, branchId: e.target.value })}
+                options={branchOptions}
+              />
+            </FormField>
+          )}
+
+          <FormField label="Password" hint="Leave blank to keep the current password">
+            <TextInput
+              type="password"
+              value={editData.password}
+              onChange={(e) => setEditData({ ...editData, password: e.target.value })}
+              placeholder="••••••••"
+            />
+          </FormField>
+
+          <label className="flex items-center gap-3 p-3 rounded-xl bg-ios-border-subtle/30 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={editData.isActive}
+              onChange={(e) => setEditData({ ...editData, isActive: e.target.checked })}
+              className="w-4 h-4 rounded border-ios-border-subtle text-ios-primary focus:ring-ios-primary"
+            />
+            <div>
+              <p className="text-label font-semibold text-ios-foreground">Active</p>
+              <p className="text-micro text-ios-foreground-faint">User can access the dashboard</p>
             </div>
+          </label>
 
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-caption font-semibold text-ios-foreground-muted">Full Name</label>
-                <input
-                  required
-                  value={editData.name}
-                  onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                  className="squircle-input w-full"
-                />
-              </div>
+          {editError && <ErrorMessage>{editError}</ErrorMessage>}
 
-              <div className="space-y-1.5">
-                <label className="text-caption font-semibold text-ios-foreground-muted">Email</label>
-                <input
-                  required
-                  type="email"
-                  value={editData.email}
-                  onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                  className="squircle-input w-full"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-caption font-semibold text-ios-foreground-muted">Role</label>
-                <select
-                  value={editData.role}
-                  onChange={(e) => setEditData({ ...editData, role: e.target.value as UserRole })}
-                  className="squircle-input w-full appearance-none"
-                >
-                  <option value="BRANCH_MANAGER">Branch Manager</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </div>
-
-              {editData.role === "BRANCH_MANAGER" && (
-                <div className="space-y-1.5">
-                  <label className="text-caption font-semibold text-ios-foreground-muted">Branch ID (optional)</label>
-                  <input
-                    type="number"
-                    value={editData.branchId}
-                    onChange={(e) => setEditData({ ...editData, branchId: e.target.value })}
-                    className="squircle-input w-full"
-                    placeholder="Numeric branch ID"
-                  />
-                </div>
-              )}
-
-              <label className="flex items-center gap-3 p-3 rounded-xl bg-ios-border-subtle/30 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editData.isActive}
-                  onChange={(e) => setEditData({ ...editData, isActive: e.target.checked })}
-                  className="w-4 h-4 rounded border-ios-border-subtle text-ios-primary focus:ring-ios-primary"
-                />
-                <div>
-                  <p className="text-label font-semibold text-ios-foreground">Active</p>
-                  <p className="text-micro text-ios-foreground-faint">User can access the dashboard</p>
-                </div>
-              </label>
-
-              {editError && (
-                <div className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-caption font-semibold">
-                  {editError}
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-2">
-                <Button variant="outline" type="button" onClick={() => setEditing(null)} className="flex-1">Cancel</Button>
-                <Button variant="primary" type="button" onClick={handleUpdate} loading={saving} className="flex-1">Save Changes</Button>
-              </div>
-            </div>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" type="button" onClick={() => setEditing(null)} className="flex-1">
+              Cancel
+            </Button>
+            <Button variant="primary" type="button" onClick={handleUpdate} loading={saving} className="flex-1">
+              Save Changes
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
+
+      {/* Delete Confirm */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        loading={deleting != null}
+        title="Delete User"
+        message={
+          <>
+            Are you sure you want to delete{" "}
+            <span className="font-bold text-ios-foreground">{deleteTarget?.name}</span>? This action
+            cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+      />
 
       {/* Table */}
       <div className="glass-card rounded-3xl overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-ios-border-subtle flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Users size={15} className="text-ios-foreground-subtle" />
-            <span className="text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">All Users</span>
-            <span className="text-micro font-medium text-ios-foreground-faint bg-ios-border-subtle/50 px-2 py-0.5 rounded-full">
-              {data.total} total
-            </span>
+        <CardHeader
+          icon={Users}
+          title="All Users"
+          count={data.total}
+          action={
+            canManage ? (
+              <Button variant="ghost" size="sm" icon={Plus} onClick={() => setShowCreate(true)}>
+                New User
+              </Button>
+            ) : undefined
+          }
+        />
+
+        <div className="px-4 py-3 border-b border-ios-border-subtle flex flex-wrap items-center gap-2.5">
+          <div className="flex-1 min-w-[180px]">
+            <SearchInput
+              value={searchInput}
+              onChange={setSearchInput}
+              onEnter={() => applyFilters({ search: searchInput, role: roleFilter })}
+              placeholder="Search by name or email..."
+            />
           </div>
-          {useDashboardUser().role !== "BRANCH_MANAGER" && (
-            <Button variant="ghost" size="sm" icon={Plus} onClick={() => setShowCreate(true)}>New User</Button>
-          )}
+          <div className="flex items-center gap-2">
+            <SelectInput
+              value={roleFilter}
+              onChange={(e) => {
+                setRoleFilter(e.target.value);
+                applyFilters({ search: searchInput, role: e.target.value });
+              }}
+              options={roleFilterOptions}
+              className="h-9 min-w-[150px]"
+            />
+            <Button variant="primary" size="sm" onClick={() => applyFilters({ search: searchInput, role: roleFilter })}>
+              Search
+            </Button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-ios-border-subtle">
-                <th className="text-left px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">User</th>
-                <th className="text-left px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Email</th>
-                <th className="text-left px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Role</th>
-                <th className="text-left px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Status</th>
-                <th className="text-left px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Created</th>
-                <th className="text-right px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.users.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-16">
-                    <div className="flex flex-col items-center gap-3">
-                      <Users size={32} className="text-ios-foreground-faint" />
-                      <p className="text-label font-semibold text-ios-foreground-subtle">No users found</p>
+        <Table>
+          <THead>
+            <THeadRow>
+              <TH>User</TH>
+              <TH>Email</TH>
+              <TH>Role</TH>
+              <TH>Status</TH>
+              <TH>Created</TH>
+              <TH align="right">Actions</TH>
+            </THeadRow>
+          </THead>
+          <tbody>
+            {data.users.length === 0 ? (
+              <TableEmpty colSpan={6} icon={Users} title="No users found" />
+            ) : (
+              data.users.map((user) => (
+                <TR key={user.id}>
+                  <TD>
+                    <div className="flex items-center gap-3">
+                      <Avatar name={user.name} size="sm" />
+                      <div>
+                        <span className="text-label font-semibold text-ios-foreground block">{user.name}</span>
+                        {user.branchId && (
+                          <span className="text-micro text-ios-foreground-faint">
+                            {branches.find((b) => b.id === String(user.branchId))?.name ?? `Branch #${user.branchId}`}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ) : (
-                data.users.map((user) => {
-                  const RoleIcon = ROLE_ICONS[user.role] || Shield;
-                  return (
-                    <tr
-                      key={user.id}
-                      className="border-b border-ios-border-subtle last:border-0 hover:bg-ios-border-subtle/50 transition-colors"
-                    >
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-ios-primary/10 flex items-center justify-center shrink-0">
-                            <span className="text-micro font-bold text-ios-primary">
-                              {user.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <span className="text-label font-semibold text-ios-foreground">{user.name}</span>
-                          {user.branchId && (
-                            <span className="text-micro text-ios-foreground-faint">(Branch #{user.branchId})</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span className="text-label text-ios-foreground-muted">{user.email}</span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-micro font-bold uppercase tracking-wider border ${ROLE_STYLES[user.role] || "bg-ios-border-subtle text-ios-foreground-subtle"}`}>
-                          <RoleIcon size={12} />
-                          {user.role === "SUPER_ADMIN" ? "Super Admin" : user.role === "ADMIN" ? "Admin" : "Branch Mgr"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-micro font-bold uppercase tracking-wider ${
-                          user.isActive
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                            : "bg-red-500/10 text-red-600 dark:text-red-400"
-                        }`}>
-                          {user.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span className="text-caption text-ios-foreground-subtle font-medium">
-                          {new Date(user.createdAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="icon"
-                            onClick={() => handleToggleStatus(user)}
-                            disabled={toggling === user.id}
-                            loading={toggling === user.id}
-                            icon={user.isActive ? ToggleRight : ToggleLeft}
-                            title={user.isActive ? "Deactivate" : "Activate"}
-                          />
-                          <Button variant="icon" onClick={() => openEdit(user)} title="Edit user" icon={Pencil} />
-                          {user.role !== "SUPER_ADMIN" && (
-                            <Button
-                              variant="ghost-red"
-                              onClick={() => handleDelete(user)}
-                              disabled={deleting === user.id}
-                              loading={deleting === user.id}
-                              icon={Trash2}
-                              title="Delete user"
-                            />
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                  </TD>
+                  <TD>
+                    <span className="text-label text-ios-foreground-muted">{user.email}</span>
+                  </TD>
+                  <TD>
+                    <RoleBadge role={user.role} />
+                  </TD>
+                  <TD>
+                    <StatusBadge variant={user.isActive ? "success" : "danger"}>
+                      {user.isActive ? "Active" : "Inactive"}
+                    </StatusBadge>
+                  </TD>
+                  <TD>
+                    <span className="text-caption text-ios-foreground-subtle font-medium">
+                      {new Date(user.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </TD>
+                  <TD align="right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="icon"
+                        onClick={() => handleToggleStatus(user)}
+                        disabled={toggling === user.id}
+                        loading={toggling === user.id}
+                        icon={user.isActive ? ToggleRight : ToggleLeft}
+                        title={user.isActive ? "Deactivate" : "Activate"}
+                      />
+                      <Button variant="icon" onClick={() => openEdit(user)} title="Edit user" icon={Pencil} />
+                      {user.role !== "SUPER_ADMIN" && (
+                        <Button
+                          variant="ghost-red"
+                          onClick={() => setDeleteTarget(user)}
+                          disabled={deleting === user.id}
+                          loading={deleting === user.id}
+                          icon={Trash2}
+                          title="Delete user"
+                        />
+                      )}
+                    </div>
+                  </TD>
+                </TR>
+              ))
+            )}
+          </tbody>
+        </Table>
 
         {data.totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-ios-border-subtle bg-ios-border-subtle/20">
-            <p className="text-caption text-ios-foreground-subtle font-medium">
-              Page {data.page} of {data.totalPages}
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => goToPage(data.page - 1)}
-                disabled={data.page <= 1}
-                className="w-8 h-8 rounded-lg hover:bg-ios-border-subtle disabled:opacity-30 disabled:cursor-not-allowed text-ios-foreground-subtle transition-colors flex items-center justify-center"
-                aria-label="Previous page"
-              >
-                <ChevronLeft size={15} />
-              </button>
-              {Array.from({ length: Math.min(data.totalPages, 5) }).map((_, i) => {
-                const pageNum = Math.max(1, Math.min(data.page - 2, data.totalPages - 4)) + i;
-                if (pageNum > data.totalPages) return null;
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => goToPage(pageNum)}
-                    className={`w-8 h-8 rounded-lg text-micro font-bold transition-all ${
-                      pageNum === data.page
-                        ? "bg-ios-primary text-ios-on-primary shadow-md"
-                        : "text-ios-foreground-subtle hover:bg-ios-border-subtle"
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => goToPage(data.page + 1)}
-                disabled={data.page >= data.totalPages}
-                className="w-8 h-8 rounded-lg hover:bg-ios-border-subtle disabled:opacity-30 disabled:cursor-not-allowed text-ios-foreground-subtle transition-colors flex items-center justify-center"
-                aria-label="Next page"
-              >
-                <ChevronRight size={15} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={data.page}
+            totalPages={data.totalPages}
+            total={data.total}
+            pageSize={20}
+            onPageChange={goToPage}
+          />
         )}
       </div>
     </>

@@ -28,6 +28,7 @@ export function FeedbackPageShell({ initialBranches }: FeedbackPageShellProps) {
               width={50}
               height={50}
               priority
+              className="bg-white"
             />
             <div className="min-w-0">
               <h1

@@ -1,8 +1,10 @@
 "use client";
 
-import { X, SlidersHorizontal, Calendar } from "lucide-react";
+import { X, SlidersHorizontal, CalendarRange, Lock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { BranchSelect } from "@/components/dashboard/branch-select";
 import { useFilterParams } from "@/hooks/useFilterParams";
+import { useDashboardUser } from "@/app/dashboard/dashboard-context";
 
 interface Branch {
   code: string;
@@ -16,15 +18,26 @@ interface DashboardFilterBarProps {
 
 export function DashboardFilterBar({ branches, basePath }: DashboardFilterBarProps) {
   const { filters, setFilter, clearFilters, hasFilters, filterCount } = useFilterParams(basePath);
+  const user = useDashboardUser();
+  const isManager = user?.role === "BRANCH_MANAGER";
+  // For branch managers the backend scopes every query to their own branch.
+  const scopedBranch = isManager ? branches[0] : undefined;
 
   return (
-    <div className="glass-card rounded-3xl">
-      <div className="px-5 py-3.5 border-b border-ios-border-subtle flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <SlidersHorizontal size={15} className="text-ios-foreground-subtle" />
-          <span className="text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Filters</span>
+    <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-ios-border-subtle">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-ios-primary/[0.07] border border-ios-primary/10 flex items-center justify-center shrink-0">
+            <SlidersHorizontal size={15} className="text-ios-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-label font-bold text-ios-foreground leading-none">Filters</p>
+            <p className="text-micro text-ios-foreground-faint mt-1">Refine the metrics below</p>
+          </div>
           {hasFilters && (
-            <span className="text-micro font-bold text-ios-primary bg-ios-primary/10 px-2 py-0.5 rounded-full">{filterCount} active</span>
+            <span className="text-micro font-bold text-ios-primary bg-ios-primary/10 px-2 py-0.5 rounded-full border border-ios-primary/15 shrink-0">
+              {filterCount} active
+            </span>
           )}
         </div>
         {hasFilters && (
@@ -33,37 +46,42 @@ export function DashboardFilterBar({ branches, basePath }: DashboardFilterBarPro
           </Button>
         )}
       </div>
-      <div className="p-4">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1.5">
-            <Calendar size={14} className="text-ios-foreground-faint shrink-0" />
+
+      <div className="px-5 py-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-200 border border-ios-border-subtle transition-colors duration-200 focus-within:border-ios-primary/40 focus-within:ring-2 focus-within:ring-ios-primary/10">
+            <CalendarRange size={14} className="text-ios-foreground-subtle shrink-0" />
             <input
               type="date"
               value={filters.dateFrom}
               onChange={(e) => setFilter("dateFrom", e.target.value)}
-              className="squircle-input h-10 text-caption w-[140px]"
+              className="bg-transparent border-0 shadow-none text-caption h-8 w-[128px] px-1.5 rounded-md min-h-0 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:outline-none"
+              aria-label="Date from"
             />
-            <span className="text-micro text-ios-foreground-faint">—</span>
+            <span className="text-micro text-ios-foreground-faint shrink-0">to</span>
             <input
               type="date"
               value={filters.dateTo}
               onChange={(e) => setFilter("dateTo", e.target.value)}
-              className="squircle-input h-10 text-caption w-[140px]"
+              className="bg-transparent border-0 shadow-none text-caption h-8 w-[128px] px-1.5 rounded-md min-h-0 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:outline-none"
+              aria-label="Date to"
             />
           </div>
 
-          <div className="w-px h-8 bg-ios-border-subtle" />
-
-          <select
-            value={filters.branch}
-            onChange={(e) => setFilter("branch", e.target.value)}
-            className="squircle-input h-10 text-caption min-w-[160px]"
-          >
-            <option value="">All Branches</option>
-            {branches.map((b) => (
-              <option key={b.code} value={b.code}>{b.name}</option>
-            ))}
-          </select>
+          {isManager && scopedBranch ? (
+            <span className="inline-flex items-center gap-1.5 pl-2.5 pr-3 py-2 rounded-xl bg-ios-primary/8 border border-ios-primary/15 text-caption font-semibold text-ios-primary">
+              <Lock size={13} className="shrink-0" />
+              {scopedBranch.name}
+              <span className="text-micro font-medium text-ios-foreground-faint">(scoped to your branch)</span>
+            </span>
+          ) : (
+            <BranchSelect
+              branches={branches}
+              value={filters.branch}
+              onSelect={(code) => setFilter("branch", code)}
+              placeholder="All Branches"
+            />
+          )}
         </div>
       </div>
     </div>

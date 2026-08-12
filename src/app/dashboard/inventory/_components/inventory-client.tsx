@@ -5,16 +5,23 @@ import { useRouter } from "next/navigation";
 import { useDashboardUser } from "../../dashboard-context";
 import {
   Plus,
-  X,
   Save,
   Send,
   PackageCheck,
   Boxes,
   Lock,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { FormField } from "@/components/ui/FormField";
+import { TextInput } from "@/components/ui/TextInput";
+import { SelectInput } from "@/components/ui/SelectInput";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { Table, THead, THeadRow, TH, TD, TR, TableEmpty, TableLoading } from "@/components/dashboard/table";
+import { Pagination } from "@/components/dashboard/pagination";
+import { CardHeader } from "@/components/dashboard/card-header";
+import { StatusBadge as StatusBadgeShared } from "@/components/dashboard/status-badge";
+import { isAdminRole } from "@/lib/roles";
 import {
   getInventoryStatements,
   getInventoryStatementLines,
@@ -29,20 +36,38 @@ import type {
   PaginatedResult,
 } from "@/features/inventory/actions";
 
-const STATUS_STYLES: Record<InventoryStatus, string> = {
-  DRAFT: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
-  SUBMITTED: "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/20",
-  LOCKED: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+const STATUS_VARIANT: Record<InventoryStatus, "warning" | "info" | "success"> = {
+  DRAFT: "warning",
+  SUBMITTED: "info",
+  LOCKED: "success",
 };
+
+function StatusBadge({ status }: { status: InventoryStatus }) {
+  return (
+    <StatusBadgeShared variant={STATUS_VARIANT[status]}>
+      <Boxes size={12} /> {status}
+    </StatusBadgeShared>
+  );
+}
 
 function currentMonth(): string {
   return new Date().toISOString().slice(0, 7);
 }
 
+function Banner({ type, text }: { type: "ok" | "err"; text: string }) {
+  const styles =
+    type === "ok"
+      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+      : "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400";
+  return (
+    <div className={`mb-4 px-3 py-2 rounded-xl border text-caption font-semibold ${styles}`}>{text}</div>
+  );
+}
+
 function LinesEditor({ statement, onClose }: { statement: InventoryStatement; onClose: () => void }) {
   const router = useRouter();
   const user = useDashboardUser();
-  const isAdmin = user.role === "SUPER_ADMIN" || user.role === "ADMIN";
+  const isAdmin = isAdminRole(user.role);
   const [lines, setLines] = useState<InventoryLine[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -115,128 +140,109 @@ function LinesEditor({ statement, onClose }: { statement: InventoryStatement; on
     } ${rowValue > 0 ? "text-ios-primary" : "text-ios-foreground-muted"}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-card p-6 rounded-3xl shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-label font-bold text-ios-foreground">Inventory Statement — {statement.statementMonth}</h2>
-            <p className="text-caption text-ios-foreground-muted mt-0.5">
-              {statement.branch?.name ?? `Branch #${statement.branchId}`}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-micro font-bold uppercase tracking-wider border ${STATUS_STYLES[statement.status]}`}>
-              <Boxes size={12} /> {statement.status}
-            </span>
-            <Button variant="icon" size="sm" onClick={onClose} aria-label="Close" icon={X} />
-          </div>
+    <Modal
+      open
+      onClose={onClose}
+      size="xl"
+      title={`Inventory Statement — ${statement.statementMonth}`}
+      description={statement.branch?.name ?? `Branch #${statement.branchId}`}
+      headerExtra={<StatusBadge status={statement.status} />}
+    >
+      {editable && (
+        <div className="mb-4 px-4 py-2.5 rounded-xl bg-ios-primary/5 border border-ios-primary/15 text-caption text-ios-foreground-subtle">
+          Opening stock is carried over from the previous month. Enter the additions, breakages/losses and rejects, then save.
         </div>
+      )}
 
-        {editable && (
-          <div className="mb-4 px-4 py-2.5 rounded-xl bg-ios-primary/5 border border-ios-primary/15 text-caption text-ios-foreground-subtle">
-            Opening stock is carried over from the previous month. Enter the additions, breakages/losses and rejects, then save.
-          </div>
-        )}
+      {message && <Banner type={message.type} text={message.text} />}
 
-        {message && (
-          <div className={`mb-4 px-3 py-2 rounded-xl border text-caption font-semibold ${
-            message.type === "ok"
-              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-              : "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400"
-          }`}>
-            {message.text}
-          </div>
-        )}
-
-        {loading ? (
-          <p className="text-center py-12 text-caption text-ios-foreground-subtle font-medium">Loading lines…</p>
-        ) : (
-          Object.entries(grouped).map(([category, catLines]) => (
-            <div key={category} className="mb-5">
-              <h3 className="text-caption font-bold uppercase tracking-wider text-ios-foreground-subtle mb-2">{category}</h3>
-              <div className="overflow-x-auto rounded-2xl border border-ios-border-subtle">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-ios-border-subtle/30">
-                      <th className="text-left px-4 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Item</th>
-                      <th className="text-center px-2 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Opening</th>
-                      <th className="text-center px-2 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Added</th>
-                      <th className="text-center px-2 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Broken / Lost</th>
-                      <th className="text-center px-2 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Reject</th>
-                      <th className="text-center px-4 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Closing</th>
+      {loading ? (
+        <p className="text-center py-12 text-caption text-ios-foreground-subtle font-medium">Loading lines…</p>
+      ) : (
+        Object.entries(grouped).map(([category, catLines]) => (
+          <div key={category} className="mb-5">
+            <h3 className="text-caption font-bold uppercase tracking-wider text-ios-foreground-subtle mb-2">{category}</h3>
+            <div className="overflow-x-auto rounded-2xl border border-ios-border-subtle">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-ios-border-subtle/30">
+                    <th className="text-left px-4 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Item</th>
+                    <th className="text-center px-2 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Opening</th>
+                    <th className="text-center px-2 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Added</th>
+                    <th className="text-center px-2 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Broken / Lost</th>
+                    <th className="text-center px-2 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Reject</th>
+                    <th className="text-center px-4 py-2.5 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Closing</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {catLines.map((line) => (
+                    <tr key={line.id} className="border-t border-ios-border-subtle">
+                      <td className="px-4 py-2.5 text-label font-semibold text-ios-foreground">{line.item.name}</td>
+                      <td className="px-2 py-2.5 text-center text-label font-semibold text-ios-foreground-muted">{line.openingStock}</td>
+                      <td className="px-2 py-2.5 text-center">
+                        <input
+                          type="number"
+                          min={0}
+                          disabled={!editable}
+                          value={line.added}
+                          onChange={(e) => setValue(line.itemId, "added", e.target.value)}
+                          className={inputClass(line.added)}
+                        />
+                      </td>
+                      <td className="px-2 py-2.5 text-center">
+                        <input
+                          type="number"
+                          min={0}
+                          disabled={!editable}
+                          value={line.brokenLost}
+                          onChange={(e) => setValue(line.itemId, "brokenLost", e.target.value)}
+                          className={inputClass(line.brokenLost)}
+                        />
+                      </td>
+                      <td className="px-2 py-2.5 text-center">
+                        <input
+                          type="number"
+                          min={0}
+                          disabled={!editable}
+                          value={line.reject}
+                          onChange={(e) => setValue(line.itemId, "reject", e.target.value)}
+                          className={inputClass(line.reject)}
+                        />
+                      </td>
+                      <td className="px-4 py-2.5 text-center text-label font-extrabold text-ios-primary">
+                        {line.openingStock + line.added - line.brokenLost - line.reject}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {catLines.map((line) => (
-                      <tr key={line.id} className="border-t border-ios-border-subtle">
-                        <td className="px-4 py-2.5 text-label font-semibold text-ios-foreground">{line.item.name}</td>
-                        <td className="px-2 py-2.5 text-center text-label font-semibold text-ios-foreground-muted">{line.openingStock}</td>
-                        <td className="px-2 py-2.5 text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            disabled={!editable}
-                            value={line.added}
-                            onChange={(e) => setValue(line.itemId, "added", e.target.value)}
-                            className={inputClass(line.added)}
-                          />
-                        </td>
-                        <td className="px-2 py-2.5 text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            disabled={!editable}
-                            value={line.brokenLost}
-                            onChange={(e) => setValue(line.itemId, "brokenLost", e.target.value)}
-                            className={inputClass(line.brokenLost)}
-                          />
-                        </td>
-                        <td className="px-2 py-2.5 text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            disabled={!editable}
-                            value={line.reject}
-                            onChange={(e) => setValue(line.itemId, "reject", e.target.value)}
-                            className={inputClass(line.reject)}
-                          />
-                        </td>
-                        <td className="px-4 py-2.5 text-center text-label font-extrabold text-ios-primary">
-                          {line.openingStock + line.added - line.brokenLost - line.reject}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))
-        )}
-
-        {editable && (
-          <div className="flex gap-3 pt-2">
-            <Button variant="outline" type="button" onClick={onClose} className="flex-1">Close</Button>
-            <Button variant="secondary" icon={Save} loading={saving} onClick={handleSave} className="flex-1">Save Lines</Button>
-            <Button variant="primary" icon={Send} loading={submitting} onClick={handleSubmit} className="flex-1">Save & Submit</Button>
           </div>
-        )}
+        ))
+      )}
 
-        {readonly && (
-          <div className="flex gap-3 pt-2">
-            <Button variant="outline" type="button" onClick={onClose} className="flex-1">Close</Button>
-            {isAdmin && statement.status === "SUBMITTED" && (
-              <Button variant="primary" icon={Lock} className="flex-1" onClick={async () => {
-                const result = await updateInventoryStatementStatusAction(statement.id, "LOCKED");
-                if (result.success) { router.refresh(); void load(); }
-              }}>
-                Lock Statement
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+      {editable && (
+        <div className="flex gap-3 pt-2">
+          <Button variant="outline" type="button" onClick={onClose} className="flex-1">Close</Button>
+          <Button variant="secondary" icon={Save} loading={saving} onClick={handleSave} className="flex-1">Save Lines</Button>
+          <Button variant="primary" icon={Send} loading={submitting} onClick={handleSubmit} className="flex-1">Save & Submit</Button>
+        </div>
+      )}
+
+      {readonly && (
+        <div className="flex gap-3 pt-2">
+          <Button variant="outline" type="button" onClick={onClose} className="flex-1">Close</Button>
+          {isAdmin && statement.status === "SUBMITTED" && (
+            <Button variant="primary" icon={Lock} className="flex-1" onClick={async () => {
+              const result = await updateInventoryStatementStatusAction(statement.id, "LOCKED");
+              if (result.success) { router.refresh(); void load(); }
+            }}>
+              Lock Statement
+            </Button>
+          )}
+        </div>
+      )}
+    </Modal>
   );
 }
 
@@ -286,145 +292,108 @@ export function InventoryClient() {
 
   return (
     <>
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
-          <div className="relative w-full max-w-md glass-card p-6 rounded-3xl shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-label font-bold text-ios-foreground">New Inventory Statement</h2>
-                <p className="text-caption text-ios-foreground-muted mt-0.5">Opens a fresh statement with carried-over opening stock</p>
-              </div>
-              <Button variant="icon" size="sm" onClick={() => setShowCreate(false)} aria-label="Close" icon={X} />
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-caption font-semibold text-ios-foreground-muted">Statement Month</label>
-                <input
-                  required
-                  type="month"
-                  value={newMonth}
-                  onChange={(e) => setNewMonth(e.target.value)}
-                  className="squircle-input w-full"
-                />
-              </div>
-              {createError && (
-                <div className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-caption font-semibold">{createError}</div>
-              )}
-              <div className="flex gap-3 pt-2">
-                <Button variant="outline" type="button" onClick={() => setShowCreate(false)} className="flex-1">Cancel</Button>
-                <Button variant="primary" type="button" loading={creating} onClick={handleCreate} className="flex-1">Create Statement</Button>
-              </div>
-            </div>
+      <Modal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        title="New Inventory Statement"
+        description="Opens a fresh statement with carried-over opening stock"
+      >
+        <div className="space-y-4">
+          <FormField label="Statement Month" required>
+            <TextInput
+              required
+              type="month"
+              value={newMonth}
+              onChange={(e) => setNewMonth(e.target.value)}
+            />
+          </FormField>
+          {createError && <ErrorMessage>{createError}</ErrorMessage>}
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" type="button" onClick={() => setShowCreate(false)} className="flex-1">Cancel</Button>
+            <Button variant="primary" type="button" loading={creating} onClick={handleCreate} className="flex-1">Create Statement</Button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {opening && <LinesEditor statement={opening} onClose={() => setOpening(null)} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <input
+          <TextInput
             type="month"
             value={monthFilter}
             onChange={(e) => { setMonthFilter(e.target.value); setPage(1); }}
-            className="squircle-input w-auto"
+            className="w-auto"
           />
-          <select
+          <SelectInput
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value as InventoryStatus | ""); setPage(1); }}
-            className="squircle-input w-auto appearance-none"
-          >
-            <option value="">All Statuses</option>
-            <option value="DRAFT">Draft</option>
-            <option value="SUBMITTED">Submitted</option>
-            <option value="LOCKED">Locked</option>
-          </select>
+            className="w-auto"
+            options={[
+              { value: "", label: "All Statuses" },
+              { value: "DRAFT", label: "Draft" },
+              { value: "SUBMITTED", label: "Submitted" },
+              { value: "LOCKED", label: "Locked" },
+            ]}
+          />
         </div>
         <Button variant="primary" size="sm" icon={Plus} onClick={() => setShowCreate(true)}>New Statement</Button>
       </div>
 
       <div className="glass-card rounded-3xl overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-ios-border-subtle flex items-center gap-2.5">
-          <PackageCheck size={15} className="text-ios-foreground-subtle" />
-          <span className="text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Statements</span>
-          <span className="text-micro font-medium text-ios-foreground-faint bg-ios-border-subtle/50 px-2 py-0.5 rounded-full">
-            {data.total} total
-          </span>
-        </div>
+        <CardHeader icon={PackageCheck} title="Statements" count={data.total} />
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-ios-border-subtle">
-                <th className="text-left px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Month</th>
-                <th className="text-left px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Branch</th>
-                <th className="text-left px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Status</th>
-                <th className="text-left px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Submitted</th>
-                <th className="text-right px-4 py-3 text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={5} className="text-center py-16"><p className="text-caption text-ios-foreground-subtle font-medium">Loading…</p></td></tr>
-              ) : data.items.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="text-center py-16">
-                    <div className="flex flex-col items-center gap-3">
-                      <PackageCheck size={32} className="text-ios-foreground-faint" />
-                      <p className="text-label font-semibold text-ios-foreground-subtle">No statements found</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                data.items.map((stmt) => (
-                  <tr key={stmt.id} className="border-b border-ios-border-subtle last:border-0 hover:bg-ios-border-subtle/50 transition-colors">
-                    <td className="px-4 py-3.5"><span className="text-label font-semibold text-ios-foreground">{stmt.statementMonth}</span></td>
-                    <td className="px-4 py-3.5"><span className="text-label text-ios-foreground-muted">{stmt.branch?.name ?? `Branch #${stmt.branchId}`}</span></td>
-                    <td className="px-4 py-3.5">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-micro font-bold uppercase tracking-wider border ${STATUS_STYLES[stmt.status]}`}>
-                        <Boxes size={12} /> {stmt.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <span className="text-caption text-ios-foreground-subtle">
-                        {stmt.submittedAt ? new Date(stmt.submittedAt).toLocaleString() : "—"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 text-right">
-                      <Button variant="ghost" size="sm" icon={Boxes} onClick={() => setOpening(stmt)}>
-                        Open
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <THead>
+            <THeadRow>
+              <TH>Month</TH>
+              <TH>Branch</TH>
+              <TH>Status</TH>
+              <TH>Submitted</TH>
+              <TH align="right">Actions</TH>
+            </THeadRow>
+          </THead>
+          <tbody>
+            {loading ? (
+              <TableLoading colSpan={5} />
+            ) : data.items.length === 0 ? (
+              <TableEmpty colSpan={5} icon={PackageCheck} title="No statements found" />
+            ) : (
+              data.items.map((stmt) => (
+                <TR key={stmt.id}>
+                  <TD>
+                    <span className="text-label font-semibold text-ios-foreground">{stmt.statementMonth}</span>
+                  </TD>
+                  <TD>
+                    <span className="text-label text-ios-foreground-muted">{stmt.branch?.name ?? `Branch #${stmt.branchId}`}</span>
+                  </TD>
+                  <TD>
+                    <StatusBadge status={stmt.status} />
+                  </TD>
+                  <TD>
+                    <span className="text-caption text-ios-foreground-subtle">
+                      {stmt.submittedAt ? new Date(stmt.submittedAt).toLocaleString() : "—"}
+                    </span>
+                  </TD>
+                  <TD align="right">
+                    <Button variant="ghost" size="sm" icon={Boxes} onClick={() => setOpening(stmt)}>
+                      Open
+                    </Button>
+                  </TD>
+                </TR>
+              ))
+            )}
+          </tbody>
+        </Table>
 
         {data.totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-ios-border-subtle bg-ios-border-subtle/20">
-            <p className="text-caption text-ios-foreground-subtle font-medium">Page {data.page} of {data.totalPages}</p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={data.page <= 1}
-                className="w-8 h-8 rounded-lg hover:bg-ios-border-subtle disabled:opacity-30 disabled:cursor-not-allowed text-ios-foreground-subtle transition-colors flex items-center justify-center"
-                aria-label="Previous page"
-              >
-                <ChevronLeft size={15} />
-              </button>
-              <button
-                onClick={() => setPage((p) => p + 1)}
-                disabled={data.page >= data.totalPages}
-                className="w-8 h-8 rounded-lg hover:bg-ios-border-subtle disabled:opacity-30 disabled:cursor-not-allowed text-ios-foreground-subtle transition-colors flex items-center justify-center"
-                aria-label="Next page"
-              >
-                <ChevronRight size={15} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={data.page}
+            totalPages={data.totalPages}
+            total={data.total}
+            pageSize={15}
+            onPageChange={setPage}
+          />
         )}
       </div>
     </>

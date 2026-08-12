@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { APP_CONFIG } from "@/lib/config";
 
 interface ErrorProps {
@@ -123,13 +124,13 @@ export default function Error({ error, reset }: ErrorProps) {
             Try Again
           </button>
 
-          <a
+          <Link
             href="/"
             className="btn-ios-secondary h-11 px-6 text-label inline-flex items-center justify-center gap-2"
             aria-label="Go back to home"
           >
             Go to Home
-          </a>
+          </Link>
         </div>
       </div>
 

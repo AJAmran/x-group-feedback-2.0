@@ -1,16 +1,15 @@
-import { Bone, TableSkeleton } from "../../_components/skeleton";
+import { Bone, PageHeaderSkeleton, TableSkeleton } from "../../_components/skeleton";
 
 export default function BranchesLoading() {
   return (
     <div className="space-y-6 pb-8">
       <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <Bone className="h-8 w-40 mb-2" />
-          <Bone className="h-4 w-64" />
+        <div className="flex-1 min-w-0">
+          <PageHeaderSkeleton />
         </div>
-        <div className="flex gap-2">
-          <Bone className="h-9 w-28" />
-          <Bone className="h-9 w-28" />
+        <div className="flex gap-2 pt-1">
+          <Bone className="h-9 w-28 rounded-xl" />
+          <Bone className="h-9 w-28 rounded-xl" />
         </div>
       </div>
 
@@ -23,7 +22,7 @@ export default function BranchesLoading() {
               <Bone className="h-4 w-24 mb-4" />
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, j) => (
-                  <div key={j} className="h-12 bg-ios-border-subtle rounded-xl" />
+                  <Bone key={j} className="h-12 rounded-xl w-full" />
                 ))}
               </div>
             </div>

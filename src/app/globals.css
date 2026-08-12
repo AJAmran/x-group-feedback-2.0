@@ -39,6 +39,7 @@
   --text-micro: clamp(0.6875rem, 0.66rem + 0.06vw, 0.75rem);
 
   --animate-shine: shine 2.2s infinite;
+  --animate-shimmer: shimmer 2.2s linear infinite;
 
   @keyframes shine {
     0% {
@@ -46,6 +47,14 @@
     }
     100% {
       transform: translateX(220%) skewX(-12deg);
+    }
+  }
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-150%);
+    }
+    100% {
+      transform: translateX(150%);
     }
   }
   @keyframes seal-press {
@@ -366,5 +375,144 @@
     inset: 3px;
     border-radius: inherit;
     border: 1px solid oklch(var(--ios-accent) / 0.5);
+  }
+
+  /* ── Dashboard shell & surfaces ── */
+  .dashboard-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: oklch(var(--background));
+  }
+  .dashboard-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        ellipse 80% 50% at 0% 0%,
+        oklch(var(--ios-primary) / 0.05) 0%,
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse 60% 40% at 100% 100%,
+        oklch(var(--ios-accent) / 0.04) 0%,
+        transparent 50%
+      );
+  }
+
+  /* Card without letterhead rule — for popovers, nested panels, badges */
+  .glass-card-plain {
+    background: var(--color-surface-300);
+    border: 1px solid var(--paper-border);
+    border-radius: var(--radius-ios-xl);
+    box-shadow: 0 12px 32px -20px var(--paper-shadow);
+  }
+
+  /* Interactive card hover lift */
+  .card-interactive {
+    transition:
+      transform 0.25s var(--ease-ios),
+      box-shadow 0.25s var(--ease-ios),
+      border-color 0.25s var(--ease-ios);
+  }
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 28px 56px -24px var(--paper-shadow);
+    border-color: oklch(var(--ios-primary) / 0.22);
+  }
+
+  /* Skeleton with a sweeping sheen — replaces plain animate-pulse blocks */
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+    background: oklch(var(--border-subtle) / 0.6);
+  }
+  .skeleton-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-150%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      oklch(var(--surface-300) / 0.7),
+      transparent
+    );
+    animation: var(--animate-shimmer);
+  }
+
+  /* Icon tile with brand gradient — used by KPI & stat tiles */
+  .tile-gradient {
+    background: linear-gradient(
+      135deg,
+      oklch(var(--ios-primary) / 0.16) 0%,
+      oklch(var(--ios-accent) / 0.14) 100%
+    );
+    border: 1px solid oklch(var(--ios-primary) / 0.14);
+  }
+
+  /* Gold hairline — the "official document" divider */
+  .gold-rule {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      oklch(var(--ios-accent) / 0.45) 30%,
+      oklch(var(--ios-accent) / 0.45) 70%,
+      transparent
+    );
+  }
+
+  /* Semantic status badges */
+  .status-success {
+    color: oklch(42% 0.12 155);
+    background: oklch(42% 0.12 155 / 0.1);
+    border-color: oklch(42% 0.12 155 / 0.22);
+  }
+  .status-warning {
+    color: oklch(52% 0.14 75);
+    background: oklch(52% 0.14 75 / 0.1);
+    border-color: oklch(52% 0.14 75 / 0.22);
+  }
+  .status-danger {
+    color: oklch(var(--lacquer));
+    background: oklch(var(--lacquer) / 0.1);
+    border-color: oklch(var(--lacquer) / 0.22);
+  }
+  .status-info {
+    color: oklch(var(--ios-primary));
+    background: oklch(var(--ios-primary) / 0.1);
+    border-color: oklch(var(--ios-primary) / 0.22);
+  }
+  .status-neutral {
+    color: oklch(var(--foreground-subtle));
+    background: oklch(var(--border-subtle));
+    border-color: oklch(var(--border-default));
+  }
+
+  /* Sidebar active indicator */
+  .nav-active-indicator {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    border-radius: 0 2px 2px 0;
+    background: linear-gradient(
+      180deg,
+      oklch(var(--ios-primary)),
+      oklch(var(--ios-accent))
+    );
+  }
+
+  /* Page content max-width container */
+  .dashboard-page {
+    position: relative;
+    z-index: 1;
+    max-width: 1440px;
+    margin-inline: auto;
   }
 }

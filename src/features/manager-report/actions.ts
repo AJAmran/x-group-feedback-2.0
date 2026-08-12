@@ -2,6 +2,8 @@
 
 import { authenticatedFetch, getCurrentUserAction } from "@/features/auth/actions";
 
+export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface GuestComplaintInput {
   guestName: string;
   mobile: string;
@@ -29,9 +31,24 @@ export interface ManagerReportItem {
   supplyPurchaseIssues: string;
   briefingPoints: string;
   dailyLearnings: string;
+  approvalStatus: ApprovalStatus;
+  approvedAt?: string | null;
+  approvedBy?: { name?: string };
+  approvalComment?: string | null;
   branch?: { code?: string; name?: string };
   complaints?: Array<GuestComplaintInput & { id: number }>;
   bpCpEntries?: Array<BpCpEntryInput & { id: number }>;
+  comments?: ManagerReportCommentItem[];
+  _count?: { complaints: number; bpCpEntries: number };
+}
+
+export interface ManagerReportCommentItem {
+  id: number;
+  reportId: number;
+  userId: number;
+  comment: string;
+  createdAt: string;
+  user?: { id?: number; name?: string; role?: string };
 }
 
 export interface ManagerReportListResult {
@@ -41,6 +58,13 @@ export interface ManagerReportListResult {
   totalPages: number;
 }
 
+export interface ManagerReportSummary {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+}
+
 interface ManagerReportListParams {
   page?: number;
   limit?: number;
@@ -48,6 +72,7 @@ interface ManagerReportListParams {
   managerName?: string;
   startDate?: string;
   endDate?: string;
+  approvalStatus?: ApprovalStatus;
 }
 
 async function scopedBranchId(): Promise<number | undefined> {
@@ -65,6 +90,7 @@ export async function getManagerReports(params: ManagerReportListParams = {}): P
     if (params.managerName) query.set("managerName", params.managerName);
     if (params.startDate) query.set("startDate", params.startDate);
     if (params.endDate) query.set("endDate", params.endDate);
+    if (params.approvalStatus) query.set("approvalStatus", params.approvalStatus);
     const scope = await scopedBranchId();
     const branchId = params.branchId ?? scope;
     if (branchId) query.set("branchId", String(branchId));
@@ -93,6 +119,16 @@ export async function getManagerReportDetail(id: number): Promise<ManagerReportI
     return json.data ?? null;
   } catch {
     return null;
+  }
+}
+
+export async function getManagerReportSummary(): Promise<ManagerReportSummary> {
+  try {
+    const res = await authenticatedFetch("/api/v1/manager-reports/summary");
+    const json = await res.json();
+    return json.data ?? { total: 0, pending: 0, approved: 0, rejected: 0 };
+  } catch {
+    return { total: 0, pending: 0, approved: 0, rejected: 0 };
   }
 }
 
@@ -156,5 +192,53 @@ export async function deleteManagerReportAction(id: number): Promise<{ success: 
     return { success: true };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Failed to delete report" };
+  }
+}
+
+export async function setManagerReportApprovalAction(
+  id: number,
+  approvalStatus: Extract<ApprovalStatus, "APPROVED" | "REJECTED">,
+  approvalComment?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await authenticatedFetch(`/api/v1/manager-reports/${id}/approval`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        approvalStatus,
+        ...(approvalComment ? { approvalComment } : {}),
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { success: false, error: json.message || "Failed to update approval" };
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to update approval" };
+  }
+}
+
+export async function getManagerReportComments(id: number): Promise<ManagerReportCommentItem[]> {
+  try {
+    const res = await authenticatedFetch(`/api/v1/manager-reports/${id}/comments`);
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function addManagerReportComment(
+  id: number,
+  comment: string
+): Promise<{ success: boolean; comment?: ManagerReportCommentItem; error?: string }> {
+  try {
+    const res = await authenticatedFetch(`/api/v1/manager-reports/${id}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ comment }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { success: false, error: json.message || "Failed to add comment" };
+    return { success: true, comment: json.data };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to add comment" };
   }
 }

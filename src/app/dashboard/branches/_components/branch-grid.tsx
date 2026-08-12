@@ -1,4 +1,4 @@
-interface BranchData {
+﻿interface BranchData {
   id: string;
   code: string;
   name: string;
@@ -19,7 +19,7 @@ export function BranchGridView({ branches }: BranchGridViewProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {branches.map((branch) => (
-        <div key={branch.code} className="glass-card p-5 rounded-[1.5rem]">
+        <div key={branch.code} className="glass-card p-5 rounded-3xl">
           <div className="flex items-start justify-between mb-3">
             <div>
               <p className="text-label font-semibold text-ios-foreground">{branch.name}</p>

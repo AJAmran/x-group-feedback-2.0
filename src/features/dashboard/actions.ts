@@ -4,17 +4,25 @@ import { cache } from "react";
 import { authenticatedFetch, getCurrentUserAction } from "@/features/auth/actions";
 import { numberToRating } from "@/lib/utils";
 
-interface DistributionItem {
-  rating: number;
-  count: number;
-  percentage: number;
+/**
+ * Resolve the effective branch scope for an analytics query.
+ * - An explicit branchId (from an admin filter) always wins.
+ * - Branch managers are ALWAYS scoped to their own branch, even when no
+ *   branch filter is selected — this prevents cross-branch data leakage.
+ */
+async function resolveBranchScope(branchId?: string | number | null): Promise<string | undefined> {
+  if (branchId != null && String(branchId) !== "") return String(branchId);
+  const user = await getCurrentUserAction();
+  if (user?.role === "BRANCH_MANAGER" && user.branchId != null) return String(user.branchId);
+  return undefined;
 }
 
 const getCachedAnalytics = cache(async (dateFrom?: string, dateTo?: string, branchId?: string) => {
+  const scopedBranchId = await resolveBranchScope(branchId);
   const query = new URLSearchParams();
   if (dateFrom) query.set("startDate", dateFrom);
   if (dateTo) query.set("endDate", dateTo);
-  if (branchId) query.set("branchId", branchId);
+  if (scopedBranchId) query.set("branchId", scopedBranchId);
   const qs = query.toString();
   const res = await fetchApi(`/api/v1/analytics/dashboard${qs ? `?${qs}` : ""}`);
   return res.data;
@@ -53,6 +61,46 @@ interface BranchItem {
   lng?: number;
 }
 
+interface BranchDetail {
+  id: number;
+  name: string;
+  code: string;
+  address: string;
+  phone: string | null;
+  latitude: number;
+  longitude: number;
+  isActive: boolean;
+}
+
+/** Row shape returned by the paginated branch list endpoint. */
+export interface BranchListItem extends BranchDetail {
+  createdAt?: string;
+}
+
+interface AnalyticsBranchReport {
+  id?: string | number;
+  code?: string;
+  branchName?: string;
+  isActive?: boolean;
+  totalFeedback?: number;
+  averageRating?: number;
+  positivePercentage?: number;
+  negativePercentage?: number;
+  averageRatings?: { overallRating?: number };
+}
+
+interface AnalyticsDistributionItem {
+  rating: number;
+  count: number;
+  percentage?: number;
+}
+
+interface DashboardAlert {
+  severity: "critical" | "info";
+  title: string;
+  message: string;
+}
+
 async function fetchApi(endpoint: string, options: RequestInit = {}) {
   const res = await authenticatedFetch(endpoint, options);
 
@@ -88,9 +136,23 @@ export async function getDashboardStats(dateFrom?: string, dateTo?: string, bran
     const negativePct = sentiment.total > 0 ? Math.round((sentiment.negative / sentiment.total) * 100) : 0;
     
     const daily = data?.daily || [];
-    const todayStr = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit" }).replace(/(\w{3})\s(\d{2})/, "$1 $2");
-    const todayMatch = daily.find((d: any) => d.date === todayStr || d.date === new Date().toLocaleString('en-US', { month: 'short', day: 'numeric' }));
+    const today = new Date();
+    const todayISO = today.toISOString().slice(0, 10); // "YYYY-MM-DD" — stable & locale-independent
+    const todayMatch = (daily as { date: string; count: number }[]).find(
+      (d) => d.date === todayISO || d.date?.startsWith(todayISO),
+    );
     const feedbackToday = todayMatch ? todayMatch.count : 0;
+
+    // NPS = %promoters (5/4 stars) − %detractors (1/2 stars)
+    const distribution = data?.distribution || [];
+    let promoters = 0;
+    let detractors = 0;
+    for (const d of distribution) {
+      if (d.rating == null) continue;
+      if (d.rating >= 4) promoters += d.count;
+      else if (d.rating <= 2) detractors += d.count;
+    }
+    const nps = totalFeedbacks > 0 ? Math.round(((promoters - detractors) / totalFeedbacks) * 100) : 0;
 
     return {
       totalFeedback: totalFeedbacks,
@@ -100,7 +162,7 @@ export async function getDashboardStats(dateFrom?: string, dateTo?: string, bran
       averageRating: avgRating,
       positiveFeedback: positivePct,
       negativeFeedback: negativePct,
-      netSatisfactionScore: Math.round(positivePct - negativePct),
+      netSatisfactionScore: nps,
       returningGuestPercentage: 0,
       recommendationRate: positivePct,
       avgRatings: {
@@ -145,12 +207,17 @@ export async function getFeedbackList(params: {
     query.set("page", String(page));
     query.set("limit", String(pageSize));
 
+    // Resolve branch code (e.g. X-01) to the numeric branchId the API expects.
+    let branchId: string | null = null;
     const branchFilter = await getFilteredFeedbackFeedbacks();
-    if (branchCode && !branchFilter) {
-      query.set("branchId", branchCode);
-    } else if (branchFilter) {
-      query.set("branchId", branchFilter.branchId);
+    if (branchFilter) {
+      branchId = branchFilter.branchId;
+    } else if (branchCode) {
+      const branches = await getBranchList();
+      const matched = branches.find((b) => b.code === branchCode || b.id === branchCode);
+      if (matched) branchId = matched.id;
     }
+    if (branchId) query.set("branchId", branchId);
 
     if (rating) query.set("rating", RATING_LABEL_TO_INT[rating] ?? rating);
     if (status) query.set("status", status);
@@ -170,7 +237,6 @@ export async function getFeedbackList(params: {
         branchName: f.branch?.name || "Unknown Branch",
         overallRating: f.overallRating ? numberToRating(f.overallRating) : null,
         createdAt: f.submittedAt ?? "",
-        status: "completed",
         sentimentLabel: computeSentiment(f.overallRating),
       })),
       total: Number(meta?.totalRecords) || 0,
@@ -211,7 +277,6 @@ export async function getFeedbackDetail(id: string) {
       eventRating: f.eventRating ? numberToRating(f.eventRating) : null,
       ageGroup: f.ageGroup || null,
       source: f.heardAbout || null,
-      review: null,
     };
   } catch {
     return null;
@@ -223,18 +288,18 @@ export async function getBranchPerformance() {
     const data = await getCachedAnalyticsSafe();
     if (!data) throw new Error("No data");
 
-    return data?.branchReports?.map((b: any) => {
+    return data?.branchReports?.map((b: AnalyticsBranchReport) => {
       return {
-        id: b.id || b.code || b.branchName,
+        id: b.id ?? b.code ?? b.branchName,
         code: b.code || b.branchName,
         name: b.branchName,
-        isActive: true,
+        isActive: b.isActive ?? true,
         totalFeedback: b.totalFeedback || 0,
         averageRating: b.averageRating || 0,
-        positivePercentage: b.averageRatings?.overallRating ? Math.round((b.averageRatings.overallRating / 5) * 100) : 0, // Derived from avg
-        negativePercentage: b.averageRatings?.overallRating ? 100 - Math.round((b.averageRatings.overallRating / 5) * 100) : 0,
-        monthlyTrend: b.averageRatings?.overallRating ?? 0, // Using avg rating as a simple trend proxy
-        healthScore: b.averageRatings?.overallRating ? Math.round((b.averageRatings.overallRating / 5) * 100) : 0,
+        positivePercentage: b.positivePercentage ?? 0,
+        negativePercentage: b.negativePercentage ?? 0,
+        monthlyTrend: b.averageRatings?.overallRating ?? 0,
+        healthScore: b.averageRating ? Math.round((b.averageRating / 5) * 100) : 0,
       };
     }) || [];
   } catch {
@@ -249,7 +314,7 @@ export async function getAnalyticsData(dateFrom?: string, dateTo?: string, branc
 
     return {
       trend: data?.trend?.length ? data.trend : [{ month: new Date().toISOString().slice(0, 7), avgRating: data?.averageRating || 0, count: data?.totalFeedbacks || 0 }],
-      ratingDistribution: data?.distribution?.reduce((acc: any, d: any) => {
+      ratingDistribution: data?.distribution?.reduce((acc: Record<string, number>, d: AnalyticsDistributionItem) => {
         const label = numberToRating(d.rating);
         if (label) acc[label] = (acc[label] ?? 0) + d.count;
         return acc;
@@ -301,14 +366,15 @@ export async function getAlertsData(dateFrom?: string, dateTo?: string, branchId
     if (!data) throw new Error("No data");
     const branches = data?.branchReports || [];
     
-    const alerts: any[] = [];
-    
-    branches.forEach((b: any) => {
-      if (b.averageRating > 0 && b.averageRating < 3.0) {
+    const alerts: DashboardAlert[] = [];
+
+    branches.forEach((b: AnalyticsBranchReport) => {
+      const rating = b.averageRating ?? 0;
+      if (rating > 0 && rating < 3.0) {
         alerts.push({
-          severity: "error" as const,
+          severity: "critical" as const,
           title: "Critical Feedback",
-          message: `${b.branchName} has an average rating of ${b.averageRating}. Immediate action required.`
+          message: `${b.branchName} has an average rating of ${rating}. Immediate action required.`
         });
       }
     });
@@ -339,7 +405,7 @@ export async function getFeedbackMetrics(dateFrom?: string, dateTo?: string, bra
     const sentiment = data?.sentiment ?? { positive: 0, neutral: 0, negative: 0, total: 0 };
     const positivePct = sentiment.total > 0 ? Math.round((sentiment.positive / sentiment.total) * 100) : 0;
     const negativePct = sentiment.total > 0 ? Math.round((sentiment.negative / sentiment.total) * 100) : 0;
-    const distributionArr = data?.distribution || [];
+    const distributionArr: AnalyticsDistributionItem[] = data?.distribution || [];
 
     const ratingLabels: Record<number, string> = {
       5: "EXCELLENT",
@@ -363,8 +429,8 @@ export async function getFeedbackMetrics(dateFrom?: string, dateTo?: string, bra
     };
 
     const distribution = distributionArr
-      .filter((d: any) => d.rating != null && ratingLabels[d.rating])
-      .map((d: any) => {
+      .filter((d: AnalyticsDistributionItem) => d.rating != null && ratingLabels[d.rating])
+      .map((d: AnalyticsDistributionItem) => {
         const label = ratingLabels[d.rating]!;
         return {
           rating: Number(d.rating),
@@ -374,14 +440,23 @@ export async function getFeedbackMetrics(dateFrom?: string, dateTo?: string, bra
           color: String(ratingColors[label]),
           icon: String(ratingIcons[label]),
         };
-      }).sort((a: any, b: any) => b.rating - a.rating);
+      }).sort((a, b) => b.rating - a.rating);
+
+    let promoters = 0;
+    let detractors = 0;
+    for (const d of distributionArr) {
+      if (d.rating == null) continue;
+      if (d.rating >= 4) promoters += d.count;
+      else if (d.rating <= 2) detractors += d.count;
+    }
+    const nps = totalFeedbacks > 0 ? Math.round(((promoters - detractors) / totalFeedbacks) * 100) : 0;
 
     return {
       totalFeedbacks,
       averageRating: avgRating,
       positivePercentage: positivePct,
       negativePercentage: negativePct,
-      nps: Math.round(positivePct - negativePct),
+      nps,
       distribution,
     };
   } catch {
@@ -404,36 +479,61 @@ export async function getPaginatedBranches(params: { page?: number; limit?: numb
     if (params.search) query.set("search", params.search);
 
     const res = await fetchApi(`/api/v1/branches?${query.toString()}`);
+    const { items, meta } = unwrapPaginated<BranchListItem>(res);
     return {
-      branches: (res.data?.items || []) as any[],
-      total: res.data?.meta?.total || 0,
-      page: res.data?.meta?.page || 1,
-      totalPages: res.data?.meta?.totalPages || 1,
+      branches: items,
+      total: Number(meta?.totalRecords) || 0,
+      page: Number(meta?.page) || 1,
+      totalPages: Number(meta?.totalPages) || 1,
     };
   } catch {
     return { branches: [], total: 0, page: 1, totalPages: 1 };
   }
 }
 
-export async function getBranchList(): Promise<{ id: string; code: string; name: string }[]> {
+/** Fetch the full branch list, looping until all active branches are retrieved. */
+export async function getAllBranches(): Promise<BranchItem[]> {
+  const all: BranchItem[] = [];
+  const pageSize = 100;
+  let page = 1;
+
   try {
-    const res = await fetchApi("/api/v1/branches?limit=1000");
-    const { items: branches } = unwrapPaginated<BranchItem>(res);
-    return branches.map((b) => ({
+    for (let guard = 0; guard < 20; guard++) {
+      const res = await fetchApi(`/api/v1/branches?page=${page}&limit=${pageSize}`);
+      const { items, meta } = unwrapPaginated<BranchItem>(res);
+      all.push(...items);
+      const total = Number(meta?.totalRecords) || 0;
+      const fetched = all.length;
+      if (fetched >= total || items.length === 0) break;
+      page += 1;
+    }
+  } catch {
+    // Return whatever was loaded so far
+  }
+
+  return all;
+}
+
+const getCachedBranchList = cache(async (): Promise<{ id: string; code: string; name: string }[]> => {
+  const branches = await getAllBranches();
+  // Branch managers should only ever see their own branch in filters.
+  const user = await getCurrentUserAction();
+  if (user?.role === "BRANCH_MANAGER" && user.branchId != null) {
+    return branches.filter((b) => String(b.id) === String(user.branchId)).map((b) => ({
       id: String(b.id),
       code: b.code ?? b.id,
       name: b.name,
     }));
-  } catch {
-    return [];
   }
-}
+  return branches.map((b) => ({
+    id: String(b.id),
+    code: b.code ?? b.id,
+    name: b.name,
+  }));
+});
 
-export async function updateFeedbackStatus(_id: string, _status: string) {
-  void _id;
-  void _status;
-  // New backend doesn't support status updates on feedback. Return true.
-  return { success: true };
+export async function getBranchList(): Promise<{ id: string; code: string; name: string }[]> {
+  return getCachedBranchList();
 }
 
 export async function getReportData(params: {
@@ -446,28 +546,35 @@ export async function getReportData(params: {
   try {
     const user = await getCurrentUserAction();
     const isManager = user?.role === "BRANCH_MANAGER";
-    const managerBranchId = isManager ? String(user!.branchId) : null;
+    const managerBranchNum = isManager ? Number(user!.branchId) : null;
 
     const query = new URLSearchParams({ limit: "1000" });
     if (params.dateFrom) query.set("startDate", params.dateFrom);
     if (params.dateTo) query.set("endDate", params.dateTo);
-    if (params.branch && !managerBranchId) query.set("branchId", params.branch);
+
+    // Resolve branch code (e.g. X-01) to the numeric branchId the API expects.
+    let branchId: string | null = null;
+    if (!managerBranchNum && params.branch) {
+      const branches = await getBranchList();
+      const matched = branches.find((b) => b.code === params.branch || b.id === params.branch);
+      if (matched) branchId = matched.id;
+    }
+    if (branchId || managerBranchNum) query.set("branchId", String(branchId ?? managerBranchNum));
     if (params.rating) query.set("rating", RATING_LABEL_TO_INT[params.rating] ?? params.rating);
     if (params.search) query.set("search", params.search);
 
-    const [feedbackRes, branchRes] = await Promise.all([
+    const [feedbackRes, branches] = await Promise.all([
       fetchApi(`/api/v1/feedbacks?${query.toString()}`),
-      fetchApi("/api/v1/branches?limit=1000"),
+      getAllBranches(),
     ]);
 
     const { items: allFeedbacks } = unwrapPaginated<FeedbackItem>(feedbackRes);
-    const { items: branches } = unwrapPaginated<BranchItem>(branchRes);
 
     const feedbacks = isManager
-      ? allFeedbacks.filter((f) => f.branchId === managerBranchId)
+      ? allFeedbacks.filter((f) => String(f.branchId) === String(managerBranchNum))
       : allFeedbacks;
     const filteredBranches = isManager
-      ? branches.filter((b) => b.id === managerBranchId)
+      ? branches.filter((b) => String(b.id) === String(managerBranchNum))
       : branches;
 
     return filteredBranches.map((b) => {
@@ -499,21 +606,18 @@ export async function getReportMetrics(dateFrom?: string, dateTo?: string) {
     const avgRating = data?.averageRating ?? 0;
     const positivePct = data?.sentiment?.total > 0 ? Math.round((data.sentiment.positive / data.sentiment.total) * 100) : 0;
     
-    // We don't have positive/negative comments in the dashboard summary, but they aren't strictly necessary for the metrics overview (they might be in the detailed report).
-    // The previous implementation fetched all feedbacks to get comments, which was very slow.
-    // For performance, we skip comments in the metrics overview or they can be fetched via a separate endpoint if needed.
-    const branchReports = data?.branchReports?.map((b: any) => ({
+    const branchReports = data?.branchReports?.map((b: AnalyticsBranchReport) => ({
       branchName: b.branchName,
       totalFeedback: b.totalFeedback,
       averageRating: b.averageRating,
-      positivePercentage: 0,
-      negativePercentage: 0,
+      positivePercentage: b.positivePercentage ?? 0,
+      negativePercentage: b.negativePercentage ?? 0,
       positiveComments: [],
       negativeComments: [],
     })) || [];
 
     const ratingDist: Record<string, number> = { EXCELLENT: 0, GOOD: 0, AVERAGE: 0, POOR: 0 };
-    (data?.distribution || []).forEach((d: any) => {
+    (data?.distribution || []).forEach((d: AnalyticsDistributionItem) => {
       const label = numberToRating(d.rating);
       if (label) ratingDist[label] = (ratingDist[label] ?? 0) + d.count;
     });
@@ -546,16 +650,7 @@ export async function getReportMetrics(dateFrom?: string, dateTo?: string) {
 
 export async function getBranchByIdAction(id: string | number): Promise<{
   success: boolean;
-  data?: {
-    id: number;
-    name: string;
-    code: string;
-    address: string;
-    phone: string | null;
-    latitude: number;
-    longitude: number;
-    isActive: boolean;
-  };
+  data?: BranchDetail;
   error?: string;
 }> {
   try {
@@ -624,7 +719,7 @@ export async function createBranchAction(
     latitude: number;
     longitude: number;
   }
-): Promise<{ success: boolean; data?: any; error?: string }> {
+): Promise<{ success: boolean; data?: BranchDetail; error?: string }> {
   try {
     const user = await getCurrentUserAction();
     if (user && user.role === "BRANCH_MANAGER") {

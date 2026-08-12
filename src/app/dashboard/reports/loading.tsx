@@ -1,12 +1,9 @@
-import { Bone, KpiCardSkeleton, TableSkeleton } from "../../_components/skeleton";
+import { Bone, KpiCardSkeleton, TableSkeleton, PageHeaderSkeleton } from "../../_components/skeleton";
 
 export default function ReportsLoading() {
   return (
     <div className="space-y-6 pb-8">
-      <div>
-        <Bone className="h-8 w-40 mb-2" />
-        <Bone className="h-4 w-72" />
-      </div>
+      <PageHeaderSkeleton />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (

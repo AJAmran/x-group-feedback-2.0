@@ -1,16 +1,18 @@
 import { Suspense } from "react";
+import { BadgePercent } from "lucide-react";
 import { GuestOffersClient } from "./_components/guest-offers-client";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { TableSkeleton } from "../../_components/skeleton";
 
 export default function GuestOffersPage() {
   return (
-    <div className="space-y-6 pb-8">
-      <div>
-        <h1 className="text-display font-extrabold text-ios-foreground tracking-tight">Guest Discount & Entertainment</h1>
-        <p className="text-subtitle text-ios-foreground-muted mt-1">
-          Daily guest discount and entertainment offers with admin approval
-        </p>
-      </div>
+    <div className="space-y-5 pb-8">
+      <PageHeader
+        icon={BadgePercent}
+        title="Guest Discount & Entertainment"
+        subtitle="অতিথি ডিসকাউন্ট ও এন্টারটেইনমেন্ট"
+        description="Daily guest discount and entertainment offers with admin approval"
+      />
 
       <Suspense fallback={<TableSkeleton rows={6} />}>
         <GuestOffersClient />

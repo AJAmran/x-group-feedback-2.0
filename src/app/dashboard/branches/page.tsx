@@ -1,11 +1,13 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { Building2 } from "lucide-react";
 import { getCurrentUserAction } from "@/features/auth/actions";
 import { getBranchPerformance, getPaginatedBranches } from "@/features/dashboard/actions";
 import { BranchGridView } from "./_components/branch-grid";
 import { BranchLeaderboard } from "./_components/branch-leaderboard";
 import { BranchManagement } from "./_components/branch-management";
 import { BranchTabsSwitcher } from "./_components/branch-tabs-switcher";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Bone } from "../../_components/skeleton";
 
 async function BranchPerformanceContent() {
@@ -23,9 +25,9 @@ async function BranchPerformanceContent() {
           <h3 className="text-label font-bold text-ios-foreground mb-4 uppercase tracking-[0.12em]">Best Branches</h3>
           <div className="space-y-3">
             {best.map((b, i) => (
-              <div key={b.code} className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <div key={b.code} className="flex items-center justify-between p-3 rounded-xl status-success border">
                 <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-micro font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="w-6 h-6 rounded-lg bg-current/10 flex items-center justify-center text-micro font-bold">
                     {i + 1}
                   </span>
                   <div>
@@ -96,29 +98,30 @@ export default async function BranchesPage(props: {
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-display font-extrabold text-ios-foreground tracking-tight">Branches</h1>
-          <p className="text-subtitle text-ios-foreground-muted mt-1">
-            {tab === "management" ? "Manage X-Group branch locations" : "Performance metrics for all X-Group branches"}
-          </p>
-        </div>
-        <BranchTabsSwitcher activeTab={tab} />
-      </div>
+      <PageHeader
+        icon={Building2}
+        title="Branches"
+        description={
+          tab === "management"
+            ? "Manage X-Group branch locations"
+            : "Performance metrics for all X-Group branches"
+        }
+        actions={<BranchTabsSwitcher activeTab={tab} />}
+      />
 
       <Suspense
         key={tab + page + (search ?? "")}
         fallback={
           <div className="space-y-6">
             <div className="glass-card p-6 rounded-3xl">
-              <div className="h-64 bg-ios-border-subtle rounded-xl" />
+              <Bone className="h-64 w-full rounded-xl" />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {Array.from({ length: 2 }).map((_, i) => (
                 <div key={i} className="glass-card p-6 rounded-3xl">
                   <Bone className="h-4 w-24 mb-4" />
                   <div className="space-y-3">
-                    {Array.from({ length: 3 }).map((_, j) => <div key={j} className="h-12 bg-ios-border-subtle rounded-xl" />)}
+                    {Array.from({ length: 3 }).map((_, j) => <Bone key={j} className="h-12 rounded-xl w-full" />)}
                   </div>
                 </div>
               ))}
