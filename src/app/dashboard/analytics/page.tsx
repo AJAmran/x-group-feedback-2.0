@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { BarChart3 } from "lucide-react";
 import { getAnalyticsData, getBranchList } from "@/features/dashboard/actions";
-import { AnalyticsCharts } from "./_components/analytics-charts";
+import { AnalyticsChartsLazy } from "./_components/analytics-charts-lazy";
 import { DashboardFilterBar } from "@/components/dashboard/dashboard-filter-bar";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { ChartCardSkeleton } from "../../_components/skeleton";
@@ -37,7 +37,7 @@ async function AnalyticsContent({
       <DashboardFilterBar branches={branches} basePath="/dashboard/analytics" />
 
       <div key={filterKey}>
-        <AnalyticsCharts {...data} />
+        <AnalyticsChartsLazy {...data} />
       </div>
     </div>
   );

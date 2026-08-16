@@ -13,6 +13,7 @@ import {
   ClipboardList,
   BadgePercent,
   PackageCheck,
+  FileSpreadsheet,
   ChevronLeft,
   PanelRightClose,
   X,
@@ -40,6 +41,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/manager-report", label: "Manager Reports", icon: ClipboardList, section: "Daily Operations" },
   { href: "/dashboard/guest-offers", label: "Guest Offers", icon: BadgePercent, section: "Daily Operations" },
   { href: "/dashboard/inventory", label: "Inventory", icon: PackageCheck, section: "Daily Operations" },
+  { href: "/dashboard/inventory/report", label: "Inventory Report", icon: FileSpreadsheet, section: "Daily Operations" },
 ];
 
 function getNavItems(role: UserRole): NavItem[] {
@@ -49,7 +51,7 @@ function getNavItems(role: UserRole): NavItem[] {
   });
 }
 
-function isNavActive(pathname: string, href: string): boolean {
+function isSegmentPrefix(href: string, pathname: string): boolean {
   if (href === "/dashboard") return pathname === "/dashboard";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -139,7 +141,11 @@ function NavList({
   return (
     <>
       {navItems.map((item, index) => {
-        const isActive = isNavActive(pathname, item.href);
+        const activeHref = navItems
+          .map((i) => i.href)
+          .filter((href) => isSegmentPrefix(href, pathname))
+          .sort((a, b) => b.length - a.length)[0];
+        const isActive = item.href === activeHref;
         const prevSection = index > 0 ? navItems[index - 1].section : undefined;
         const showHeader = item.section && item.section !== prevSection;
         return (

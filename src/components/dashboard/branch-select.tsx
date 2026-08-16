@@ -35,11 +35,15 @@ export function BranchSelect({
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(e: MouseEvent) {
-      if (triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const isInside = triggerRef.current?.contains(target) ?? false;
+      const isInsideMenu = menuRef.current?.contains(target) ?? false;
+      if (!isInside && !isInsideMenu) {
         setOpen(false);
       }
     }
@@ -95,6 +99,7 @@ export function BranchSelect({
       {open && pos && typeof document !== "undefined" &&
         createPortal(
           <div
+            ref={menuRef}
             role="listbox"
             aria-label="Select branch"
             className="fixed z-[100] glass-card p-1.5 rounded-2xl border border-ios-border shadow-lg animate-in fade-in slide-in-from-top-1 duration-150"

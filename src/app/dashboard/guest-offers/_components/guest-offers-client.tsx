@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDashboardUser } from "../../dashboard-context";
 import {
   Trash2,
@@ -12,7 +11,7 @@ import {
   UtensilsCrossed,
   Phone,
   Plus,
-  type LucideIcon,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -22,10 +21,12 @@ import { TextInput } from "@/components/ui/TextInput";
 import { TextAreaInput } from "@/components/ui/TextAreaInput";
 import { SelectInput } from "@/components/ui/SelectInput";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
-import { Table, THead, THeadRow, TH, TD, TR, TableEmpty } from "@/components/dashboard/table";
+import { Table, THead, THeadRow, TH, TD, TR, TableEmpty, TableSkeletonRows } from "@/components/dashboard/table";
 import { StatusBadge as StatusBadgeShared } from "@/components/dashboard/status-badge";
+import { DateRangeFilter, FilterChip, FILTER_SELECT_CLASS } from "@/components/dashboard/filters";
+import { OpsStatCard } from "@/components/dashboard/ops-stat-card";
+import { StatsGridSkeleton } from "@/app/_components/skeleton";
 import { isAdminRole, isBranchManager } from "@/lib/roles";
-import { getBranchList } from "@/features/dashboard/actions";
 import {
   getDiscountLogs,
   getEntertainmentLogs,
@@ -43,6 +44,7 @@ import type {
   GuestOfferSummary,
   ApprovalStatus,
   PaginatedResult,
+  OfferListParams,
 } from "@/features/guest-offer/actions";
 
 type Tab = "discounts" | "entertainments";
@@ -72,37 +74,44 @@ function StatusBadge({ status }: { status: ApprovalStatus }) {
   );
 }
 
-/** Compact height override for toolbar selects. */
-const SEL_INPUT = "!h-10 !min-h-0 !px-3.5 !py-0 !pr-9 text-caption !w-auto";
-
 const formatMoney = (value?: number) =>
   `৳${(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const KPI_TONES = {
-  primary: "bg-ios-primary/[0.09] border-ios-primary/15 text-ios-primary",
-  gold: "bg-[oklch(var(--ios-accent)/0.12)] border-[oklch(var(--ios-accent)/0.22)] text-[oklch(var(--ios-accent))]",
-} as const;
-
-function KpiCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-  tone: keyof typeof KPI_TONES;
-}) {
+function BranchBadge({ code, id }: { code?: string; id: number }) {
   return (
-    <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 p-5 transition-colors duration-200 hover:border-ios-border hover:bg-surface-200">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-caption font-semibold text-ios-foreground-muted truncate">{label}</p>
-        <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${KPI_TONES[tone]}`}>
-          <Icon size={16} strokeWidth={2} />
+    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-ios-primary/10 border border-ios-primary/15 text-micro font-semibold text-ios-primary">
+      {code ?? `#${id}`}
+    </span>
+  );
+}
+
+function GuestCell({
+  name,
+  mobile,
+  hadLunch,
+  hadDinner,
+}: {
+  name: string;
+  mobile: string;
+  hadLunch?: boolean;
+  hadDinner?: boolean;
+}) {
+  const meals = [hadLunch && "Lunch", hadDinner && "Dinner"].filter(Boolean) as string[];
+  return (
+    <div className="min-w-0">
+      <p className="text-label font-semibold text-ios-foreground truncate">{name}</p>
+      <p className="text-micro text-ios-foreground-subtle flex items-center gap-1">
+        <Phone size={11} /> {mobile}
+      </p>
+      {meals.length > 0 && (
+        <div className="flex items-center gap-1 mt-1">
+          {meals.map((m) => (
+            <span key={m} className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-ios-border-subtle/60 text-micro font-bold text-ios-foreground-subtle">
+              {m}
+            </span>
+          ))}
         </div>
-      </div>
-      <p className="mt-3.5 text-title font-extrabold tracking-tight text-ios-foreground leading-none truncate">{value}</p>
+      )}
     </div>
   );
 }
@@ -370,46 +379,78 @@ function EntertainmentForm({ branches, onClose, onSaved }: { branches: BranchOpt
   );
 }
 
-export function GuestOffersClient() {
-  const router = useRouter();
+export function GuestOffersClient({
+  initialDiscounts,
+  initialEntertainments,
+  initialSummary,
+  initialPending,
+  branches,
+}: {
+  initialDiscounts: PaginatedResult<DiscountLogItem>;
+  initialEntertainments: PaginatedResult<EntertainmentLogItem>;
+  initialSummary: GuestOfferSummary | null;
+  initialPending: { discounts: number; entertainments: number };
+  branches: BranchOption[];
+}) {
   const user = useDashboardUser();
   const isAdmin = isAdminRole(user.role);
 
-  const [branches, setBranches] = useState<BranchOption[]>([]);
   const [tab, setTab] = useState<Tab>("discounts");
-  const [discountData, setDiscountData] = useState<PaginatedResult<DiscountLogItem>>({ items: [], total: 0, page: 1, totalPages: 0 });
-  const [entertainmentData, setEntertainmentData] = useState<PaginatedResult<EntertainmentLogItem>>({ items: [], total: 0, page: 1, totalPages: 0 });
-  const [summary, setSummary] = useState<GuestOfferSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [discountData, setDiscountData] = useState<PaginatedResult<DiscountLogItem>>(initialDiscounts);
+  const [entertainmentData, setEntertainmentData] = useState<PaginatedResult<EntertainmentLogItem>>(initialEntertainments);
+  const [summary, setSummary] = useState<GuestOfferSummary | null>(initialSummary);
+  const [pending, setPending] = useState(initialPending);
+  const [loading, setLoading] = useState(false);
   const [showDiscountForm, setShowDiscountForm] = useState(false);
   const [showEntertainmentForm, setShowEntertainmentForm] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ApprovalStatus | "">("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [branchFilter, setBranchFilter] = useState("");
   const [approving, setApproving] = useState<{ kind: "discount" | "entertainment"; id: number; status: "APPROVED" | "REJECTED" } | null>(null);
   const [deleting, setDeleting] = useState<{ kind: "discount" | "entertainment"; id: number } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ kind: "discount" | "entertainment"; id: number } | null>(null);
 
   const load = useCallback(async () => {
-    const status = statusFilter || undefined;
+    const params: OfferListParams = {
+      page: 1,
+      limit: 25,
+      approvalStatus: statusFilter || undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      branchId: branchFilter ? Number(branchFilter) : undefined,
+    };
     const [d, e, s] = await Promise.all([
-      getDiscountLogs({ page: 1, limit: 25, approvalStatus: status }),
-      getEntertainmentLogs({ page: 1, limit: 25, approvalStatus: status }),
-      getGuestOfferSummary(),
+      getDiscountLogs(params),
+      getEntertainmentLogs(params),
+      getGuestOfferSummary(params),
     ]);
     setDiscountData(d);
     setEntertainmentData(e);
     setSummary(s);
+    const pending = await Promise.all([
+      statusFilter === "PENDING"
+        ? Promise.resolve(d.total)
+        : getDiscountLogs({ page: 1, limit: 1, approvalStatus: "PENDING" }).then((r) => r.total),
+      statusFilter === "PENDING"
+        ? Promise.resolve(e.total)
+        : getEntertainmentLogs({ page: 1, limit: 1, approvalStatus: "PENDING" }).then((r) => r.total),
+    ]);
+    setPending({ discounts: pending[0], entertainments: pending[1] });
     setLoading(false);
-  }, [statusFilter]);
+  }, [statusFilter, startDate, endDate, branchFilter]);
 
+  // Initial data arrives from the server, so only refetch when the filters
+  // actually change (skip the very first effect run).
+  const skippedInitialLoad = useRef(false);
   useEffect(() => {
+    if (!skippedInitialLoad.current) {
+      skippedInitialLoad.current = true;
+      return;
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    getBranchList().then(setBranches);
-  }, [isAdmin]);
 
   const handleApprove = async (kind: "discount" | "entertainment", id: number, status: "APPROVED" | "REJECTED") => {
     if (approving != null) return;
@@ -420,7 +461,6 @@ export function GuestOffersClient() {
         : await setEntertainmentApprovalAction(id, status);
     setApproving(null);
     if (result.success) {
-      router.refresh();
       void load();
     }
   };
@@ -436,9 +476,18 @@ export function GuestOffersClient() {
     setDeleting(null);
     setConfirmDelete(null);
     if (result.success) {
-      router.refresh();
       void load();
     }
+  };
+
+  const pendingTotal = pending.discounts + pending.entertainments;
+  const hasFilters = statusFilter !== "" || startDate !== "" || endDate !== "" || branchFilter !== "";
+
+  const clearFilters = () => {
+    setStatusFilter("");
+    setStartDate("");
+    setEndDate("");
+    setBranchFilter("");
   };
 
   return (
@@ -465,20 +514,33 @@ export function GuestOffersClient() {
         cancelLabel="Cancel"
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        <KpiCard
-          icon={BadgePercent}
-          label="Total Discounts"
-          value={formatMoney(summary?.discount.totalDiscountAmount)}
-          tone="primary"
-        />
-        <KpiCard
-          icon={UtensilsCrossed}
-          label="Entertainment Cost"
-          value={formatMoney(summary?.entertainment.totalCost)}
-          tone="gold"
-        />
-      </div>
+      {loading ? (
+        <StatsGridSkeleton count={3} cols="sm:grid-cols-3" />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <OpsStatCard
+            icon={BadgePercent}
+            label="Total Discounts"
+            value={formatMoney(summary?.discount.totalDiscountAmount)}
+            tone="primary"
+            subtext={`${summary?.discount.logs ?? 0} logs recorded`}
+          />
+          <OpsStatCard
+            icon={UtensilsCrossed}
+            label="Entertainment Cost"
+            value={formatMoney(summary?.entertainment.totalCost)}
+            tone="gold"
+            subtext={`${summary?.entertainment.logs ?? 0} logs recorded`}
+          />
+          <OpsStatCard
+            icon={Clock}
+            label="Pending Approvals"
+            value={pendingTotal}
+            tone="amber"
+            subtext={`${pending.discounts} discounts · ${pending.entertainments} entertainment`}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
         <div className="inline-flex items-center p-1 gap-1 border border-ios-border-subtle bg-surface-200/70 rounded-xl w-fit">
@@ -486,24 +548,51 @@ export function GuestOffersClient() {
             variant={tab === "discounts" ? "primary" : "outline"}
             size="sm"
             icon={BadgePercent}
-            className="!h-9"
+            className="h-9!"
             onClick={() => setTab("discounts")}
           >
             Discount Logs
+            <span className={`ml-1.5 px-1.5 py-0.5 rounded-md text-micro font-bold ${
+              tab === "discounts" ? "bg-ios-on-primary/15 text-ios-on-primary" : "bg-ios-border-subtle/60 text-ios-foreground-subtle"
+            }`}>
+              {discountData.total}
+            </span>
           </Button>
           <Button
             variant={tab === "entertainments" ? "primary" : "outline"}
             size="sm"
             icon={UtensilsCrossed}
-            className="!h-9"
+            className="h-9!"
             onClick={() => setTab("entertainments")}
           >
             Entertainment Logs
+            <span className={`ml-1.5 px-1.5 py-0.5 rounded-md text-micro font-bold ${
+              tab === "entertainments" ? "bg-ios-on-primary/15 text-ios-on-primary" : "bg-ios-border-subtle/60 text-ios-foreground-subtle"
+            }`}>
+              {entertainmentData.total}
+            </span>
           </Button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {isAdmin && (
+            <SelectInput
+              className={FILTER_SELECT_CLASS}
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+              options={[
+                { value: "", label: "All Branches" },
+                ...branches.map((b) => ({ value: b.id, label: `${b.code} — ${b.name}` })),
+              ]}
+            />
+          )}
+          <DateRangeFilter
+            start={startDate}
+            end={endDate}
+            onStartChange={setStartDate}
+            onEndChange={setEndDate}
+          />
           <SelectInput
-            className={SEL_INPUT}
+            className={FILTER_SELECT_CLASS}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as ApprovalStatus | "")}
             options={[
@@ -513,6 +602,11 @@ export function GuestOffersClient() {
               { value: "REJECTED", label: "Rejected" },
             ]}
           />
+          {hasFilters && (
+            <Button variant="ghost" size="sm" icon={RotateCcw} onClick={clearFilters}>
+              Clear
+            </Button>
+          )}
           {tab === "discounts" ? (
             <Button variant="primary" size="sm" icon={BadgePercent} onClick={() => setShowDiscountForm(true)}>New Discount</Button>
           ) : (
@@ -521,10 +615,24 @@ export function GuestOffersClient() {
         </div>
       </div>
 
+      {hasFilters && (
+        <div className="flex flex-wrap items-center gap-2">
+          {branchFilter && (
+            <FilterChip
+              label={`Branch: ${branches.find((b) => b.id === branchFilter)?.code ?? branchFilter}`}
+              onClear={() => setBranchFilter("")}
+            />
+          )}
+          {startDate && <FilterChip label={`From: ${startDate}`} onClear={() => setStartDate("")} />}
+          {endDate && <FilterChip label={`To: ${endDate}`} onClear={() => setEndDate("")} />}
+          {statusFilter && <FilterChip label={`Status: ${statusFilter}`} onClear={() => setStatusFilter("")} />}
+        </div>
+      )}
+
       <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm overflow-hidden">
         <div className="px-5 py-3.5 border-b border-ios-border-subtle flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-ios-primary/[0.09] border border-ios-primary/10 text-ios-primary flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-ios-primary/9 border border-ios-primary/10 text-ios-primary flex items-center justify-center shrink-0">
               {tab === "discounts" ? <BadgePercent size={15} strokeWidth={2} /> : <UtensilsCrossed size={15} strokeWidth={2} />}
             </div>
             <h3 className="text-label font-bold text-ios-foreground">
@@ -588,6 +696,7 @@ function DiscountTable({
         <THeadRow>
           <TH className="bg-ios-primary/[0.035]">Date</TH>
           <TH className="bg-ios-primary/[0.035]">Guest</TH>
+          <TH className="bg-ios-primary/[0.035]">Branch</TH>
           <TH className="bg-ios-primary/[0.035]">Bill</TH>
           <TH className="bg-ios-primary/[0.035]">Discount</TH>
           <TH className="bg-ios-primary/[0.035]">Reason</TH>
@@ -597,14 +706,10 @@ function DiscountTable({
       </THead>
       <tbody>
         {loading ? (
-          <TR>
-            <TD colSpan={7} align="center">
-              <p className="text-caption text-ios-foreground-subtle font-medium py-8">Loading…</p>
-            </TD>
-          </TR>
+          <TableSkeletonRows colSpan={8} rows={6} />
         ) : data.items.length === 0 ? (
           <TableEmpty
-            colSpan={7}
+            colSpan={8}
             icon={BadgePercent}
             title="No discount logs found"
             description="No guest discounts match the current filters. Record the first discount to get started."
@@ -614,15 +719,18 @@ function DiscountTable({
           />
         ) : (
           data.items.map((log) => (
-            <TR key={log.id}>
+            <TR
+              key={log.id}
+              className={log.approvalStatus === "PENDING" ? "bg-amber-500/[0.04]" : undefined}
+            >
               <TD>
                 <span className="text-caption font-bold text-ios-foreground whitespace-nowrap">{log.logDate}</span>
               </TD>
               <TD>
-                <div>
-                  <p className="text-label font-semibold text-ios-foreground">{log.guestName}</p>
-                  <p className="text-micro text-ios-foreground-subtle flex items-center gap-1"><Phone size={11} /> {log.mobile}</p>
-                </div>
+                <GuestCell name={log.guestName} mobile={log.mobile} hadLunch={log.hadLunch} hadDinner={log.hadDinner} />
+              </TD>
+              <TD>
+                <BranchBadge code={log.branch?.code} id={log.branchId} />
               </TD>
               <TD>
                 <span className="text-label font-medium text-ios-foreground-muted whitespace-nowrap">{formatMoney(log.totalBill)}</span>
@@ -632,13 +740,24 @@ function DiscountTable({
                 <span className="text-caption text-ios-foreground-subtle block whitespace-nowrap">{formatMoney(log.discountAmount)}</span>
               </TD>
               <TD>
-                <span className="text-caption text-ios-foreground-subtle line-clamp-2 max-w-[240px] block">{log.reasonForDiscount}</span>
+                <span className="text-caption text-ios-foreground-subtle line-clamp-2 max-w-60 block">{log.reasonForDiscount}</span>
               </TD>
               <TD>
                 <StatusBadge status={log.approvalStatus} />
               </TD>
               <TD align="right">
                 <div className="flex items-center justify-end gap-1.5">
+                  <div className="inline-flex items-center rounded-lg bg-ios-border-subtle/40 p-0.5">
+                    <Button
+                      variant="icon-danger"
+                      size="sm"
+                      disabled={approving != null || (deleting?.kind === "discount" && deleting.id === log.id)}
+                      loading={deleting?.kind === "discount" && deleting.id === log.id}
+                      onClick={() => onDelete("discount", log.id)}
+                      icon={Trash2}
+                      title="Delete"
+                    />
+                  </div>
                   {isAdmin && log.approvalStatus === "PENDING" && (
                     <>
                       <Button
@@ -663,14 +782,6 @@ function DiscountTable({
                       </Button>
                     </>
                   )}
-                  <Button
-                    variant="icon-danger"
-                    disabled={approving != null || (deleting?.kind === "discount" && deleting.id === log.id)}
-                    loading={deleting?.kind === "discount" && deleting.id === log.id}
-                    onClick={() => onDelete("discount", log.id)}
-                    icon={Trash2}
-                    title="Delete"
-                  />
                 </div>
               </TD>
             </TR>
@@ -706,6 +817,7 @@ function EntertainmentTable({
         <THeadRow>
           <TH className="bg-ios-primary/[0.035]">Date</TH>
           <TH className="bg-ios-primary/[0.035]">Guest</TH>
+          <TH className="bg-ios-primary/[0.035]">Branch</TH>
           <TH className="bg-ios-primary/[0.035]">Food</TH>
           <TH className="bg-ios-primary/[0.035]">Cost</TH>
           <TH className="bg-ios-primary/[0.035]">Reason</TH>
@@ -715,14 +827,10 @@ function EntertainmentTable({
       </THead>
       <tbody>
         {loading ? (
-          <TR>
-            <TD colSpan={7} align="center">
-              <p className="text-caption text-ios-foreground-subtle font-medium py-8">Loading…</p>
-            </TD>
-          </TR>
+          <TableSkeletonRows colSpan={8} rows={6} />
         ) : data.items.length === 0 ? (
           <TableEmpty
-            colSpan={7}
+            colSpan={8}
             icon={UtensilsCrossed}
             title="No entertainment logs found"
             description="No complimentary food or entertainment matches the current filters. Record the first one to get started."
@@ -732,15 +840,18 @@ function EntertainmentTable({
           />
         ) : (
           data.items.map((log) => (
-            <TR key={log.id}>
+            <TR
+              key={log.id}
+              className={log.approvalStatus === "PENDING" ? "bg-amber-500/[0.04]" : undefined}
+            >
               <TD>
                 <span className="text-caption font-bold text-ios-foreground whitespace-nowrap">{log.logDate}</span>
               </TD>
               <TD>
-                <div>
-                  <p className="text-label font-semibold text-ios-foreground">{log.guestName}</p>
-                  <p className="text-micro text-ios-foreground-subtle flex items-center gap-1"><Phone size={11} /> {log.mobile}</p>
-                </div>
+                <GuestCell name={log.guestName} mobile={log.mobile} hadLunch={log.hadLunch} hadDinner={log.hadDinner} />
+              </TD>
+              <TD>
+                <BranchBadge code={log.branch?.code} id={log.branchId} />
               </TD>
               <TD>
                 <span className="text-label font-medium text-ios-foreground-muted">{log.foodName}</span>
@@ -749,13 +860,24 @@ function EntertainmentTable({
                 <span className="text-label font-bold text-ios-primary whitespace-nowrap">{formatMoney(log.foodCost)}</span>
               </TD>
               <TD>
-                <span className="text-caption text-ios-foreground-subtle line-clamp-2 max-w-[240px] block">{log.reasonForEntertainment}</span>
+                <span className="text-caption text-ios-foreground-subtle line-clamp-2 max-w-60 block">{log.reasonForEntertainment}</span>
               </TD>
               <TD>
                 <StatusBadge status={log.approvalStatus} />
               </TD>
               <TD align="right">
                 <div className="flex items-center justify-end gap-1.5">
+                  <div className="inline-flex items-center rounded-lg bg-ios-border-subtle/40 p-0.5">
+                    <Button
+                      variant="icon-danger"
+                      size="sm"
+                      disabled={approving != null || (deleting?.kind === "entertainment" && deleting.id === log.id)}
+                      loading={deleting?.kind === "entertainment" && deleting.id === log.id}
+                      onClick={() => onDelete("entertainment", log.id)}
+                      icon={Trash2}
+                      title="Delete"
+                    />
+                  </div>
                   {isAdmin && log.approvalStatus === "PENDING" && (
                     <>
                       <Button
@@ -780,14 +902,6 @@ function EntertainmentTable({
                       </Button>
                     </>
                   )}
-                  <Button
-                    variant="icon-danger"
-                    disabled={approving != null || (deleting?.kind === "entertainment" && deleting.id === log.id)}
-                    loading={deleting?.kind === "entertainment" && deleting.id === log.id}
-                    onClick={() => onDelete("entertainment", log.id)}
-                    icon={Trash2}
-                    title="Delete"
-                  />
                 </div>
               </TD>
             </TR>

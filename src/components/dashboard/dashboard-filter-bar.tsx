@@ -7,6 +7,7 @@ import { useFilterParams } from "@/hooks/useFilterParams";
 import { useDashboardUser } from "@/app/dashboard/dashboard-context";
 
 interface Branch {
+  id: string;
   code: string;
   name: string;
 }
@@ -21,7 +22,9 @@ export function DashboardFilterBar({ branches, basePath }: DashboardFilterBarPro
   const user = useDashboardUser();
   const isManager = user?.role === "BRANCH_MANAGER";
   // For branch managers the backend scopes every query to their own branch.
-  const scopedBranch = isManager ? branches[0] : undefined;
+  const scopedBranch = isManager
+    ? branches.find((b) => b.id === String(user?.branchId))
+    : undefined;
 
   return (
     <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm overflow-hidden">

@@ -26,6 +26,7 @@ export interface InventoryStatement {
   statementMonth: string;
   status: InventoryStatus;
   submittedAt?: string | null;
+  openingStockEditable?: boolean;
   branch?: { code?: string; name?: string };
 }
 
@@ -37,7 +38,8 @@ export interface InventoryLine {
   brokenLost: number;
   reject: number;
   closingStock: number;
-  item: { name: string; category: { name: string } };
+  openingStockEditable?: boolean;
+  item: { name: string; sortOrder: number; category: { name: string; sortOrder: number } };
 }
 
 export interface PaginatedResult<T> {
@@ -74,6 +76,59 @@ export async function getInventoryItems(categoryId?: number): Promise<InventoryI
     return ((wrapped.data ?? []) as InventoryItem[]) ?? [];
   } catch {
     return [];
+  }
+}
+
+export async function createInventoryCategoryAction(name: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await authenticatedFetch("/api/v1/inventory/categories", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { success: false, error: json.message || "Failed to create category" };
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to create category" };
+  }
+}
+
+export async function createInventoryItemAction(
+  categoryId: number,
+  name: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await authenticatedFetch("/api/v1/inventory/items", {
+      method: "POST",
+      body: JSON.stringify({ categoryId, name }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { success: false, error: json.message || "Failed to create item" };
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to create item" };
+  }
+}
+
+export async function deleteInventoryItemAction(id: number): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await authenticatedFetch(`/api/v1/inventory/items/${id}`, { method: "DELETE" });
+    const json = await res.json();
+    if (!res.ok) return { success: false, error: json.message || "Failed to delete item" };
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to delete item" };
+  }
+}
+
+export async function deleteInventoryCategoryAction(id: number): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await authenticatedFetch(`/api/v1/inventory/categories/${id}`, { method: "DELETE" });
+    const json = await res.json();
+    if (!res.ok) return { success: false, error: json.message || "Failed to delete category" };
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to delete category" };
   }
 }
 
@@ -152,7 +207,7 @@ export async function createInventoryStatementAction(statementMonth: string): Pr
 
 export async function updateInventoryStatementLinesAction(
   id: number,
-  lines: Array<{ itemId: number; added?: number; brokenLost?: number; reject?: number }>
+  lines: Array<{ itemId: number; openingStock?: number; added?: number; brokenLost?: number; reject?: number }>
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const res = await authenticatedFetch(`/api/v1/inventory/statements/${id}/lines`, {
@@ -182,4 +237,79 @@ export async function updateInventoryStatementStatusAction(
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Failed to update status" };
   }
+}
+
+export type InventoryReportStatus = "DRAFT" | "SUBMITTED" | "LOCKED" | "MISSING";
+
+export interface InventoryReportTotals {
+  openingStock: number;
+  added: number;
+  brokenLost: number;
+  reject: number;
+  closingStock: number;
+}
+
+export interface InventoryReportBranchRow {
+  branch: { id: number; name: string; code: string | null };
+  status: InventoryReportStatus;
+  submittedAt?: string | null;
+  submittedBy?: { id: number; name: string } | null;
+  lineCount: number;
+  totals: InventoryReportTotals;
+}
+
+export interface InventoryReportCategoryTotal {
+  id: number;
+  name: string;
+  totals: InventoryReportTotals;
+}
+
+export interface InventoryReport {
+  month: string;
+  summary: {
+    totalBranches: number;
+    branchesWithStatement: number;
+    submitted: number;
+    locked: number;
+    missing: number;
+  };
+  branches: InventoryReportBranchRow[];
+  categoryTotals: InventoryReportCategoryTotal[];
+}
+
+export async function getInventoryReportAction(params: {
+  branchId?: string;
+  statementMonth?: string;
+} = {}): Promise<InventoryReport | null> {
+  try {
+    const query = new URLSearchParams();
+    if (params.statementMonth) query.set("statementMonth", params.statementMonth);
+    if (params.branchId) query.set("branchId", params.branchId);
+    const qs = query.toString();
+    const res = await authenticatedFetch(`/api/v1/inventory/report${qs ? `?${qs}` : ""}`);
+    const json = await res.json();
+    return (json.data ?? null) as InventoryReport | null;
+  } catch {
+    return null;
+  }
+}
+
+export interface InventoryBranchDetail {
+  statement: InventoryStatement | null;
+  lines: InventoryLine[];
+}
+
+/**
+ * Resolves a single branch's statement for a month and returns it together
+ * with its line items, for the per-branch details view.
+ */
+export async function getInventoryBranchDetail(
+  branchId: number,
+  statementMonth: string,
+): Promise<InventoryBranchDetail> {
+  const statements = await getInventoryStatements({ branchId, statementMonth, limit: 1 });
+  const statement = statements.items[0] ?? null;
+  if (!statement) return { statement: null, lines: [] };
+  const lines = await getInventoryStatementLines(statement.id);
+  return { statement, lines };
 }

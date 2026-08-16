@@ -24,21 +24,21 @@ export const ROLE_META: Record<UserRole, RoleMeta> = {
     shortLabel: "Super Admin",
     description: "Full system access including settings",
     icon: ShieldCheck,
-    badge: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/20",
+    badge: "bg-purple-600 text-white border-purple-500/30 shadow-sm",
   },
   ADMIN: {
     label: "Admin",
     shortLabel: "Admin",
     description: "Manage branches, users and approvals",
     icon: Shield,
-    badge: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/20",
+    badge: "bg-sky-600 text-white border-sky-500/30 shadow-sm",
   },
   BRANCH_MANAGER: {
     label: "Branch Manager",
     shortLabel: "Branch Mgr",
     description: "Daily operations for a single branch",
     icon: UserCog,
-    badge: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
+    badge: "bg-emerald-600 text-white border-emerald-500/30 shadow-sm",
   },
 };
 

@@ -44,6 +44,28 @@ function extractCookieValue(setCookie: string | null, name: string): string | nu
   return null;
 }
 
+/**
+ * Parse the Max-Age (in seconds) for a named cookie out of Set-Cookie,
+ * falling back to a default when the attribute is absent.
+ */
+function extractCookieMaxAge(setCookie: string | null, name: string, fallback: number): number {
+  if (!setCookie) return fallback;
+  const parts = setCookie.split(",");
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed.startsWith(`${name}=`)) continue;
+    const maxAge = /max-age=(\d+)/i.exec(trimmed);
+    if (maxAge) return Number(maxAge[1]);
+  }
+  return fallback;
+}
+
+// Default lifetimes used when the backend does not expose Max-Age.
+// Driven from server-side env vars (falling back to backend-compatible
+// defaults) so the cookie lifetime always mirrors JWT_*_EXPIRES_IN.
+const DEFAULT_ACCESS_MAX_AGE = Number(process.env.AUTH_ACCESS_TOKEN_MAX_AGE ?? 60 * 60 * 24);
+const DEFAULT_REFRESH_MAX_AGE = Number(process.env.AUTH_REFRESH_TOKEN_MAX_AGE ?? 60 * 60 * 24 * 7);
+
 // ─── Public helpers (used by other modules) ───
 
 /** Read the accessToken from the Next.js cookie store. */
@@ -61,8 +83,22 @@ async function getRefreshToken(): Promise<string | null> {
 /**
  * Attempt to refresh the access token using the stored refresh token.
  * Returns the new access token on success, or null if the refresh failed.
+ *
+ * The refresh is single-flight: when several server actions hit a 401 in the
+ * same tick (e.g. a page that fires parallel fetches), they share ONE refresh
+ * round-trip. Without this, concurrent refreshes present the same rotated-out
+ * jti and the backend's reuse-detection would revoke the whole session.
  */
 export async function refreshAccessTokenAction(): Promise<string | null> {
+  inFlightRefresh ??= performRefresh().finally(() => {
+    inFlightRefresh = null;
+  });
+  return inFlightRefresh;
+}
+
+let inFlightRefresh: Promise<string | null> | null = null;
+
+async function performRefresh(): Promise<string | null> {
   const refreshToken = await getRefreshToken();
   if (!refreshToken) return null;
 
@@ -79,25 +115,27 @@ export async function refreshAccessTokenAction(): Promise<string | null> {
 
     if (!res.ok) return null;
 
-    // Backend returns: { success, message, data: { accessToken } }
+    const setCookie = res.headers.get("set-cookie");
     const json = await res.json();
-    const newToken: string | undefined = json.data?.accessToken;
 
-    // Fallback: try extracting from Set-Cookie
-    let token = newToken;
-    if (!token) {
-      const setCookie = res.headers.get("set-cookie");
-      const match = extractCookieValue(setCookie, ACCESS_TOKEN_COOKIE);
-      if (match) token = match;
+    // Backend rotates BOTH tokens: take them from the body first, then Set-Cookie.
+    const newAccessToken: string | undefined =
+      json.data?.accessToken ?? extractCookieValue(setCookie, ACCESS_TOKEN_COOKIE) ?? undefined;
+    const newRefreshToken: string | undefined =
+      json.data?.refreshToken ?? extractCookieValue(setCookie, REFRESH_TOKEN_COOKIE) ?? undefined;
+
+    if (!newAccessToken) return null;
+
+    const accessMaxAge = extractCookieMaxAge(setCookie, ACCESS_TOKEN_COOKIE, DEFAULT_ACCESS_MAX_AGE);
+    const refreshMaxAge = extractCookieMaxAge(setCookie, REFRESH_TOKEN_COOKIE, DEFAULT_REFRESH_MAX_AGE);
+
+    const cookieStore = await cookies();
+    cookieStore.set(ACCESS_TOKEN_COOKIE, newAccessToken, cookieOptions(accessMaxAge));
+    if (newRefreshToken) {
+      cookieStore.set(REFRESH_TOKEN_COOKIE, newRefreshToken, cookieOptions(refreshMaxAge));
     }
 
-    if (!token) return null;
-
-    // Update the accessToken cookie with the fresh token
-    const cookieStore = await cookies();
-    cookieStore.set(ACCESS_TOKEN_COOKIE, token, cookieOptions(60 * 60 * 24));
-
-    return token;
+    return newAccessToken;
   } catch {
     return null;
   }
@@ -183,23 +221,25 @@ export async function loginAction(_prev: unknown, formData: FormData) {
 
     const setCookie = res.headers.get("set-cookie");
 
-    // Extract tokens from response body first, fall back to Set-Cookie
-    const bodyToken: string | undefined = json.data?.accessToken;
-    const cookieToken = extractCookieValue(setCookie, ACCESS_TOKEN_COOKIE);
-    const cookieRefresh = extractCookieValue(setCookie, REFRESH_TOKEN_COOKIE);
-
-    const accessToken = bodyToken || cookieToken;
-    const refreshToken = cookieRefresh;
+    // Extract tokens from response body first, fall back to Set-Cookie.
+    // Backend returns both tokens on login and rotates them on refresh.
+    const bodyAccess: string | undefined = json.data?.accessToken;
+    const bodyRefresh: string | undefined = json.data?.refreshToken;
+    const accessToken = bodyAccess || extractCookieValue(setCookie, ACCESS_TOKEN_COOKIE);
+    const refreshToken = bodyRefresh || extractCookieValue(setCookie, REFRESH_TOKEN_COOKIE);
 
     if (!accessToken) {
       return { error: "Authentication succeeded but no token was returned." };
     }
 
+    const accessMaxAge = extractCookieMaxAge(setCookie, ACCESS_TOKEN_COOKIE, DEFAULT_ACCESS_MAX_AGE);
+    const refreshMaxAge = extractCookieMaxAge(setCookie, REFRESH_TOKEN_COOKIE, DEFAULT_REFRESH_MAX_AGE);
+
     const store = await cookies();
-    store.set(ACCESS_TOKEN_COOKIE, accessToken, cookieOptions(60 * 60 * 24));
+    store.set(ACCESS_TOKEN_COOKIE, accessToken, cookieOptions(accessMaxAge));
 
     if (refreshToken) {
-      store.set(REFRESH_TOKEN_COOKIE, refreshToken, cookieOptions(60 * 60 * 24 * 7));
+      store.set(REFRESH_TOKEN_COOKIE, refreshToken, cookieOptions(refreshMaxAge));
     }
   } catch {
     return { error: "Authentication failed. Backend unreachable." };

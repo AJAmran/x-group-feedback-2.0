@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes skeleton-shine {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
 @theme {
   /* Brand system: X Group — navy & gold on warm porcelain (guest-ticket aesthetic) */
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
@@ -39,7 +57,7 @@
   --text-micro: clamp(0.6875rem, 0.66rem + 0.06vw, 0.75rem);
 
   --animate-shine: shine 2.2s infinite;
-  --animate-shimmer: shimmer 2.2s linear infinite;
+  --animate-shimmer: shimmer 1.4s linear infinite;
 
   @keyframes shine {
     0% {
@@ -423,24 +441,37 @@
     border-color: oklch(var(--ios-primary) / 0.22);
   }
 
-  /* Skeleton with a sweeping sheen — replaces plain animate-pulse blocks */
+  /* Skeleton with a bright sweeping shine + breathing pulse — unmistakably "loading" */
   .skeleton-shimmer {
     position: relative;
     overflow: hidden;
-    background: oklch(var(--border-subtle) / 0.6);
+    background-color: oklch(var(--foreground) / 0.11);
+    animation: skeleton-pulse 1.8s ease-in-out infinite;
   }
   .skeleton-shimmer::after {
     content: "";
     position: absolute;
     inset: 0;
-    transform: translateX(-150%);
+    transform: translateX(-130%);
     background: linear-gradient(
-      90deg,
-      transparent,
-      oklch(var(--surface-300) / 0.7),
-      transparent
+      100deg,
+      transparent 25%,
+      rgba(255, 255, 255, 0.25) 42%,
+      rgba(255, 255, 255, 0.65) 50%,
+      rgba(255, 255, 255, 0.25) 58%,
+      transparent 75%
     );
-    animation: var(--animate-shimmer);
+    animation: skeleton-shine 1.5s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-shimmer,
+    .skeleton-shimmer::after {
+      animation: none;
+    }
+    .skeleton-shimmer::after {
+      opacity: 0;
+    }
   }
 
   /* Icon tile with brand gradient — used by KPI & stat tiles */
@@ -515,4 +546,42 @@
     max-width: 1440px;
     margin-inline: auto;
   }
+}
+
+/* ── Print: render only the intended report, never the dashboard chrome ── */
+@media print {
+  .mesh-bg,
+  .dashboard-bg,
+  .gold-rule {
+    display: none !important;
+  }
+
+  aside,
+  header {
+    display: none !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body {
+    overflow: visible !important;
+    background: white;
+  }
+
+  /* When a Modal is open, hide everything except the modal itself. */
+  body[data-modal-open] > :not([data-print-area]) {
+    display: none !important;
+  }
+}
+
+/* Hide the native calendar glyph on date inputs that render their own icon.
+   The invisible indicator still stretches over the whole input so clicks open the picker. */
+.date-filter-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
 }

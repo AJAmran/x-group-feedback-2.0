@@ -22,7 +22,7 @@ import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { InsightCard } from "./_components/insight-card";
 import { AlertCard } from "./_components/alert-card";
-import { ChartsSection } from "./_components/charts-section";
+import { ChartsSectionLazy } from "./_components/charts-section-lazy";
 import { DashboardFilterBar } from "@/components/dashboard/dashboard-filter-bar";
 import { KpiCardSkeleton, ListCardSkeleton, ChartCardSkeleton } from "../_components/skeleton";
 
@@ -80,6 +80,8 @@ async function OperationalSection() {
       value: widgets.pendingApprovals.total,
       icon: Clock,
       accent: "amber" as const,
+      attention: widgets.pendingApprovals.total > 0,
+      attentionLabel: "Needs approval",
       subtext: `${widgets.pendingApprovals.discounts} discounts · ${widgets.pendingApprovals.entertainments} entertainment`,
       href: "/dashboard/guest-offers",
     },
@@ -159,7 +161,7 @@ async function InsightsSection({ dateFrom, dateTo, branchId }: { dateFrom?: stri
 
 async function DashboardCharts({ dateFrom, dateTo, branchId }: { dateFrom?: string; dateTo?: string; branchId?: string }) {
   const analytics = await getAnalyticsData(dateFrom, dateTo, branchId);
-  return <ChartsSection data={analytics} />;
+  return <ChartsSectionLazy data={analytics} />;
 }
 
 async function OverviewContent({

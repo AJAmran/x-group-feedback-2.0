@@ -28,7 +28,6 @@ type AnalyticsData = {
   sentiment: { positive: number; neutral: number; negative: number; total: number };
 };
 
-const ACCENT = "var(--color-ios-accent)";
 const GOLD = "oklch(77% 0.15 85)";
 
 function ratingLabel(key: string): string {
@@ -174,7 +173,7 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
                     {distributionData.map((entry) => (
                       <Cell
                         key={entry.name}
-                        fill={entry.name.toLowerCase() === "excellent" ? ACCENT : getRatingColor(entry.name.toUpperCase())}
+                        fill={getRatingColor(entry.name.toUpperCase())}
                       />
                     ))}
                   </Bar>
@@ -203,7 +202,7 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
                     stroke="none"
                   >
                     {sentimentData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.key === "positive" ? ACCENT : getSentimentColor(entry.key)} />
+                      <Cell key={`cell-${index}`} fill={getSentimentColor(entry.key)} />
                     ))}
                   </Pie>
                   <Tooltip content={<PieTooltip />} />
@@ -230,7 +229,7 @@ export function ChartsSection({ data }: { data: AnalyticsData }) {
                 return (
                   <div key={item.name} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.key === "positive" ? ACCENT : getSentimentColor(item.key) }} />
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getSentimentColor(item.key) }} />
                       <span className="font-medium text-ios-foreground">{item.name}</span>
                     </div>
                     <div className="flex items-center gap-3">

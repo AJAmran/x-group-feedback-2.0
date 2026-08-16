@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Bone } from "@/app/_components/skeleton";
 
 /**
  * Table primitives — shared building blocks for every dashboard data table
@@ -139,5 +140,35 @@ export function TableLoading({ colSpan, label = "Loading…" }: { colSpan: numbe
         <p className="text-caption text-ios-foreground-subtle font-medium">{label}</p>
       </td>
     </tr>
+  );
+}
+
+/** Skeleton rows shown while a table fetches data (mirrors real row structure). */
+const ROW_DELAYS = [
+  "[animation-delay:0ms]",
+  "[animation-delay:120ms]",
+  "[animation-delay:240ms]",
+  "[animation-delay:360ms]",
+  "[animation-delay:480ms]",
+  "[animation-delay:600ms]",
+];
+
+export function TableSkeletonRows({ rows = 5, colSpan }: { rows?: number; colSpan: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <tr key={i} aria-hidden="true" className="border-b border-ios-border-subtle last:border-0">
+          <td colSpan={colSpan} className="px-4 py-3.5">
+            <div className="flex items-center gap-4">
+              <Bone className={`h-5 w-24 shrink-0 ${ROW_DELAYS[i % ROW_DELAYS.length]}`} />
+              <Bone className={`h-5 w-32 shrink-0 ${ROW_DELAYS[(i + 1) % ROW_DELAYS.length]}`} />
+              <Bone className={`h-5 w-28 shrink-0 ${ROW_DELAYS[(i + 2) % ROW_DELAYS.length]}`} />
+              <Bone className={`h-5 flex-1 ${ROW_DELAYS[(i + 3) % ROW_DELAYS.length]}`} />
+              <Bone className={`h-5 w-16 shrink-0 ${ROW_DELAYS[(i + 4) % ROW_DELAYS.length]}`} />
+            </div>
+          </td>
+        </tr>
+      ))}
+    </>
   );
 }

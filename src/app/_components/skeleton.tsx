@@ -1,5 +1,14 @@
 ﻿// ── Shared skeleton primitives for all dashboard loading.tsx files ──
 
+const ROW_DELAYS = [
+  "[animation-delay:0ms]",
+  "[animation-delay:120ms]",
+  "[animation-delay:240ms]",
+  "[animation-delay:360ms]",
+  "[animation-delay:480ms]",
+  "[animation-delay:600ms]",
+];
+
 export function Bone({ className = "" }: { className?: string }) {
   return (
     <div
@@ -58,7 +67,10 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
       </div>
       <div className="p-8 space-y-4">
         {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="h-12 bg-ios-border-subtle/60 rounded-xl skeleton-shimmer" />
+          <div
+            key={i}
+            className={`h-12 rounded-xl skeleton-shimmer ${ROW_DELAYS[i % ROW_DELAYS.length]}`}
+          />
         ))}
       </div>
     </div>
@@ -91,6 +103,89 @@ export function CardSkeleton({ children }: { children?: React.ReactNode }) {
   return (
     <div className="glass-card p-5 rounded-3xl">
       {children}
+    </div>
+  );
+}
+
+// ── Daily Operations skeletons ───────────────────────────────────────────────
+
+/** Skeleton that mirrors OpsStatCard (label + icon tile + value + subtext). */
+export function OpsStatCardSkeleton() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm p-5">
+      <div className="relative flex items-start justify-between gap-3">
+        <Bone className="h-3 w-24 rounded-lg" />
+        <Bone className="w-9 h-9 rounded-lg" />
+      </div>
+      <div className="relative mt-3.5">
+        <Bone className="h-7 w-24 rounded-lg" />
+      </div>
+      <div className="relative mt-2.5">
+        <Bone className="h-2.5 w-32 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+/** Row of Ops stat-card skeletons — pass the same grid cols as the live layout. */
+export function StatsGridSkeleton({ count = 4, cols = "lg:grid-cols-4" }: { count?: number; cols?: string }) {
+  return (
+    <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${cols}`}>
+      {Array.from({ length: count }).map((_, i) => (
+        <OpsStatCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
+/** Skeleton for a filter/action toolbar (input + button placeholders). */
+export function ToolbarSkeleton({ inputs = 2, actions = 2 }: { inputs?: number; actions?: number }) {
+  return (
+    <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center gap-3">
+        {Array.from({ length: inputs }).map((_, i) => (
+          <Bone key={i} className="h-10 w-40 rounded-xl" />
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        {Array.from({ length: actions }).map((_, i) => (
+          <Bone key={i} className="h-10 w-28 rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const TABLE_HEADER_BONES = ["w-12", "w-16", "w-14", "w-20", "w-12", "w-16", "w-14", "w-20", "w-12", "w-16"];
+const TABLE_ROW_BONES = ["w-28", "w-20", "w-24", "w-32", "w-16", "w-24"];
+
+/** Skeleton for a card-hosted data table: card header, column header, mirroring rows. */
+export function TableCardSkeleton({ rows = 6, columns = 5 }: { rows?: number; columns?: number }) {
+  return (
+    <div className="glass-card rounded-3xl overflow-hidden">
+      <div className="px-5 py-4 border-b border-ios-border-subtle flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <Bone className="w-8 h-8 rounded-lg" />
+          <Bone className="h-4 w-44" />
+        </div>
+        <Bone className="h-6 w-16 rounded-full" />
+      </div>
+      <div className="hidden md:flex items-center gap-4 px-4 py-3 border-b border-ios-border-subtle">
+        {Array.from({ length: columns }).map((_, i) => (
+          <Bone key={i} className={`h-2.5 shrink-0 ${TABLE_HEADER_BONES[i % TABLE_HEADER_BONES.length]}`} />
+        ))}
+      </div>
+      <div className="divide-y divide-ios-border-subtle">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4 px-4 py-3.5">
+            <Bone className={`h-4 w-28 shrink-0 ${ROW_DELAYS[i % ROW_DELAYS.length]}`} />
+            <Bone className={`h-4 shrink-0 ${TABLE_ROW_BONES[(i + 1) % TABLE_ROW_BONES.length]} ${ROW_DELAYS[(i + 1) % ROW_DELAYS.length]}`} />
+            <Bone className={`h-4 w-20 shrink-0 hidden sm:block ${ROW_DELAYS[(i + 2) % ROW_DELAYS.length]}`} />
+            <Bone className={`h-4 flex-1 ${ROW_DELAYS[(i + 3) % ROW_DELAYS.length]}`} />
+            <Bone className={`h-7 w-24 shrink-0 rounded-lg ${ROW_DELAYS[(i + 4) % ROW_DELAYS.length]}`} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

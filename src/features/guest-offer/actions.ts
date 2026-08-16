@@ -58,7 +58,7 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
-interface OfferListParams {
+export interface OfferListParams {
   page?: number;
   limit?: number;
   branchId?: number;

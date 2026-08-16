@@ -1,6 +1,6 @@
 "use client";
 
-import { X, FileText, SlidersHorizontal } from "lucide-react";
+import { X, FileText, SlidersHorizontal, Lock } from "lucide-react";
 import { useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
@@ -8,9 +8,11 @@ import { TextInput } from "@/components/ui/TextInput";
 import { SelectInput } from "@/components/ui/SelectInput";
 import { SearchInput } from "@/components/dashboard/search-input";
 import { BranchSelect } from "@/components/dashboard/branch-select";
+import { useDashboardUser } from "../../dashboard-context";
 import { useFilterParams } from "@/hooks/useFilterParams";
 
 interface Branch {
+  id?: string;
   code: string;
   name: string;
 }
@@ -24,6 +26,11 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
   const { filters, setFilter, clearFilters: clearUrlFilters, hasFilters: urlHasFilters, filterCount: urlFilterCount } = useFilterParams("/dashboard/feedback");
   const [searchInput, setSearchInput] = useState(filters.search);
   const [prevSearch, setPrevSearch] = useState(filters.search);
+  const user = useDashboardUser();
+  const isManager = user?.role === "BRANCH_MANAGER";
+  const scopedBranch = isManager
+    ? branches.find((b) => b.id === String(user?.branchId))
+    : undefined;
 
   // Keep the local draft input in sync with URL without an effect
   // (React 19 recommendation: adjust state during render).
@@ -80,12 +87,20 @@ export function FeedbackFilters({ branches }: FeedbackFiltersProps) {
             </Button>
           </div>
 
-          <BranchSelect
-            branches={branches}
-            value={filters.branch}
-            onSelect={(code) => setFilter("branch", code)}
-            placeholder="All Branches"
-          />
+          {isManager && scopedBranch ? (
+            <span className="inline-flex items-center gap-1.5 pl-2.5 pr-3 py-2 rounded-xl bg-ios-primary/8 border border-ios-primary/15 text-caption font-semibold text-ios-primary">
+              <Lock size={13} className="shrink-0" />
+              {scopedBranch.name}
+              <span className="text-micro font-medium text-ios-foreground-faint">(scoped to your branch)</span>
+            </span>
+          ) : (
+            <BranchSelect
+              branches={branches}
+              value={filters.branch}
+              onSelect={(code) => setFilter("branch", code)}
+              placeholder="All Branches"
+            />
+          )}
 
           <SelectInput
             value={filters.rating}

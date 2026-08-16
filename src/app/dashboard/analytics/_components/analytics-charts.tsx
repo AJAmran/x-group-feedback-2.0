@@ -5,7 +5,7 @@ import {
   getRatingColor,
   getSentimentColor,
   getStableColor,
-  SEQUENTIAL_COLORS,
+  getBranchColor,
   RATING_ORDER,
 } from "@/lib/chart-theme";
 
@@ -62,9 +62,6 @@ export function AnalyticsCharts({
   const accentVar = "var(--color-ios-accent)";
 
   const sortedBranches = [...branchComparison.branches].sort((a, b) => b.average - a.average).slice(0, 17);
-  const maxDelta = sortedBranches.length > 0
-    ? Math.max(...sortedBranches.map((b) => Math.abs(b.average - branchComparison.companyAvg)), 0.01)
-    : 1;
 
   return (
     <div className="space-y-6">
@@ -191,12 +188,9 @@ export function AnalyticsCharts({
               <YAxis domain={[0, 5]} tick={{ fontSize: 12, fill: "var(--color-ios-foreground-faint)" }} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="average" radius={[6, 6, 0, 0]}>
-                {sortedBranches.map((b) => {
-                  const delta = (b.average - branchComparison.companyAvg) / maxDelta;
-                  const normalized = Math.round(((delta + 1) / 2) * 4);
-                  const idx = Math.max(0, Math.min(4, normalized));
-                  return <Cell key={b.code} fill={SEQUENTIAL_COLORS[idx]} />;
-                })}
+                {sortedBranches.map((b, i) => (
+                  <Cell key={b.code} fill={getBranchColor(i)} />
+                ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>

@@ -515,21 +515,34 @@ export async function getAllBranches(): Promise<BranchItem[]> {
 }
 
 const getCachedBranchList = cache(async (): Promise<{ id: string; code: string; name: string }[]> => {
-  const branches = await getAllBranches();
-  // Branch managers should only ever see their own branch in filters.
   const user = await getCurrentUserAction();
-  if (user?.role === "BRANCH_MANAGER" && user.branchId != null) {
-    return branches.filter((b) => String(b.id) === String(user.branchId)).map((b) => ({
-      id: String(b.id),
-      code: b.code ?? b.id,
-      name: b.name,
-    }));
-  }
-  return branches.map((b) => ({
+  const mapBranches = (b: { id: string | number; code?: string | null; name: string }) => ({
     id: String(b.id),
-    code: b.code ?? b.id,
+    code: b.code ?? String(b.id),
     name: b.name,
-  }));
+  });
+
+  // Branch managers can only ever see their own branch in filters. The full
+  // branch list endpoint is admin-only, so resolve their branch through the
+  // public active-branches endpoint instead.
+  if (user?.role === "BRANCH_MANAGER" && user.branchId != null) {
+    try {
+      const res = await authenticatedFetch("/api/v1/branches/active");
+      if (res.ok) {
+        const json = await res.json();
+        const list = (json.data ?? []) as { id: string | number; code?: string | null; name: string }[];
+        return list
+          .filter((b) => String(b.id) === String(user.branchId))
+          .map(mapBranches);
+      }
+    } catch {
+      // Fall through to an empty list
+    }
+    return [];
+  }
+
+  const branches = await getAllBranches();
+  return branches.map(mapBranches);
 });
 
 export async function getBranchList(): Promise<{ id: string; code: string; name: string }[]> {
@@ -575,7 +588,9 @@ export async function getReportData(params: {
       : allFeedbacks;
     const filteredBranches = isManager
       ? branches.filter((b) => String(b.id) === String(managerBranchNum))
-      : branches;
+      : branchId
+        ? branches.filter((b) => String(b.id) === String(branchId))
+        : branches;
 
     return filteredBranches.map((b) => {
       const bFeedbacks = feedbacks.filter((f) => f.branchId === b.id);

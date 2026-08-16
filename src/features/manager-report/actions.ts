@@ -19,6 +19,7 @@ export interface BpCpEntryInput {
   entryType: "TODAY" | "TOMORROW";
   guestName: string;
   mobile: string;
+  totalPax?: number | null;
   comment?: string | null;
 }
 

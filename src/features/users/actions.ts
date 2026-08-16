@@ -15,6 +15,7 @@ export async function getUsers(params?: {
   limit?: number;
   search?: string;
   role?: UserRole;
+  isActive?: boolean;
 }): Promise<UsersListResult> {
   try {
     const query = new URLSearchParams();
@@ -22,6 +23,7 @@ export async function getUsers(params?: {
     if (params?.limit) query.set("limit", String(params.limit));
     if (params?.search) query.set("search", params.search);
     if (params?.role) query.set("role", params.role);
+    if (params?.isActive !== undefined) query.set("isActive", String(params.isActive));
 
     const res = await authenticatedFetch(`/api/v1/users?${query.toString()}`);
     const json = await res.json();
