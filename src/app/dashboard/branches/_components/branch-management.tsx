@@ -251,7 +251,7 @@ export function BranchManagement({ data }: { data: BranchesListData }) {
       </Modal>
 
       {/* Table */}
-      <div className="glass-card rounded-3xl overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <CardHeader
           icon={Building2}
           title="All Branches"

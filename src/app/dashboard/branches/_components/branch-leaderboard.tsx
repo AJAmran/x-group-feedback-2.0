@@ -195,7 +195,7 @@ export function BranchLeaderboard({ branches }: BranchLeaderboardProps) {
         )}
       </Modal>
 
-      <div className="glass-card rounded-3xl overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <CardHeader icon={Award} title="Branch Performance" count={branches.length} />
 
         <Table>

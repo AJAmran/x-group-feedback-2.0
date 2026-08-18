@@ -26,7 +26,7 @@ import { StatusBadge as StatusBadgeShared } from "@/components/dashboard/status-
 import { DateRangeFilter, FilterChip, FILTER_SELECT_CLASS } from "@/components/dashboard/filters";
 import { OpsStatCard } from "@/components/dashboard/ops-stat-card";
 import { StatsGridSkeleton } from "@/app/_components/skeleton";
-import { isAdminRole, isBranchManager } from "@/lib/roles";
+import { isAdminRole, isBranchManager, isSuperAdminRole } from "@/lib/roles";
 import {
   getDiscountLogs,
   getEntertainmentLogs,
@@ -394,6 +394,7 @@ export function GuestOffersClient({
 }) {
   const user = useDashboardUser();
   const isAdmin = isAdminRole(user.role);
+  const isSuperAdmin = isSuperAdminRole(user.role);
 
   const [tab, setTab] = useState<Tab>("discounts");
   const [discountData, setDiscountData] = useState<PaginatedResult<DiscountLogItem>>(initialDiscounts);
@@ -629,10 +630,10 @@ export function GuestOffersClient({
         </div>
       )}
 
-      <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <div className="px-5 py-3.5 border-b border-ios-border-subtle flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-ios-primary/9 border border-ios-primary/10 text-ios-primary flex items-center justify-center shrink-0">
+            <div className="icon-tile-sm bg-ios-primary/9 border border-ios-primary/10 text-ios-primary">
               {tab === "discounts" ? <BadgePercent size={15} strokeWidth={2} /> : <UtensilsCrossed size={15} strokeWidth={2} />}
             </div>
             <h3 className="text-label font-bold text-ios-foreground">
@@ -648,6 +649,7 @@ export function GuestOffersClient({
             data={discountData}
             loading={loading}
             isAdmin={isAdmin}
+            isSuperAdmin={isSuperAdmin}
             approving={approving}
             deleting={deleting}
             onApprove={handleApprove}
@@ -659,6 +661,7 @@ export function GuestOffersClient({
             data={entertainmentData}
             loading={loading}
             isAdmin={isAdmin}
+            isSuperAdmin={isSuperAdmin}
             approving={approving}
             deleting={deleting}
             onApprove={handleApprove}
@@ -675,6 +678,7 @@ function DiscountTable({
   data,
   loading,
   isAdmin,
+  isSuperAdmin,
   approving,
   deleting,
   onApprove,
@@ -684,6 +688,7 @@ function DiscountTable({
   data: PaginatedResult<DiscountLogItem>;
   loading: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   approving: { kind: "discount" | "entertainment"; id: number; status: "APPROVED" | "REJECTED" } | null;
   deleting: { kind: "discount" | "entertainment"; id: number } | null;
   onApprove: (kind: "discount" | "entertainment", id: number, status: "APPROVED" | "REJECTED") => void;
@@ -747,17 +752,19 @@ function DiscountTable({
               </TD>
               <TD align="right">
                 <div className="flex items-center justify-end gap-1.5">
-                  <div className="inline-flex items-center rounded-lg bg-ios-border-subtle/40 p-0.5">
-                    <Button
-                      variant="icon-danger"
-                      size="sm"
-                      disabled={approving != null || (deleting?.kind === "discount" && deleting.id === log.id)}
-                      loading={deleting?.kind === "discount" && deleting.id === log.id}
-                      onClick={() => onDelete("discount", log.id)}
-                      icon={Trash2}
-                      title="Delete"
-                    />
-                  </div>
+                  {(log.approvalStatus !== "APPROVED" || isSuperAdmin) && (
+                    <div className="inline-flex items-center rounded-lg bg-ios-border-subtle/40 p-0.5">
+                      <Button
+                        variant="icon-danger"
+                        size="sm"
+                        disabled={approving != null || (deleting?.kind === "discount" && deleting.id === log.id)}
+                        loading={deleting?.kind === "discount" && deleting.id === log.id}
+                        onClick={() => onDelete("discount", log.id)}
+                        icon={Trash2}
+                        title="Delete"
+                      />
+                    </div>
+                  )}
                   {isAdmin && log.approvalStatus === "PENDING" && (
                     <>
                       <Button
@@ -796,6 +803,7 @@ function EntertainmentTable({
   data,
   loading,
   isAdmin,
+  isSuperAdmin,
   approving,
   deleting,
   onApprove,
@@ -805,6 +813,7 @@ function EntertainmentTable({
   data: PaginatedResult<EntertainmentLogItem>;
   loading: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   approving: { kind: "discount" | "entertainment"; id: number; status: "APPROVED" | "REJECTED" } | null;
   deleting: { kind: "discount" | "entertainment"; id: number } | null;
   onApprove: (kind: "discount" | "entertainment", id: number, status: "APPROVED" | "REJECTED") => void;
@@ -867,17 +876,19 @@ function EntertainmentTable({
               </TD>
               <TD align="right">
                 <div className="flex items-center justify-end gap-1.5">
-                  <div className="inline-flex items-center rounded-lg bg-ios-border-subtle/40 p-0.5">
-                    <Button
-                      variant="icon-danger"
-                      size="sm"
-                      disabled={approving != null || (deleting?.kind === "entertainment" && deleting.id === log.id)}
-                      loading={deleting?.kind === "entertainment" && deleting.id === log.id}
-                      onClick={() => onDelete("entertainment", log.id)}
-                      icon={Trash2}
-                      title="Delete"
-                    />
-                  </div>
+                  {(log.approvalStatus !== "APPROVED" || isSuperAdmin) && (
+                    <div className="inline-flex items-center rounded-lg bg-ios-border-subtle/40 p-0.5">
+                      <Button
+                        variant="icon-danger"
+                        size="sm"
+                        disabled={approving != null || (deleting?.kind === "entertainment" && deleting.id === log.id)}
+                        loading={deleting?.kind === "entertainment" && deleting.id === log.id}
+                        onClick={() => onDelete("entertainment", log.id)}
+                        icon={Trash2}
+                        title="Delete"
+                      />
+                    </div>
+                  )}
                   {isAdmin && log.approvalStatus === "PENDING" && (
                     <>
                       <Button

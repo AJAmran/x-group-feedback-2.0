@@ -21,7 +21,7 @@ export function QuickLinkCard({ title, value, subtext, icon: Icon, href, accent 
   return (
     <Link href={href} className="group block h-full">
       <div
-        className={`h-full rounded-2xl border bg-surface-300 shadow-sm p-5 transition-all duration-200 hover:shadow-md flex flex-col ${
+        className={`h-full glass-card p-5 transition-all duration-200 hover:shadow-md flex flex-col ${
           attention
             ? "border-amber-500/30 hover:border-amber-500/50 ring-1 ring-amber-500/15"
             : "border-ios-border-subtle hover:border-ios-primary/25"
@@ -29,7 +29,7 @@ export function QuickLinkCard({ title, value, subtext, icon: Icon, href, accent 
       >
         <div className="flex items-start justify-between gap-3">
           <div
-            className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-[1.04] ${
+            className={`icon-tile-lg transition-transform duration-200 group-hover:scale-[1.04] ${
               attention
                 ? "bg-amber-500/12 border-amber-500/25 text-amber-600 dark:text-amber-400"
                 : a.tile
@@ -53,15 +53,11 @@ export function QuickLinkCard({ title, value, subtext, icon: Icon, href, accent 
           </div>
         </div>
 
-        <p className="mt-4 text-caption font-semibold uppercase tracking-[0.12em] text-ios-foreground-subtle leading-none">
-          {title}
-        </p>
-        <p className="mt-2 text-title font-extrabold tracking-tight text-ios-foreground leading-none tabular-nums">
-          {value}
-        </p>
+        <p className="stat-kicker mt-4">{title}</p>
+        <p className="stat-value mt-2">{value}</p>
 
         {subtext && (
-          <p className="text-micro text-ios-foreground-faint font-medium mt-2.5">{subtext}</p>
+          <p className="meta-caption mt-2.5">{subtext}</p>
         )}
       </div>
     </Link>

@@ -35,7 +35,7 @@ export function SearchInput({
           if (e.key === "Enter") onEnter?.();
         }}
         placeholder={placeholder}
-        className={cn("squircle-input w-full pl-9 h-10 text-caption", inputClassName)}
+        className={cn("squircle-input w-full pl-9 h-10 !min-h-0 !py-0 text-caption", inputClassName)}
       />
     </div>
   );

@@ -41,10 +41,10 @@ export function InsightCard({ type, message }: InsightCardProps) {
   const Icon = c.icon;
 
   return (
-    <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm p-4 card-interactive">
+    <div className="glass-card p-4 card-interactive">
       <div className="flex items-start gap-3">
         <div
-          className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${c.iconWrap}`}
+          className={`icon-tile ${c.iconWrap}`}
         >
           <Icon size={17} strokeWidth={2.25} />
         </div>

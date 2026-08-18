@@ -54,6 +54,10 @@ export function isAdminRole(role: UserRole | undefined | null): boolean {
   return role === "SUPER_ADMIN" || role === "ADMIN";
 }
 
+export function isSuperAdminRole(role: UserRole | undefined | null): boolean {
+  return role === "SUPER_ADMIN";
+}
+
 export function isBranchManager(role: UserRole | undefined | null): boolean {
   return role === "BRANCH_MANAGER";
 }

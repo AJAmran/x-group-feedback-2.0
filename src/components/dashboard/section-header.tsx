@@ -12,7 +12,7 @@ export function SectionHeader({ title, description, icon: Icon, actions }: Secti
     <div className="flex items-center justify-between gap-4 mb-4">
       <div className="flex items-center gap-2.5 min-w-0">
         {Icon && (
-          <div className="w-8 h-8 rounded-lg bg-ios-primary/[0.07] border border-ios-primary/10 text-ios-primary flex items-center justify-center shrink-0">
+          <div className="icon-tile-sm bg-ios-primary/[0.07] border-ios-primary/10 text-ios-primary">
             <Icon size={15} strokeWidth={2.1} />
           </div>
         )}

@@ -214,10 +214,10 @@ export function InventoryReportView() {
 
   return (
     <>
-      <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <div className="px-5 py-4 border-b border-ios-border-subtle flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-ios-primary/9 border border-ios-primary/10 text-ios-primary flex items-center justify-center shrink-0">
+            <div className="icon-tile-sm bg-ios-primary/9 border border-ios-primary/10 text-ios-primary">
               <ClipboardCheck size={15} strokeWidth={2} />
             </div>
             <h2 className="text-label font-bold text-ios-foreground">Report Filters</h2>
@@ -227,7 +227,7 @@ export function InventoryReportView() {
               type="month"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
-              className="w-auto"
+              className="h-10 !min-h-0 !py-0 w-auto"
               aria-label="Statement month"
             />
             {isAdmin && (
@@ -236,14 +236,15 @@ export function InventoryReportView() {
                 onChange={(e) => setBranchId(e.target.value)}
                 placeholder="All branches"
                 options={branches.map((b) => ({ value: b.id, label: `${b.code} — ${b.name}` }))}
-                className="w-auto min-w-[200px]"
+                className="h-10 !min-h-0 !py-0 w-auto min-w-[200px]"
               />
             )}
             <div className="flex gap-2">
               <Button
                 variant="ghost-green"
-                size="sm"
+                size="md"
                 icon={Download}
+                className="h-10"
                 loading={exporting === "excel"}
                 disabled={exporting != null || !hasBranches}
                 onClick={() => void handleExportExcel()}
@@ -252,8 +253,9 @@ export function InventoryReportView() {
               </Button>
               <Button
                 variant="ghost-danger"
-                size="sm"
+                size="md"
                 icon={FileText}
+                className="h-10"
                 loading={exporting === "pdf"}
                 disabled={exporting != null || !hasBranches}
                 onClick={() => void handleExportPDF()}
@@ -262,8 +264,9 @@ export function InventoryReportView() {
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 icon={Printer}
+                className="h-10"
                 disabled={exporting != null}
                 onClick={() => window.print()}
               >
@@ -297,7 +300,7 @@ export function InventoryReportView() {
         </div>
       )}
 
-      <div className="glass-card rounded-3xl overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <CardHeader icon={Building2} title="By Branch" count={summary?.totalBranches} />
 
         <Table>
@@ -399,7 +402,7 @@ export function InventoryReportView() {
         </Table>
       </div>
 
-      <div className="glass-card rounded-3xl overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <CardHeader icon={PackageCheck} title="Category Totals" count={report?.categoryTotals.length} />
 
         <Table>

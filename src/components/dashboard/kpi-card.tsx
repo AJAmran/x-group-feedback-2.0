@@ -38,10 +38,10 @@ export function KpiCard({
     trend === "up" || trend === "down" || trend === "neutral" ? trendMetaMap[trend] : null;
 
   return (
-    <div className="group rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm p-5 transition-all duration-200 hover:shadow-md hover:border-ios-border flex flex-col">
+    <div className="group glass-card p-5 transition-all duration-200 hover:shadow-md hover:border-ios-border flex flex-col card-lift">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div
-          className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-colors duration-200 group-hover:scale-[1.04] ${a.tile}`}
+          className={`icon-tile-lg transition-colors duration-200 group-hover:scale-[1.04] ${a.tile}`}
         >
           <Icon size={18} strokeWidth={2.25} />
         </div>
@@ -55,12 +55,8 @@ export function KpiCard({
         )}
       </div>
 
-      <p className="text-caption font-semibold uppercase tracking-[0.12em] text-ios-foreground-subtle leading-none">
-        {title}
-      </p>
-      <p className="mt-2 text-title font-extrabold tracking-tight text-ios-foreground leading-none tabular-nums">
-        {value}
-      </p>
+      <p className="stat-kicker">{title}</p>
+      <p className="stat-value mt-2">{value}</p>
 
       {typeof progress === "number" && (
         <div
@@ -78,7 +74,7 @@ export function KpiCard({
       )}
 
       {subtext && (
-        <p className="text-micro text-ios-foreground-faint font-medium mt-2.5">{subtext}</p>
+        <p className="meta-caption mt-2.5">{subtext}</p>
       )}
     </div>
   );

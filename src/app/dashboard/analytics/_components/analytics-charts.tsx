@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Cell, PieChart, Pie } from "recharts";
+import { TrendingUp, CalendarDays, BarChart3, Layers, Smile, Building2 } from "lucide-react";
 import {
   getRatingColor,
   getSentimentColor,
@@ -8,6 +9,7 @@ import {
   getBranchColor,
   RATING_ORDER,
 } from "@/lib/chart-theme";
+import { CardHeader } from "@/components/dashboard/card-header";
 
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { color: string; name: string; value: number }[]; label?: string }) => {
   if (active && payload?.length) {
@@ -66,8 +68,8 @@ export function AnalyticsCharts({
   return (
     <div className="space-y-6">
       {/* Rating Trend */}
-      <div className="glass-card p-6 rounded-3xl">
-        <h3 className="text-label font-bold text-ios-foreground mb-4 uppercase tracking-[0.12em]">Rating Trend</h3>
+      <div className="glass-card p-6">
+        <CardHeader icon={TrendingUp} title="Rating Trend" variant="inset" />
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={trend}>
@@ -82,8 +84,8 @@ export function AnalyticsCharts({
       </div>
 
       {/* Daily Feedback Volume */}
-      <div className="glass-card p-6 rounded-3xl">
-        <h3 className="text-label font-bold text-ios-foreground mb-4 uppercase tracking-[0.12em]">Daily Feedback Volume</h3>
+      <div className="glass-card p-6">
+        <CardHeader icon={CalendarDays} title="Daily Feedback Volume" variant="inset" />
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={daily}>
@@ -105,8 +107,8 @@ export function AnalyticsCharts({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Rating Distribution */}
-        <div className="glass-card p-6 rounded-3xl">
-          <h3 className="text-label font-bold text-ios-foreground mb-4 uppercase tracking-[0.12em]">Rating Distribution</h3>
+        <div className="glass-card p-6">
+          <CardHeader icon={BarChart3} title="Rating Distribution" variant="inset" />
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={distData} layout="vertical">
@@ -125,8 +127,8 @@ export function AnalyticsCharts({
         </div>
 
         {/* Category Performance */}
-        <div className="glass-card p-6 rounded-3xl">
-          <h3 className="text-label font-bold text-ios-foreground mb-4 uppercase tracking-[0.12em]">Category Performance</h3>
+        <div className="glass-card p-6">
+          <CardHeader icon={Layers} title="Category Performance" variant="inset" />
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categories}>
@@ -146,8 +148,8 @@ export function AnalyticsCharts({
       </div>
 
       {/* Sentiment Analysis */}
-      <div className="glass-card p-6 rounded-3xl">
-        <h3 className="text-label font-bold text-ios-foreground mb-4 uppercase tracking-[0.12em]">Sentiment Analysis</h3>
+      <div className="glass-card p-6">
+        <CardHeader icon={Smile} title="Sentiment Analysis" variant="inset" />
         <div className="flex flex-wrap items-center gap-8">
           <div className="h-48 w-48">
             <ResponsiveContainer width="100%" height="100%">
@@ -177,8 +179,8 @@ export function AnalyticsCharts({
       </div>
 
       {/* Branch Comparison */}
-      <div className="glass-card p-6 rounded-3xl">
-        <h3 className="text-label font-bold text-ios-foreground mb-4 uppercase tracking-[0.12em]">Branch Comparison</h3>
+      <div className="glass-card p-6">
+        <CardHeader icon={Building2} title="Branch Comparison" variant="inset" />
         <p className="text-caption text-ios-foreground-subtle mb-4 font-medium">Company Average: {branchComparison.companyAvg.toFixed(1)}/5</p>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">

@@ -5,7 +5,7 @@ export default function FeedbackDetailLoading() {
     <div className="max-w-2xl mx-auto space-y-6 pb-8">
       <Bone className="h-4 w-24" />
 
-      <div className="glass-card rounded-3xl p-6">
+      <div className="glass-card p-6">
         <div className="flex items-center gap-4 mb-6">
           <Bone className="w-16 h-16 rounded-2xl" />
           <div className="space-y-2 flex-1">
@@ -31,7 +31,7 @@ export default function FeedbackDetailLoading() {
         </div>
       </div>
 
-      <div className="glass-card rounded-3xl p-6">
+      <div className="glass-card p-6">
         <Bone className="h-5 w-32 mb-4" />
         <Bone className="h-4 w-3/4 mb-2" />
         <Bone className="h-4 w-1/2" />

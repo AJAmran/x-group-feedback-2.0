@@ -6,7 +6,7 @@ export default function FeedbackReportLoading() {
       <Bone className="h-6 w-48" />
       <Bone className="h-4 w-72" />
 
-      <div className="glass-card rounded-3xl p-6">
+      <div className="glass-card p-6">
         <Bone className="h-64 w-full" />
       </div>
     </div>

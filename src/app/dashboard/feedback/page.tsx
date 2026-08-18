@@ -29,7 +29,7 @@ async function RatingDistribution({ metrics }: { metrics: Awaited<ReturnType<typ
   };
 
   return (
-    <div className="glass-card rounded-3xl p-6">
+    <div className="glass-card p-6">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-ios-primary/10 flex items-center justify-center">
@@ -160,7 +160,7 @@ async function FeedbackContent({
 
 function SkeletonRatingDist() {
   return (
-    <div className="glass-card rounded-3xl p-6">
+    <div className="glass-card p-6">
       <Bone className="h-5 w-36 mb-5" />
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="mb-4">
@@ -175,10 +175,10 @@ function SkeletonRatingDist() {
 function SkeletonFiltersTable() {
   return (
     <div className="space-y-6">
-      <div className="glass-card p-4 rounded-3xl">
+      <div className="glass-card p-4">
         <Bone className="h-11 w-full" />
       </div>
-      <div className="glass-card rounded-3xl">
+      <div className="glass-card">
         <div className="h-64 w-full bg-ios-border-subtle rounded-xl" />
       </div>
     </div>

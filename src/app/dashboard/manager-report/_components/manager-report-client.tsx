@@ -494,7 +494,7 @@ function DocSection({
   return (
     <section className="print:break-inside-avoid">
       <div className="flex items-center gap-3 py-4">
-        <span className="w-8 h-8 rounded-lg bg-ios-primary/[0.07] border border-ios-primary/10 text-ios-primary flex items-center justify-center shrink-0">
+        <span className="icon-tile-sm bg-ios-primary/[0.07] border-ios-primary/10 text-ios-primary">
           <Icon size={15} strokeWidth={2} />
         </span>
         <div className="min-w-0">
@@ -537,7 +537,7 @@ function MetaStrip({
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 rounded-xl border border-ios-border-subtle bg-surface-100/50 divide-y sm:divide-y-0 sm:divide-x divide-ios-border-subtle overflow-hidden">
       {cells.map((c) => (
         <div key={c.label} className="flex items-center gap-3 px-4 py-3 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-ios-primary/[0.07] border border-ios-primary/10 text-ios-primary flex items-center justify-center shrink-0">
+          <div className="icon-tile-sm bg-ios-primary/[0.07] border-ios-primary/10 text-ios-primary">
             <c.icon size={14} strokeWidth={2} />
           </div>
           <div className="min-w-0">
@@ -1311,7 +1311,7 @@ export function ManagerReportClient() {
 
       {isAdmin && summary.pending > 0 && (
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] p-4">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/12 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+          <div className="icon-tile-lg bg-amber-500/12 border-amber-500/20 text-amber-600 dark:text-amber-400">
             <Clock size={18} />
           </div>
           <div className="flex-1 min-w-0">
@@ -1328,10 +1328,10 @@ export function ManagerReportClient() {
         </div>
       )}
 
-      <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <div className="px-5 py-4 border-b border-ios-border-subtle flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-ios-primary/9 border border-ios-primary/10 text-ios-primary flex items-center justify-center shrink-0">
+            <div className="icon-tile-sm bg-ios-primary/9 border border-ios-primary/10 text-ios-primary">
               <ClipboardList size={15} strokeWidth={2} />
             </div>
             <h2 className="text-label font-bold text-ios-foreground">রিপোর্ট তালিকা</h2>

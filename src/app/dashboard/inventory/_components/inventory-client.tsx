@@ -634,9 +634,9 @@ export function InventoryClient() {
             type="month"
             value={monthFilter}
             onChange={(e) => { setMonthFilter(e.target.value); setPage(1); }}
-            className="w-auto"
+            className="h-10 !min-h-0 !py-0 w-auto"
           />
-          <div className="inline-flex items-center p-1 gap-1 border border-ios-border-subtle bg-surface-200/70 rounded-xl w-fit">
+          <div className="inline-flex items-center px-1 h-10 gap-1 border border-ios-border-subtle bg-surface-200/70 rounded-xl w-fit">
             {STATUS_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -655,15 +655,15 @@ export function InventoryClient() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {isAdmin && (
-            <Button variant="outline" size="sm" icon={Settings2} onClick={() => setShowManage(true)}>
+            <Button variant="outline" size="md" icon={Settings2} onClick={() => setShowManage(true)}>
               Manage Items
             </Button>
           )}
-          <Button variant="primary" size="sm" icon={Plus} onClick={() => setShowCreate(true)}>New Statement</Button>
+          <Button variant="primary" size="md" icon={Plus} onClick={() => setShowCreate(true)}>New Statement</Button>
         </div>
       </div>
 
-      <div className="glass-card rounded-3xl overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <CardHeader icon={PackageCheck} title="Statements" count={data.total} />
 
         <Table>

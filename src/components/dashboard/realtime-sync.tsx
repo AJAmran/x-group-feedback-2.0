@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { emitNotificationCreated } from "@/lib/notification-events";
 
 const REFRESH_DEBOUNCE_MS = 1000;
 // Minimum gap between refresh() calls. Coalesces bursts of SSE events into a
@@ -82,7 +83,12 @@ export function RealtimeSync({ children }: { children: React.ReactNode }) {
         if (!mounted) return;
         try {
           const data = JSON.parse(event.data) as { entity?: string };
-          if (data.entity && data.entity !== "ping") scheduleRefresh();
+          if (!data.entity || data.entity === "ping") return;
+          if (data.entity === "notification.created") {
+            emitNotificationCreated();
+            return;
+          }
+          scheduleRefresh();
         } catch {
           // Malformed frame — ignore.
         }

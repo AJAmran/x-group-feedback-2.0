@@ -75,7 +75,7 @@ export function BranchSelect({
     <>
       <div
         ref={triggerRef}
-        className={cn("relative flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-xl bg-ios-border-subtle/40 border border-ios-border-subtle", className)}
+        className={cn("relative flex items-center gap-1.5 pl-2.5 pr-1.5 h-10 rounded-xl bg-ios-border-subtle/40 border border-ios-border-subtle", className)}
       >
         <Building2 size={14} className="text-ios-primary shrink-0" />
         <button
@@ -84,7 +84,7 @@ export function BranchSelect({
           aria-expanded={open}
           aria-haspopup="listbox"
           className={cn(
-            "flex items-center gap-2 h-9 rounded-lg px-2 min-w-[160px] max-w-[280px] text-caption font-medium text-ios-foreground bg-transparent border-0 shadow-none cursor-pointer hover:bg-ios-border-subtle transition-colors duration-150 text-left",
+            "flex items-center gap-2 h-full rounded-lg px-2 min-w-[160px] max-w-[280px] text-caption font-medium text-ios-foreground bg-transparent border-0 shadow-none cursor-pointer hover:bg-ios-border-subtle transition-colors duration-150 text-left",
             triggerClassName,
           )}
         >

@@ -26,7 +26,7 @@ export function FilterDateInput({
       <TextInput
         type="date"
         aria-label={ariaLabel}
-        className={`date-filter-input ${FILTER_INPUT_CLASS} !pr-9 !w-[150px] ${className}`}
+        className={`date-filter-input ${FILTER_INPUT_CLASS} !pr-9 !w-[130px] ${className}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

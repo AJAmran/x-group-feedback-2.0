@@ -147,7 +147,7 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
   return (
     <div className="space-y-6">
       {/* Date Range Filter */}
-      <div className="glass-card rounded-3xl p-5">
+      <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <Calendar size={15} className="text-ios-foreground-subtle" />
           <span className="text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">
@@ -163,7 +163,7 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
               type="date"
               value={localFrom}
               onChange={(e) => setLocalFrom(e.target.value)}
-              className="h-10 px-3"
+              className="h-10 !min-h-0 !py-0 px-3"
             />
           </div>
           <div className="space-y-1">
@@ -174,14 +174,14 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
               type="date"
               value={localTo}
               onChange={(e) => setLocalTo(e.target.value)}
-              className="h-10 px-3"
+              className="h-10 !min-h-0 !py-0 px-3"
             />
           </div>
-          <Button variant="ghost" size="sm" icon={RefreshCw} onClick={applyDateFilter}>
+          <Button variant="ghost" size="md" icon={RefreshCw} className="h-10" onClick={applyDateFilter}>
             Apply
           </Button>
           {(dateFrom || dateTo) && (
-            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard/reports")}>
+            <Button variant="outline" size="md" onClick={() => router.push("/dashboard/reports")}>
               Clear
             </Button>
           )}
@@ -189,7 +189,7 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
       </div>
 
       {/* Rating Distribution */}
-      <div className="glass-card rounded-3xl p-5">
+      <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <BarChart3 size={15} className="text-ios-foreground-subtle" />
           <span className="text-micro font-bold uppercase tracking-[0.12em] text-ios-foreground-subtle">
@@ -239,7 +239,7 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
                     {r.label}
                   </span>
                 </div>
-                <p className="text-title font-extrabold text-ios-foreground tracking-tight">
+                <p className="stat-value">
                   {count}
                 </p>
                 <p className="text-caption text-ios-foreground-faint font-medium">
@@ -252,7 +252,7 @@ export function ReportClient({ data, dateFrom, dateTo }: ReportClientProps) {
       </div>
 
       {/* Branch Report Table */}
-      <div className="glass-card rounded-3xl overflow-hidden print:border print:border-gray-300">
+      <div className="glass-card overflow-hidden print:border print:border-gray-300">
         <div className="px-5 py-3.5 border-b border-ios-border-subtle flex items-center justify-between gap-3 flex-wrap print:hidden">
           <div className="flex items-center gap-2.5">
             <BarChart3 size={15} className="text-ios-foreground-subtle" />

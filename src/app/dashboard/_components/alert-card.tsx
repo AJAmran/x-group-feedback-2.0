@@ -41,11 +41,11 @@ export function AlertCard({ severity, title, message }: AlertCardProps) {
   const Icon = c.icon;
 
   return (
-    <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm p-4 relative overflow-hidden">
+    <div className="glass-card p-4 relative overflow-hidden">
       <span className={`absolute left-0 top-0 bottom-0 w-1 ${c.accent}`} aria-hidden="true" />
       <div className="flex items-start gap-3 pl-1.5">
         <div
-          className={`w-9 h-9 rounded-lg border border-current/20 flex items-center justify-center shrink-0 ${c.iconWrap}`}
+          className={`icon-tile border-current/20 ${c.iconWrap}`}
         >
           <Icon size={17} strokeWidth={2.25} />
         </div>

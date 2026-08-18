@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -54,7 +54,7 @@ export function FeedbackTable({ data }: FeedbackTableProps) {
   };
 
   return (
-    <div className="glass-card rounded-3xl overflow-hidden">
+    <div className="glass-card overflow-hidden">
       <CardHeader icon={MessageSquare} title="All Entries" count={data.total} />
 
       <Table>

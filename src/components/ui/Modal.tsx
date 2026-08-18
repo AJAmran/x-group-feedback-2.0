@@ -66,7 +66,7 @@ export function Modal({
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm print:hidden" onClick={onClose} aria-hidden="true" />
       <div
         className={cn(
-          "relative w-full max-h-[90vh] overflow-y-auto glass-card p-6 rounded-3xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 print:static print:max-h-none print:overflow-visible print:shadow-none print:bg-white print:max-w-none print:w-full print:rounded-none print:m-0",
+          "relative w-full max-h-[90vh] overflow-y-auto glass-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 print:static print:max-h-none print:overflow-visible print:shadow-none print:bg-white print:max-w-none print:w-full print:rounded-none print:m-0",
           SIZE_CLASS[size],
           className,
         )}

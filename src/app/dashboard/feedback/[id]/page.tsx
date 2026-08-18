@@ -57,7 +57,7 @@ export default async function FeedbackDetailPage({ params }: Props) {
         Back to Feedback
       </Link>
 
-      <div className="glass-card rounded-3xl overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <div className="border-b border-ios-border-subtle px-6 py-6 flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-ios-primary/20 to-ios-accent/20 flex items-center justify-center shrink-0 shadow-sm">
             <span className="text-body font-extrabold text-ios-primary">

@@ -37,14 +37,14 @@ const variantStyles: Record<ButtonVariant, string> = {
 };
 
 const sizeStyles: Record<ButtonVariant, Record<ButtonSize, string>> = {
-  primary: { sm: "h-10 px-4 text-micro", md: "h-12 px-6 text-label", lg: "h-14 px-8 text-body" },
-  secondary: { sm: "h-9 px-3 text-micro", md: "h-11 px-5 text-label", lg: "h-13 px-7 text-body" },
-  danger: { sm: "h-10 px-4 text-micro", md: "h-12 px-6 text-label", lg: "h-14 px-8 text-body" },
+  primary: { sm: "h-9 px-4 text-micro", md: "h-10 px-5 text-label", lg: "h-12 px-6 text-body" },
+  secondary: { sm: "h-9 px-3 text-micro", md: "h-10 px-5 text-label", lg: "h-12 px-6 text-body" },
+  danger: { sm: "h-9 px-4 text-micro", md: "h-10 px-5 text-label", lg: "h-12 px-6 text-body" },
   ghost: { sm: "px-2.5 py-1.5 text-micro rounded-lg", md: "px-3.5 py-2 text-caption rounded-xl", lg: "px-5 py-2.5 text-label rounded-xl" },
   "ghost-green": { sm: "px-2.5 py-1.5 text-micro rounded-lg", md: "px-3.5 py-2 text-caption rounded-xl", lg: "px-5 py-2.5 text-label rounded-xl" },
   "ghost-red": { sm: "px-2.5 py-1.5 text-micro rounded-lg", md: "px-3.5 py-2 text-caption rounded-xl", lg: "px-5 py-2.5 text-label rounded-xl" },
   "ghost-danger": { sm: "px-2.5 py-1.5 text-micro rounded-lg", md: "px-3.5 py-2 text-caption rounded-xl", lg: "px-5 py-2.5 text-label rounded-xl" },
-  outline: { sm: "h-9 px-3 text-micro rounded-lg", md: "h-11 px-5 text-label rounded-xl", lg: "h-13 px-7 text-body rounded-xl" },
+  outline: { sm: "h-9 px-3 text-micro rounded-lg", md: "h-10 px-5 text-label rounded-xl", lg: "h-12 px-6 text-body rounded-xl" },
   icon: { sm: "p-1.5", md: "p-2", lg: "p-2.5" },
   "icon-danger": { sm: "p-1.5", md: "p-2", lg: "p-2.5" },
 };

@@ -338,7 +338,7 @@ export function UserManagement({ data, stats, branches }: UserManagementProps) {
               applyFilters({ search: searchInput, role: e.target.value, isActive: statusFilter });
             }}
             options={ROLE_FILTER_OPTIONS}
-            className="h-10 sm:w-44"
+            className="h-10 !min-h-0 !py-0 sm:w-44"
             aria-label="Filter by role"
           />
           <SelectInput
@@ -348,7 +348,7 @@ export function UserManagement({ data, stats, branches }: UserManagementProps) {
               applyFilters({ search: searchInput, role: roleFilter, isActive: e.target.value });
             }}
             options={STATUS_FILTER_OPTIONS}
-            className="h-10 sm:w-40"
+            className="h-10 !min-h-0 !py-0 sm:w-40"
             aria-label="Filter by status"
           />
           {hasActiveFilters && (
@@ -523,7 +523,7 @@ export function UserManagement({ data, stats, branches }: UserManagementProps) {
       />
 
       {/* Users panel */}
-      <div className="glass-card rounded-3xl overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <CardHeader icon={Users} title="All Users" count={data.total} />
 
         {data.users.length === 0 ? (

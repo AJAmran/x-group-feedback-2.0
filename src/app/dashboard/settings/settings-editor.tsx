@@ -76,14 +76,14 @@ export function SettingsEditor() {
           <Bone className="h-9 w-40 rounded-xl" />
           <Bone className="h-5 w-72 rounded-lg mt-3" />
         </div>
-        <div className="glass-card p-6 rounded-3xl space-y-3">
+        <div className="glass-card p-6 space-y-3">
           <Bone className="h-4 w-32 rounded-lg" />
           <Bone className="h-4 w-56 rounded-lg" />
           <Bone className="h-10 w-full rounded-xl" />
           <Bone className="h-10 w-full rounded-xl" />
           <Bone className="h-12 w-40 rounded-xl" />
         </div>
-        <div className="glass-card p-6 rounded-3xl space-y-3">
+        <div className="glass-card p-6 space-y-3">
           <Bone className="h-4 w-24 rounded-lg" />
           <Bone className="h-4 w-64 rounded-lg" />
         </div>
@@ -95,7 +95,7 @@ export function SettingsEditor() {
     <div className="space-y-6 pb-8 max-w-2xl">
 
       {/* System Settings */}
-      <div className="glass-card p-6 rounded-3xl">
+      <div className="glass-card p-6">
         <h2 className="text-label font-bold text-ios-foreground mb-1 uppercase tracking-[0.12em]">System Settings</h2>
         <p className="text-caption text-ios-foreground-muted mb-4">Key-value configuration stored on the server</p>
 
@@ -142,7 +142,7 @@ export function SettingsEditor() {
       </div>
 
       {/* Theme Info */}
-      <div className="glass-card p-6 rounded-3xl">
+      <div className="glass-card p-6">
         <h2 className="text-label font-bold text-ios-foreground mb-1 uppercase tracking-[0.12em]">Theme</h2>
         <p className="text-caption text-ios-foreground-muted mb-4">Toggle between light and dark mode</p>
         <p className="text-caption text-ios-foreground-faint">Use the toggle button in the top-right corner to switch themes.</p>

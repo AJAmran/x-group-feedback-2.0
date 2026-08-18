@@ -11,7 +11,7 @@ export default function ReportsLoading() {
         ))}
       </div>
 
-      <div className="glass-card rounded-3xl p-5">
+      <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <Bone className="h-4 w-24" />
         </div>

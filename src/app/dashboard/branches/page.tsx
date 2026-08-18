@@ -21,7 +21,7 @@ async function BranchPerformanceContent() {
       <BranchLeaderboard branches={sorted} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        <div className="glass-card p-6 rounded-3xl">
+        <div className="glass-card p-6">
           <h3 className="text-label font-bold text-ios-foreground mb-4 uppercase tracking-[0.12em]">Best Branches</h3>
           <div className="space-y-3">
             {best.map((b, i) => (
@@ -47,7 +47,7 @@ async function BranchPerformanceContent() {
           </div>
         </div>
 
-        <div className="glass-card p-6 rounded-3xl">
+        <div className="glass-card p-6">
           <h3 className="text-label font-bold text-ios-foreground mb-4 uppercase tracking-[0.12em]">Needs Attention</h3>
           <div className="space-y-3">
             {worst.length > 0 ? worst.map((b, i) => (
@@ -113,12 +113,12 @@ export default async function BranchesPage(props: {
         key={tab + page + (search ?? "")}
         fallback={
           <div className="space-y-6">
-            <div className="glass-card p-6 rounded-3xl">
+            <div className="glass-card p-6">
               <Bone className="h-64 w-full rounded-xl" />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="glass-card p-6 rounded-3xl">
+                <div key={i} className="glass-card p-6">
                   <Bone className="h-4 w-24 mb-4" />
                   <div className="space-y-3">
                     {Array.from({ length: 3 }).map((_, j) => <Bone key={j} className="h-12 rounded-xl w-full" />)}

@@ -313,7 +313,13 @@ export async function getAnalyticsData(dateFrom?: string, dateTo?: string, branc
     if (!data) throw new Error("No data");
 
     return {
-      trend: data?.trend?.length ? data.trend : [{ month: new Date().toISOString().slice(0, 7), avgRating: data?.averageRating || 0, count: data?.totalFeedbacks || 0 }],
+      trend: data?.trend?.length
+        ? data.trend.map((t: { month?: string; averageRating?: number; avgRating?: number; totalFeedbacks?: number; count?: number }) => ({
+            month: t.month ?? "",
+            avgRating: Number(t.avgRating ?? t.averageRating ?? 0),
+            count: Number(t.count ?? t.totalFeedbacks ?? 0),
+          }))
+        : [{ month: new Date().toISOString().slice(0, 7), avgRating: Number(data?.averageRating || 0), count: Number(data?.totalFeedbacks || 0) }],
       ratingDistribution: data?.distribution?.reduce((acc: Record<string, number>, d: AnalyticsDistributionItem) => {
         const label = numberToRating(d.rating);
         if (label) acc[label] = (acc[label] ?? 0) + d.count;

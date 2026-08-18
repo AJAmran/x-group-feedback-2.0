@@ -32,7 +32,7 @@ export function PageHeaderSkeleton() {
 
 export function KpiCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm p-5">
+    <div className="glass-card p-5">
       <div className="flex items-start justify-between mb-4">
         <Bone className="w-10 h-10 rounded-xl" />
         <Bone className="w-14 h-5 rounded-lg" />
@@ -49,7 +49,7 @@ export function ListCardSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div className="space-y-3">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="glass-card p-5 rounded-3xl">
+        <div key={i} className="glass-card p-5">
           <Bone className="h-4 w-3/4" />
           <Bone className="h-3 w-1/2 mt-2" />
         </div>
@@ -60,7 +60,7 @@ export function ListCardSkeleton({ rows = 3 }: { rows?: number }) {
 
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="glass-card rounded-3xl overflow-hidden">
+    <div className="glass-card overflow-hidden">
       <div className="px-5 py-4 border-b border-ios-border-subtle flex items-center justify-between">
         <Bone className="h-4 w-32" />
         <Bone className="h-7 w-20 rounded-lg" />
@@ -79,7 +79,7 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
 
 export function ChartCardSkeleton({ height = "h-64" }: { height?: string }) {
   return (
-    <div className="glass-card p-6 rounded-2xl">
+    <div className="glass-card p-6">
       <Bone className="h-4 w-32 mb-6" />
       <div className={`${height} skeleton-shimmer rounded-xl`} />
     </div>
@@ -101,7 +101,7 @@ export function PageSkeleton() {
 
 export function CardSkeleton({ children }: { children?: React.ReactNode }) {
   return (
-    <div className="glass-card p-5 rounded-3xl">
+    <div className="glass-card p-5">
       {children}
     </div>
   );
@@ -112,7 +112,7 @@ export function CardSkeleton({ children }: { children?: React.ReactNode }) {
 /** Skeleton that mirrors OpsStatCard (label + icon tile + value + subtext). */
 export function OpsStatCardSkeleton() {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm p-5">
+    <div className="relative overflow-hidden glass-card p-5">
       <div className="relative flex items-start justify-between gap-3">
         <Bone className="h-3 w-24 rounded-lg" />
         <Bone className="w-9 h-9 rounded-lg" />
@@ -141,7 +141,7 @@ export function StatsGridSkeleton({ count = 4, cols = "lg:grid-cols-4" }: { coun
 /** Skeleton for a filter/action toolbar (input + button placeholders). */
 export function ToolbarSkeleton({ inputs = 2, actions = 2 }: { inputs?: number; actions?: number }) {
   return (
-    <div className="rounded-2xl border border-ios-border-subtle bg-surface-300 shadow-sm px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+    <div className="glass-card px-5 py-4 flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-3">
         {Array.from({ length: inputs }).map((_, i) => (
           <Bone key={i} className="h-10 w-40 rounded-xl" />
@@ -162,7 +162,7 @@ const TABLE_ROW_BONES = ["w-28", "w-20", "w-24", "w-32", "w-16", "w-24"];
 /** Skeleton for a card-hosted data table: card header, column header, mirroring rows. */
 export function TableCardSkeleton({ rows = 6, columns = 5 }: { rows?: number; columns?: number }) {
   return (
-    <div className="glass-card rounded-3xl overflow-hidden">
+    <div className="glass-card overflow-hidden">
       <div className="px-5 py-4 border-b border-ios-border-subtle flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <Bone className="w-8 h-8 rounded-lg" />

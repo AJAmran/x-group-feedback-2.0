@@ -18,7 +18,7 @@ export default function BranchesLoading() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="glass-card p-6 rounded-3xl">
+            <div key={i} className="glass-card p-6">
               <Bone className="h-4 w-24 mb-4" />
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, j) => (
