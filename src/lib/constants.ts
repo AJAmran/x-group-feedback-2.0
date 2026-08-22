@@ -16,6 +16,7 @@ export const BRANCH_MAP: Record<string, string> = {
   "X-19": "Four Seasons Restaurant, Mirpur-11",
 };
 
+// all branches with latitude and longitude
 export const BRANCHES: {
   code: string;
   name: string;
